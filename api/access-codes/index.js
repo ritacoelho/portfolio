@@ -3,8 +3,12 @@
 // DELETE /api/access-codes     — delete a code (admin only)
 // PATCH /api/access-codes      — update a code (admin only)
 
-const { kv }  = require('@vercel/kv');
-const jwt     = require('jsonwebtoken');
+const { Redis } = require('@upstash/redis');
+const kv = new Redis({
+  url:   process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+const jwt = require('jsonwebtoken');
 
 function requireAdmin(req) {
   const auth = req.headers.authorization || '';

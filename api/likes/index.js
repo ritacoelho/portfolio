@@ -2,7 +2,11 @@
 // POST /api/likes                — add a like (once per session, tracked by fingerprint)
 // Body: { slug: string, sessionId: string }
 
-const { kv } = require('@vercel/kv');
+const { Redis } = require('@upstash/redis');
+const kv = new Redis({
+  url:   process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 module.exports = async function handler(req, res) {
   // ── GET count ────────────────────────────────────────────────
@@ -29,7 +33,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Mark session as having liked this project (expires in 30 days)
-    await kv.set(sessionKey, 1, { ex: 60 * 60 * 24 * 30 });
+    await kv.set(sessionKey, 1, { ex: 60 * 60 * 24 * 30 }); // 30-day TTL
 
     // Increment count
     const newCount = await kv.incr(`likes:${slug}`);
