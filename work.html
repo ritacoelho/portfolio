@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work — Rita Coelho</title>
+  <meta name="description" content="Selected projects by Rita Coelho — UX, interaction and product design work.">
+  <link rel="canonical" href="https://rita-coelho.com/work">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="theme-color" content="#251605">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<header class="nav" id="nav" role="banner">
+  <a href="index.html" class="nav__logo" aria-label="Rita Coelho — home">RC<span>.</span></a>
+  <nav aria-label="Main navigation">
+    <ul class="nav__links" role="list">
+      <li><a href="work.html"    class="nav__link active">Work</a></li>
+      <li><a href="journey.html" class="nav__link">Journey</a></li>
+      <li><a href="about.html"   class="nav__link">About</a></li>
+      <li><a href="contact.html" class="nav__link">Contact</a></li>
+    </ul>
+  </nav>
+  <button class="nav__menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-label="Navigation" aria-modal="true">
+  <a href="work.html"    class="mobile-menu__link active">Work</a>
+  <a href="journey.html" class="mobile-menu__link">Journey</a>
+  <a href="about.html"   class="mobile-menu__link">About</a>
+  <a href="contact.html" class="mobile-menu__link">Contact</a>
+</div>
+
+<main>
+  <div class="container">
+
+    <header class="page-header">
+      <a href="index.html" class="page-header__back fade-up">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M11 7H3M5.5 3.5L2.5 7l3 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Home
+      </a>
+      <h1 class="page-title fade-up fade-up--d1">What I worked on</h1>
+    </header>
+
+    <!-- Controls: filter + sort -->
+    <div class="work-controls fade-up fade-up--d3">
+      <div class="work-filters" role="group" aria-label="Filter projects">
+        <button class="work-filter-btn active" data-filter="all">All</button>
+        <button class="work-filter-btn" data-filter="UX Design">UX Design</button>
+        <button class="work-filter-btn" data-filter="Interaction Design">Interaction Design</button>
+        <button class="work-filter-btn" data-filter="Enterprise UX">Enterprise UX</button>
+        <button class="work-filter-btn" data-filter="Service Design">Service Design</button>
+      </div>
+      <div class="work-sort">
+        <span class="work-sort__label" id="sort-label">Sort</span>
+        <div class="sort-select" id="work-sort" role="group" aria-labelledby="sort-label">
+          <button class="sort-select__btn" aria-haspopup="listbox" aria-expanded="false">
+            <span class="sort-select__val">Newest first</span>
+            <svg class="sort-select__chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <ul class="sort-select__list" role="listbox" aria-label="Sort order">
+            <li class="sort-select__option is-active" data-value="newest" role="option" aria-selected="true">Newest first</li>
+            <li class="sort-select__option" data-value="oldest" role="option" aria-selected="false">Oldest first</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hint -->
+    <p class="fade-up" style="font-size:0.75rem;color:var(--light);margin-bottom:2rem;">
+      Hover a card, click <span style="color:var(--brown);" aria-label="diamond">◆</span> to inspect, copy link, show love or enquire.
+    </p>
+
+    <section aria-label="Projects">
+      <div class="work-grid" id="work-grid">
+
+        <!-- ── Hexagon (most recent) ── -->
+        <article class="project-card fade-up project-card--is-locked"
+                 data-slug="hexagon"
+                 data-title="Hexagon: Enterprise UX"
+                 data-url="https://rita-coelho.com/projects/hexagon.html"
+                 data-year="2024"
+                 data-tags="Enterprise UX,Product Design">
+
+          <div class="project-card__thumb project-card--locked">
+            <img src="images/work/pilot-thumbnail.png"
+                 onerror="this.src='https://rita-coelho.com/static/media/mockup.fc6c4674de725084f512.png'"
+                 alt="" aria-hidden="true" loading="lazy"
+                 style="filter:blur(10px) brightness(0.65);">
+            <div class="project-card__lock-overlay">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                <rect x="5" y="13" width="18" height="13" rx="3" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M9 13V9a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <span class="project-card__lock-label">NDA · Enter access code</span>
+            </div>
+          </div>
+
+          <div class="project-card__meta">
+            <span class="project-card__tag">Enterprise UX</span>
+            <span class="project-card__tag">Product Design</span>
+            <span class="project-card__year">2024–present</span>
+          </div>
+          <h2 class="project-card__title">
+            <a href="projects/hexagon.html" data-project-link>Hexagon: Enterprise Scale Design</a>
+          </h2>
+          <p class="project-card__desc">UX across Hexagon's geospatial and industrial software suite. NDA protected; enter access code to view.</p>
+          <a href="projects/hexagon.html" class="project-card__link" data-project-link>
+            View case study
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <button class="ctx-trigger" aria-label="Project actions" aria-haspopup="dialog"></button>
+        </article>
+
+        <!-- ── Atlassian 2023 ── -->
+        <article class="project-card fade-up fade-up--d1"
+                 data-slug="atlassian"
+                 data-title="Pilot: Atlassian"
+                 data-url="https://rita-coelho.com/projects/atlassian.html"
+                 data-year="2023"
+                 data-tags="UX Design,Product Strategy">
+
+          <div class="project-card__thumb">
+            <img src="images/work/pilot-thumbnail.png"
+                 onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/pilot-thumbnail.23f24ee3ac67876ea1b7.png'"
+                 alt="Pilot app mockup, Atlassian project" loading="lazy">
+          </div>
+          <div class="project-card__meta">
+            <span class="project-card__tag">UX Design</span>
+            <span class="project-card__tag">Product Strategy</span>
+            <span class="project-card__year">2023</span>
+          </div>
+          <h2 class="project-card__title">
+            <a href="projects/atlassian.html" data-project-link>Pilot: AI-Assisted Workplace Onboarding</a>
+          </h2>
+          <p class="project-card__desc">Bridging the gap between student skills and workplace expectations for Atlassian, from research to interactive prototype.</p>
+          <a href="projects/atlassian.html" class="project-card__link" data-project-link>
+            View case study
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <button class="ctx-trigger" aria-label="Project actions" aria-haspopup="dialog"></button>
+        </article>
+
+        <!-- ── Last Mile 2022 ── -->
+        <article class="project-card fade-up"
+                 data-slug="last-mile"
+                 data-title="Last Mile Delivery"
+                 data-url="https://rita-coelho.com/projects/last-mile.html"
+                 data-year="2022"
+                 data-tags="Service Design,Mobile UX">
+
+          <div class="project-card__thumb">
+            <img src="images/work/ipad-screens.png"
+                 onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/ipad-screens.fc038047de8d24fcba70.png'"
+                 alt="Last Mile Delivery app on iPad" loading="lazy">
+          </div>
+          <div class="project-card__meta">
+            <span class="project-card__tag">Service Design</span>
+            <span class="project-card__tag">Mobile UX</span>
+            <span class="project-card__year">2022</span>
+          </div>
+          <h2 class="project-card__title">
+            <a href="projects/last-mile.html" data-project-link>Last Mile: Reducing Delivery Anxiety</a>
+          </h2>
+          <p class="project-card__desc">How do you reduce failed deliveries and the anxiety spiral they create for customers and couriers?</p>
+          <a href="projects/last-mile.html" class="project-card__link" data-project-link>
+            View case study
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <button class="ctx-trigger" aria-label="Project actions" aria-haspopup="dialog"></button>
+        </article>
+
+        <!-- ── Sonic Link 2022 ── -->
+        <article class="project-card fade-up fade-up--d1"
+                 data-slug="sonic-link"
+                 data-title="MAP Mima: Sonic Link"
+                 data-url="https://rita-coelho.com/projects/sonic-link.html"
+                 data-year="2022"
+                 data-tags="Interaction Design,Public Installation">
+
+          <div class="project-card__thumb">
+            <img src="images/work/sonic-thumbnail.png"
+                 onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/sonic-thumbnail.57ee73f0691da471668a.png'"
+                 alt="Sonic Link hi-fi app screens" loading="lazy">
+          </div>
+          <div class="project-card__meta">
+            <span class="project-card__tag">Interaction Design</span>
+            <span class="project-card__tag">Public Installation</span>
+            <span class="project-card__year">2022</span>
+          </div>
+          <h2 class="project-card__title">
+            <a href="projects/sonic-link.html" data-project-link>MAP Mima: Music as Public Space</a>
+          </h2>
+          <p class="project-card__desc">Designed and coded a mobile experience connecting personal sound palettes to real-time light patterns across a public installation, including the MQTT layer.</p>
+          <a href="projects/sonic-link.html" class="project-card__link" data-project-link>
+            View case study
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <button class="ctx-trigger" aria-label="Project actions" aria-haspopup="dialog"></button>
+        </article>
+
+      </div><!-- /work-grid -->
+    </section>
+
+    <!-- Bridge to Journey -->
+    <aside class="fade-up" style="margin:5rem 0;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;padding:2rem 2.5rem;background:var(--bg-alt);border-radius:20px;border:1.5px solid var(--border);">
+      <div>
+        <p style="font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);margin-bottom:0.35rem;">Want context?</p>
+        <p style="font-size:1rem;font-weight:500;color:var(--text);margin:0;">Career history, education, and how it all connects.</p>
+      </div>
+      <a href="journey.html" class="btn btn--light">
+        View journey
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </aside>
+
+  </div>
+</main>
+
+<footer class="footer" role="contentinfo">
+  <p class="footer__copy">© 2024–2026 Rita Coelho</p>
+  <p class="footer__easter">
+    <span class="footer__diamond" aria-hidden="true"></span>
+    Made with intention
+  </p>
+</footer>
+
+<script src="js/main.js" defer></script>
+<script>
+  // Work page: filter + sort controls
+  (function () {
+    var grid       = document.getElementById('work-grid');
+    var cards      = Array.from(grid ? grid.querySelectorAll('.project-card') : []);
+    var filterBtns = document.querySelectorAll('.work-filter-btn');
+    var sortEl     = document.getElementById('work-sort');
+    var activeFilter = 'all';
+    var activeSort   = 'newest';
+
+    function applyFilter() {
+      cards.forEach(function (card) {
+        var tags = (card.dataset.tags || '').split(',').map(function (t) { return t.trim(); });
+        var show = activeFilter === 'all' || tags.indexOf(activeFilter) !== -1;
+        card.classList.toggle('hidden', !show);
+      });
+    }
+
+    function applySort() {
+      var visible = cards.filter(function (c) { return !c.classList.contains('hidden'); });
+      visible.sort(function (a, b) {
+        var ya = parseInt(a.dataset.year, 10) || 0;
+        var yb = parseInt(b.dataset.year, 10) || 0;
+        return activeSort === 'newest' ? yb - ya : ya - yb;
+      });
+      visible.forEach(function (card) { grid.appendChild(card); });
+    }
+
+    filterBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        filterBtns.forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter || 'all';
+        applyFilter();
+        applySort();
+      });
+    });
+
+    if (sortEl) {
+      sortEl.addEventListener('sort-change', function (e) {
+        activeSort = e.detail.value;
+        applySort();
+      });
+    }
+
+    applySort();
+  })();
+</script>
+<script src="js/admin.js" defer></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

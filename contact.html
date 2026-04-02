@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Rita Coelho</title>
+  <meta name="description" content="Get in touch with Rita Coelho — UX/UI Designer based in Zurich.">
+  <link rel="canonical" href="https://rita-coelho.com/contact">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="theme-color" content="#251605">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    /* Contact page — full viewport, pill CTAs */
+    .contact-full {
+      margin-top: 64px;              /* push below fixed nav */
+      min-height: calc(100svh - 64px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* Left panel — identity + CTAs */
+    .contact-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(2.5rem, 5vw, 4.5rem) var(--gutter) clamp(2rem, 4vw, 4rem);
+      background: var(--bg);
+      border-right: 1.5px solid var(--border);
+    }
+    .contact-panel__back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 3rem;
+      transition: color 200ms ease, gap 200ms ease;
+      align-self: flex-start;
+    }
+    .contact-panel__back svg { transition: transform 200ms ease; }
+    .contact-panel__back:hover { color: var(--brown); gap: 0.75rem; }
+    .contact-panel__back:hover svg { transform: translateX(-3px); }
+
+    .contact-panel__heading {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.0;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+    }
+    .contact-panel__sub {
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 380px;
+      margin-bottom: 2.75rem;
+    }
+
+    /* Pill CTA buttons */
+    .contact-ctas {
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+      max-width: 320px;
+    }
+    .contact-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      padding: 1rem 2rem;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: background 220ms ease, transform 220ms var(--ease-spring), color 200ms ease;
+    }
+    .contact-cta--primary {
+      background: var(--brown);
+      color: var(--off-white);
+      border: 2px solid var(--brown);
+    }
+    .contact-cta--primary:hover {
+      background: var(--brown-dark);
+      border-color: var(--brown-dark);
+      transform: translateY(-2px);
+    }
+    .contact-cta--secondary {
+      background: transparent;
+      color: var(--text);
+      border: 2px solid var(--border);
+    }
+    .contact-cta--secondary:hover {
+      background: var(--mist-blue);
+      border-color: var(--mist-grey);
+      transform: translateY(-2px);
+    }
+
+    /* Divider below CTAs */
+    .contact-panel__divider {
+      width: 40px;
+      height: 2px;
+      background: var(--burgundy);
+      margin: 2.5rem 0;
+    }
+
+    /* GitHub link — tertiary, text only */
+    .contact-panel__github {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: color 200ms ease;
+    }
+    .contact-panel__github:hover { color: var(--brown); }
+
+    /* Right panel — map */
+    .contact-map-panel {
+      position: relative;
+      overflow: hidden;
+      background: var(--mist-grey);
+    }
+    .contact-map-panel iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      filter: saturate(0.6) contrast(0.9);
+    }
+    /* Location badge floating over map */
+    .contact-map-badge {
+      position: absolute;
+      bottom: 1.75rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      padding: 0.5rem 1.1rem;
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--text);
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      z-index: 10;
+    }
+
+    /* Responsive */
+    @media (max-width: 800px) {
+      .contact-full {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 50svh;
+      }
+      .contact-panel {
+        border-right: none;
+        border-bottom: 1.5px solid var(--border);
+        padding: 3rem var(--gutter) 3rem;
+      }
+      .contact-map-panel {
+        min-height: 280px;
+      }
+    }
+  </style>
+</head>
+<body class="contact-page">
+
+<header class="nav" id="nav" role="banner">
+  <a href="index.html" class="nav__logo" aria-label="Rita Coelho — home">RC<span>.</span></a>
+  <nav aria-label="Main navigation">
+    <ul class="nav__links" role="list">
+      <li><a href="work.html"    class="nav__link">Work</a></li>
+      <li><a href="journey.html" class="nav__link">Journey</a></li>
+      <li><a href="about.html"   class="nav__link">About</a></li>
+      <li><a href="contact.html" class="nav__link active">Contact</a></li>
+    </ul>
+  </nav>
+  <button class="nav__menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-label="Navigation" aria-modal="true">
+  <a href="work.html"    class="mobile-menu__link">Work</a>
+  <a href="journey.html" class="mobile-menu__link">Journey</a>
+  <a href="about.html"   class="mobile-menu__link">About</a>
+  <a href="contact.html" class="mobile-menu__link active">Contact</a>
+</div>
+
+<main>
+  <div class="contact-full" aria-label="Contact Rita Coelho">
+
+    <!-- Left: identity + CTAs -->
+    <section class="contact-panel" aria-label="Contact details">
+
+      <a href="index.html" class="contact-panel__back fade-up">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M11 7H3M5.5 3.5L2.5 7l3 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Home
+      </a>
+
+      <h1 class="contact-panel__heading fade-up fade-up--d1">Get in touch</h1>
+      <p class="contact-panel__sub fade-up fade-up--d2">
+        Whether you have a project in mind, a role to discuss, or just want to say hello, feel free to reach out.
+      </p>
+
+      <div class="contact-ctas fade-up fade-up--d3">
+        <a href="mailto:coelho.rita16@gmail.com" class="contact-cta contact-cta--primary" aria-label="Send Rita an email">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M2 4h12a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M1 5l7 5 7-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Send an email
+        </a>
+
+        <a href="https://www.linkedin.com/in/coelhorita/" target="_blank" rel="noopener noreferrer"
+           class="contact-cta contact-cta--secondary" aria-label="View Rita's LinkedIn profile">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <rect x="1" y="1" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M4.5 6.5v6M4.5 4v.5M7 12.5V10a2 2 0 0 1 4 0v2.5M7 8v4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          LinkedIn
+        </a>
+      </div>
+
+      <div class="contact-panel__divider fade-up fade-up--d4"></div>
+
+      <a href="https://github.com/ritacoelho" target="_blank" rel="noopener noreferrer"
+         class="contact-panel__github fade-up fade-up--d4">
+        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M9 1.5A7.5 7.5 0 0 0 1.5 9c0 3.314 2.148 6.12 5.127 7.11.375.069.513-.162.513-.36v-1.26c-2.085.453-2.523-.999-2.523-.999-.34-.864-.83-1.095-.83-1.095-.678-.462.051-.453.051-.453.75.051 1.146.771 1.146.771.666 1.14 1.749.81 2.175.621.069-.483.261-.81.474-.996-1.665-.189-3.414-.831-3.414-3.705 0-.819.294-1.488.771-2.01-.078-.189-.333-.951.072-1.983 0 0 .63-.201 2.064.771A7.17 7.17 0 0 1 9 5.55a7.17 7.17 0 0 1 1.881.252c1.434-.972 2.064-.771 2.064-.771.405 1.032.15 1.794.072 1.983.48.522.771 1.191.771 2.01 0 2.88-1.752 3.513-3.42 3.699.27.231.51.687.51 1.383v2.049c0 .2.135.432.516.36A7.502 7.502 0 0 0 16.5 9 7.5 7.5 0 0 0 9 1.5Z" fill="currentColor"/>
+        </svg>
+        GitHub
+      </a>
+
+    </section>
+
+    <!-- Right: Google Maps embed -->
+    <div class="contact-map-panel" aria-label="Map of Zurich, Switzerland">
+      <iframe
+        title="Zurich, Switzerland"
+        src="https://maps.google.com/maps?q=Zurich,Switzerland&z=13&output=embed"
+        loading="lazy"
+        allowfullscreen
+        referrerpolicy="no-referrer-when-downgrade"
+        aria-label="Google Maps showing Zurich, Switzerland">
+      </iframe>
+      <div class="contact-map-badge" aria-hidden="true">📍 Zurich, Switzerland</div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="footer" role="contentinfo">
+  <p class="footer__copy">© 2024–2026 Rita Coelho</p>
+  <p class="footer__easter">
+    <span class="footer__diamond" aria-hidden="true"></span>
+    Made with intention
+  </p>
+</footer>
+
+<script src="js/main.js" defer></script>
+<script src="js/admin.js" defer></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hexagon — Enterprise UX | Rita Coelho</title>
+  <meta name="description" content="Enterprise UX and product design work at Hexagon — NDA protected. Request access to view case study.">
+  <link rel="canonical" href="https://rita-coelho.com/projects/hexagon">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="theme-color" content="#251605">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    /* Modal overlay — sits above the (always-visible) project content */
+    .pw-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem var(--gutter);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .pw-overlay.hidden { display: none; }
+
+    .pw-gate__card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(2rem, 5vw, 3.5rem);
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.14);
+    }
+
+    /* Close (×) button */
+    .pw-gate__close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      width: 32px; height: 32px;
+      background: var(--bg-alt);
+      border: none;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--muted);
+      transition: background 180ms ease, color 180ms ease;
+    }
+    .pw-gate__close:hover { background: var(--mist-grey); color: var(--text); }
+
+    .pw-gate__icon {
+      width: 52px; height: 52px;
+      background: var(--burgundy-faint);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      color: var(--burgundy);
+    }
+    .pw-gate__title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 0.65rem;
+    }
+    .pw-gate__desc {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+    .pw-gate__input {
+      width: 100%;
+      padding: 0.85rem 1.1rem;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      color: var(--text);
+      margin-bottom: 0.875rem;
+      transition: border-color 200ms ease;
+      outline: none;
+    }
+    .pw-gate__input:focus { border-color: var(--brown); }
+    .pw-gate__input.error { border-color: var(--burgundy); }
+    .pw-gate__error {
+      font-size: 0.78rem;
+      color: var(--burgundy);
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .pw-gate__error.show { display: block; }
+    .pw-gate__submit {
+      width: 100%;
+      padding: 0.875rem;
+      background: var(--brown);
+      color: var(--white);
+      border: none;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 200ms ease, transform 200ms var(--ease-spring);
+      margin-bottom: 1.5rem;
+    }
+    .pw-gate__submit:hover { background: var(--brown-dark); transform: translateY(-2px); }
+    .pw-gate__divider { font-size: 0.72rem; color: var(--light); margin-bottom: 1rem; }
+    .pw-gate__request { font-size: 0.8rem; color: var(--muted); }
+    .pw-gate__request a {
+      color: var(--brown);
+      font-weight: 500;
+      border-bottom: 1px solid currentColor;
+      padding-bottom: 1px;
+    }
+    .pw-gate__nda {
+      margin-top: 1.75rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.72rem;
+      color: var(--light);
+      line-height: 1.55;
+    }
+
+    /* Content is always rendered; overlay sits on top when locked */
+  </style>
+</head>
+<body class="project-page">
+
+<header class="nav" id="nav" role="banner">
+  <a href="../index.html" class="nav__logo" aria-label="Rita Coelho — home">RC<span>.</span></a>
+  <nav aria-label="Main navigation">
+    <ul class="nav__links" role="list">
+      <li><a href="../work.html"          class="nav__link active">Work</a></li>
+      <li><a href="../journey.html"       class="nav__link">Journey</a></li>
+      <li><a href="../about.html"         class="nav__link">About</a></li>
+      <li><a href="../contact.html" class="nav__link">Contact</a></li>
+    </ul>
+  </nav>
+  <button class="nav__menu-btn" id="menu-btn" aria-label="Open navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-label="Navigation" aria-modal="true">
+  <a href="../work.html"          class="mobile-menu__link active">Work</a>
+  <a href="../journey.html"       class="mobile-menu__link">Journey</a>
+  <a href="../about.html"         class="mobile-menu__link">About</a>
+  <a href="../contact.html" class="mobile-menu__link">Contact</a>
+</div>
+
+<main>
+
+  <!-- ── Password overlay modal (removed on unlock or close) ── -->
+  <div class="pw-overlay" id="pw-overlay" role="dialog" aria-modal="true" aria-label="Access required">
+    <div class="pw-gate__card">
+
+      <!-- Close — goes back to work page -->
+      <button class="pw-gate__close" id="pw-close" aria-label="Close and go back">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <div class="pw-gate__icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="11" width="18" height="12" rx="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <h2 class="pw-gate__title">NDA: Access Required</h2>
+      <p class="pw-gate__desc">
+        This case study covers strategic UX work completed at Hexagon and is protected under NDA. Enter your access code, or request access if you don't have one.
+      </p>
+
+      <form id="pw-form" autocomplete="off">
+        <input
+          type="password"
+          id="pw-input"
+          class="pw-gate__input"
+          placeholder="Enter access code"
+          aria-label="Access code"
+          required>
+        <p class="pw-gate__error" id="pw-error" role="alert">Incorrect code. Try again, or request access below.</p>
+        <button type="submit" class="pw-gate__submit">Unlock case study</button>
+      </form>
+
+      <p class="pw-gate__divider">or</p>
+
+      <p class="pw-gate__request">
+        Don't have a code?
+        <a href="mailto:coelho.rita16@gmail.com?subject=Hexagon%20Case%20Study%20Access%20Request&body=Hi%20Rita%2C%0A%0AI%27d%20love%20to%20see%20your%20Hexagon%20case%20study.%20Happy%20to%20share%20context%20about%20who%20I%20am%20and%20why%20I%27m%20asking.">
+          Request access
+        </a>
+      </p>
+
+      <p class="pw-gate__nda">
+        Content shared under NDA. By entering, you agree not to reproduce or redistribute any material without prior written consent.
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ── Project content (always rendered, blurred while locked) ── -->
+  <div id="protected-content" class="pw-locked">
+
+    <section class="project-hero section container">
+
+      <a href="../work.html" class="project-hero__back fade-up" aria-label="Back to all work">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M12.5 8h-9M6.5 4L3 8l3.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        All Work
+      </a>
+
+      <div class="project-hero__tags fade-up fade-up--d1">
+        <span class="project-hero__tag">Enterprise UX</span>
+        <span class="project-hero__tag">Product Design</span>
+        <span class="project-hero__tag">Design Systems</span>
+        <span class="project-hero__tag">NDA</span>
+      </div>
+
+      <h1 class="project-hero__title fade-up fade-up--d2">
+        Hexagon: Enterprise Scale Design
+      </h1>
+
+      <p class="project-hero__summary fade-up fade-up--d3">
+        Strategic UX and product design across Hexagon's geospatial and industrial technology suite: design systems, complex workflow redesign and cross-team research at global scale.
+      </p>
+
+      <div class="project-meta fade-up fade-up--d4">
+        <div><p class="project-meta__label">Company</p><p class="project-meta__value">Hexagon AB</p></div>
+        <div><p class="project-meta__label">Period</p><p class="project-meta__value">2022 to Present</p></div>
+        <div><p class="project-meta__label">My role</p><p class="project-meta__value">UX Designer</p></div>
+        <div><p class="project-meta__label">Location</p><p class="project-meta__value">Zurich, Switzerland</p></div>
+      </div>
+
+    </section>
+
+    <section class="section container" aria-label="Case study">
+      <div class="project-body">
+
+        <div class="callout">
+          <p><strong>NDA notice:</strong> Specific product names, screens and metrics have been anonymised. The narrative reflects real work; the details have been generalised in line with my NDA obligations.</p>
+        </div>
+
+        <h2>Context</h2>
+        <p>
+          Hexagon is a global leader in digital reality solutions: sensors, software and autonomous technology. The products I work on are used by millions of operators across surveying, construction, manufacturing and public safety sectors worldwide. Complexity is the baseline.
+        </p>
+
+        <h2>The work</h2>
+        <p>
+          My work at Hexagon spans three interconnected streams: <strong>design systems</strong> (establishing and scaling shared component libraries across product teams); <strong>workflow redesign</strong> (rethinking complex, multi-step operator tasks to reduce cognitive load and error rate); and <strong>research</strong> (planning and facilitating user research that feeds directly into roadmap decisions).
+        </p>
+        <p>
+          A consistent theme across all three: designing for expert users. Hexagon's customers are domain specialists with years of experience in their field. Good enterprise UX for these users looks very different from consumer product design; it needs to support complex mental models, not simplify them away.
+        </p>
+
+        <h2>My approach</h2>
+        <p>
+          I work embedded in a cross-functional team alongside product managers, engineers and domain experts. Research at Hexagon means talking to surveyors on construction sites, operators running safety systems and field technicians who rely on our software to do dangerous jobs accurately. That proximity to the work shapes everything I design.
+        </p>
+
+        <h2>Impact</h2>
+        <p>
+          Specific metrics are covered under NDA. Broadly: design system adoption reduced inconsistency across product surfaces; workflow redesign work contributed directly to measurable reductions in task completion time for key operator journeys; research programmes established consistent user insight processes where none previously existed.
+        </p>
+
+        <div class="callout">
+          <p>
+            Interested in the specifics? <a href="mailto:coelho.rita16@gmail.com?subject=Hexagon%20Detail%20Request">Get in touch</a>. I'm happy to go deeper in conversation.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <nav class="project-nav section container" aria-label="Other projects">
+      <a href="last-mile.html" class="project-nav__link">
+        <span class="project-nav__dir">← Previous</span>
+        <span class="project-nav__title">Last Mile Delivery</span>
+      </a>
+    </nav>
+
+  </div><!-- /protected-content -->
+
+</main>
+
+<footer class="footer" role="contentinfo">
+  <p class="footer__copy">© 2024–2026 Rita Coelho</p>
+  <p class="footer__easter">
+    <span class="footer__diamond" aria-hidden="true"></span>
+    Made with intention
+  </p>
+</footer>
+
+<style>
+  /* Content is always visible behind the overlay; blurred when locked */
+  .pw-locked { filter: blur(4px); pointer-events: none; user-select: none; }
+  .pw-locked.pw-unlocked { filter: none; pointer-events: auto; user-select: auto; }
+</style>
+
+<script src="../js/main.js" defer></script>
+<script>
+  (function () {
+    var SESSION_KEY = 'rc_hx_unlocked';
+
+    var overlay  = document.getElementById('pw-overlay');
+    var content  = document.getElementById('protected-content');
+    var closeBtn = document.getElementById('pw-close');
+    var form     = document.getElementById('pw-form');
+    var input    = document.getElementById('pw-input');
+    var error    = document.getElementById('pw-error');
+    var submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+
+    function unlock(recipient) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      if (recipient) { sessionStorage.setItem('rc_hx_recipient', recipient); }
+      overlay.classList.add('hidden');
+      content.classList.add('pw-unlocked');
+      // Show access granted badge
+      showAccessBadge(recipient);
+      setTimeout(function () {
+        document.querySelectorAll('#protected-content .fade-up').forEach(function (el) {
+          el.classList.add('visible');
+        });
+      }, 80);
+    }
+
+    function showAccessBadge(recipient) {
+      if (document.getElementById('rc-access-badge')) { return; }
+      var badge = document.createElement('div');
+      badge.id = 'rc-access-badge';
+      badge.style.cssText = [
+        'position:fixed;top:1rem;right:1rem;z-index:500;',
+        'background:#e8f5e9;color:#2e7d32;',
+        'border:1.5px solid #a5d6a7;border-radius:999px;',
+        'padding:0.3rem 0.85rem;font-size:0.72rem;font-weight:600;',
+        'font-family:var(--font-sans,sans-serif);letter-spacing:0.04em;',
+        'display:flex;align-items:center;gap:0.35rem;',
+        'box-shadow:0 2px 8px rgba(0,0,0,0.08);'
+      ].join('');
+      badge.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">' +
+        '<path d="M2 6.5l2.5 2.5 5.5-5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg>' +
+        'Access granted' + (recipient ? ' · ' + recipient : '');
+      document.body.appendChild(badge);
+    }
+
+    // Auto-unlock if already authenticated this session
+    if (sessionStorage.getItem(SESSION_KEY) === '1') {
+      unlock(sessionStorage.getItem('rc_hx_recipient') || '');
+    }
+
+    // Admin bypass — skip gate if logged in as admin
+    window.addEventListener('rc-admin-enabled', function () {
+      if (!overlay.classList.contains('hidden')) {
+        overlay.classList.add('hidden');
+        content.classList.add('pw-unlocked');
+        document.querySelectorAll('#protected-content .fade-up').forEach(function (el) {
+          el.classList.add('visible');
+        });
+      }
+    });
+
+    // Submit — validate via API
+    if (form) {
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var code = input.value.trim().toUpperCase();
+        if (!code) { return; }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Checking…';
+        }
+        error.classList.remove('show');
+        input.classList.remove('error');
+
+        try {
+          var r    = await fetch('/api/access-codes/validate', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ code: code })
+          });
+          var data = await r.json();
+
+          if (r.ok && data.valid) {
+            unlock(data.recipient || '');
+          } else {
+            var msg = 'Incorrect code. Try again, or request access below.';
+            if (data.error === 'expired')  { msg = 'That code has expired. Request a new one below.'; }
+            if (data.error === 'inactive') { msg = 'That code is no longer active. Request access below.'; }
+            input.classList.add('error');
+            error.textContent = msg;
+            error.classList.add('show');
+            input.value = '';
+            input.focus();
+          }
+        } catch (err) {
+          error.textContent = 'Unable to verify. Check your connection and try again.';
+          error.classList.add('show');
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Unlock case study';
+        }
+      });
+    }
+
+    // Close (×) — go back to work page
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        window.location.href = '../work.html';
+      });
+    }
+
+    // Escape also closes
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay && !overlay.classList.contains('hidden')) {
+        window.location.href = '../work.html';
+      }
+    });
+  })();
+</script>
+<script src="../js/admin.js" defer></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

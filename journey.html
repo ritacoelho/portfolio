@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journey — Rita Coelho</title>
+  <meta name="description" content="Career and education timeline of Rita Coelho — UX/UI Designer based in Zurich.">
+  <link rel="canonical" href="https://rita-coelho.com/journey">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="theme-color" content="#251605">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<header class="nav" id="nav" role="banner">
+  <a href="index.html" class="nav__logo" aria-label="Rita Coelho — home">RC<span>.</span></a>
+  <nav aria-label="Main navigation">
+    <ul class="nav__links" role="list">
+      <li><a href="work.html"    class="nav__link">Work</a></li>
+      <li><a href="journey.html" class="nav__link active">Journey</a></li>
+      <li><a href="about.html"   class="nav__link">About</a></li>
+      <li><a href="contact.html" class="nav__link">Contact</a></li>
+    </ul>
+  </nav>
+  <button class="nav__menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-label="Navigation" aria-modal="true">
+  <a href="work.html"    class="mobile-menu__link">Work</a>
+  <a href="journey.html" class="mobile-menu__link active">Journey</a>
+  <a href="about.html"   class="mobile-menu__link">About</a>
+  <a href="contact.html" class="mobile-menu__link">Contact</a>
+</div>
+
+<main>
+  <div class="container">
+
+    <header class="page-header">
+      <a href="index.html" class="page-header__back fade-up">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M11 7H3M5.5 3.5L2.5 7l3 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Home
+      </a>
+      <h1 class="page-title fade-up fade-up--d1">How I got here</h1>
+    </header>
+
+    <div class="journey-layout">
+
+      <!-- Sticky sidebar -->
+      <aside class="journey-sticky fade-up fade-up--d3">
+        <p class="journey-sticky__intro">
+          A computer science degree, a master's in interaction design, and a few years across Lisbon, Sydney and Zurich. Filter by type or scroll through.
+        </p>
+
+        <div class="journey-sticky__filters" role="group" aria-label="Filter by type">
+          <button class="journey-filter active" data-filter="all">All</button>
+          <button class="journey-filter" data-filter="work">Work</button>
+          <button class="journey-filter" data-filter="edu">Education</button>
+        </div>
+
+        <div style="margin-top:1.25rem;" class="work-sort" style="flex-direction:column;align-items:flex-start;">
+          <span class="work-sort__label" style="margin-bottom:0.5rem;">Sort</span>
+          <div class="sort-select" id="sort-btn" role="group">
+            <button class="sort-select__btn" aria-haspopup="listbox" aria-expanded="false">
+              <span class="sort-select__val">Newest first</span>
+              <svg class="sort-select__chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <ul class="sort-select__list" role="listbox" aria-label="Sort order">
+              <li class="sort-select__option is-active" data-value="newest" role="option" aria-selected="true">Newest first</li>
+              <li class="sort-select__option" data-value="oldest" role="option" aria-selected="false">Oldest first</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);">
+          <p style="font-size:0.8rem;color:var(--muted);line-height:1.65;margin-bottom:1rem;">See what I built along the way.</p>
+          <a href="work.html" class="btn btn--light" style="font-size:0.7rem;padding:0.6rem 1.1rem;gap:0.4rem;">
+            View work
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2.5 6h7M6 2.5L9.5 6 6 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+      </aside>
+
+      <!-- Timeline -->
+      <div>
+        <ul class="timeline" role="list" aria-label="Career and education timeline">
+
+          <!-- Hexagon (current) -->
+          <li class="timeline__item" data-type="work">
+            <div class="timeline__dot" aria-hidden="true"></div>
+            <span class="timeline__badge timeline__badge--work">Work</span>
+            <p class="timeline__date">May 2024 to Present</p>
+            <h2 class="timeline__title">UX/UI Designer</h2>
+            <p class="timeline__company">Hexagon Geosystems · Zurich, Switzerland</p>
+            <p class="timeline__desc">
+              Working on UX/UI for geospatial and industrial software products at one of the world's leading digital reality companies. Cross-functional collaboration across design, product and engineering.
+            </p>
+          </li>
+
+          <!-- Master's (Sydney) — overlaps with Hexagon start -->
+          <li class="timeline__item" data-type="edu">
+            <div class="timeline__dot" aria-hidden="true"></div>
+            <span class="timeline__badge timeline__badge--edu">Education</span>
+            <p class="timeline__date">Aug 2022 to Jan 2024</p>
+            <h2 class="timeline__title">Master's in Interaction Design &amp; Electronic Arts</h2>
+            <p class="timeline__company">University of Sydney · Sydney, Australia</p>
+            <p class="timeline__desc">
+              Specialising in interaction design, physical computing and electronic arts. Studio projects included the MAP Mima Sonic Link installation, designed, coded and deployed end-to-end.
+            </p>
+          </li>
+
+          <!-- SAP -->
+          <li class="timeline__item" data-type="work">
+            <div class="timeline__dot" aria-hidden="true"></div>
+            <span class="timeline__badge timeline__badge--work">Work</span>
+            <p class="timeline__date">Nov 2021 to Jul 2022</p>
+            <h2 class="timeline__title">UX &amp; Cloud Associate Development Consultant</h2>
+            <p class="timeline__company">SAP · Lisbon, Portugal</p>
+            <p class="timeline__desc">
+              Part of a multidisciplinary team developing SAP Fiori Elements for UX projects on cloud using CDS and Node.js. Bridging UX and frontend implementation.
+            </p>
+          </li>
+
+          <!-- Vodafone -->
+          <li class="timeline__item" data-type="work">
+            <div class="timeline__dot" aria-hidden="true"></div>
+            <span class="timeline__badge timeline__badge--work">Work</span>
+            <p class="timeline__date">Nov 2020 to Oct 2021</p>
+            <h2 class="timeline__title">Web Developer</h2>
+            <p class="timeline__company">Vodafone · Lisbon, Portugal</p>
+            <p class="timeline__desc">
+              Responsible for design, development, testing and deployment of an internal web application for the Transport Network Operations team, end-to-end across the full product lifecycle.
+            </p>
+          </li>
+
+          <!-- Build Up Labs -->
+          <li class="timeline__item" data-type="work">
+            <div class="timeline__dot" aria-hidden="true"></div>
+            <span class="timeline__badge timeline__badge--work">Work</span>
+            <p class="timeline__date">Jul 2020 to Sep 2020</p>
+            <h2 class="timeline__title">Mobile / Web Application Developer</h2>
+            <p class="timeline__company">Build Up Labs · Lisbon, Portugal</p>
+            <p class="timeline__desc">
+              Startup studio internship. Contributed to the full development cycle of a mobile app, from business strategy and competitor analysis through to wireframing and front-end development with back-end integration.
+            </p>
+          </li>
+
+          <!-- Baseform -->
+          <li class="timeline__item" data-type="work">
+            <div class="timeline__dot" aria-hidden="true"></div>
+            <span class="timeline__badge timeline__badge--work">Work</span>
+            <p class="timeline__date">Sep 2019 to Dec 2019</p>
+            <h2 class="timeline__title">User Experience</h2>
+            <p class="timeline__company">Baseform · Lisbon, Portugal</p>
+            <p class="timeline__desc">
+              Supported product development in user interface design and user activity notifications for a water infrastructure software platform.
+            </p>
+          </li>
+
+          <!-- Bachelor's IST -->
+          <li class="timeline__item" data-type="edu">
+            <div class="timeline__dot" aria-hidden="true"></div>
+            <span class="timeline__badge timeline__badge--edu">Education</span>
+            <p class="timeline__date">2015 to 2020</p>
+            <h2 class="timeline__title">Bachelor's in Computer Science &amp; Engineering</h2>
+            <p class="timeline__company">Instituto Superior Técnico · Lisbon, Portugal</p>
+            <p class="timeline__desc">
+              Foundation in software engineering, algorithms, systems and human-computer interaction. The CS background informs how I think about design constraints, technical feasibility and working across disciplines.
+            </p>
+          </li>
+
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Bridge to About -->
+    <aside class="fade-up" style="margin:5rem 0;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;padding:2rem 2.5rem;background:var(--bg-alt);border-radius:20px;border:1.5px solid var(--border);">
+      <div>
+        <p style="font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);margin-bottom:0.35rem;">The person</p>
+        <p style="font-size:1rem;font-weight:500;color:var(--text);margin:0;">What I'm into outside of work.</p>
+      </div>
+      <a href="about.html" class="btn btn--light">
+        About me
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </aside>
+
+  </div>
+</main>
+
+<footer class="footer" role="contentinfo">
+  <p class="footer__copy">© 2024–2026 Rita Coelho</p>
+  <p class="footer__easter">
+    <span class="footer__diamond" aria-hidden="true"></span>
+    Made with intention
+  </p>
+</footer>
+
+<script src="js/main.js" defer></script>
+<script src="js/admin.js" defer></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

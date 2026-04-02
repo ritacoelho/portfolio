@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAP Mima — Sonic Link | Rita Coelho</title>
+  <meta name="description" content="Group project designing a mobile experience that connects personal sound palettes to real-time light patterns across a public installation — MAP Mima Sonic Link.">
+  <link rel="canonical" href="https://rita-coelho.com/projects/sonic-link">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="theme-color" content="#251605">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="project-page">
+
+<header class="nav" id="nav" role="banner">
+  <a href="../index.html" class="nav__logo" aria-label="Rita Coelho — home">RC<span>.</span></a>
+  <nav aria-label="Main navigation">
+    <ul class="nav__links" role="list">
+      <li><a href="../work.html"    class="nav__link active">Work</a></li>
+      <li><a href="../journey.html" class="nav__link">Journey</a></li>
+      <li><a href="../about.html"   class="nav__link">About</a></li>
+      <li><a href="../contact.html" class="nav__link">Contact</a></li>
+    </ul>
+  </nav>
+  <button class="nav__menu-btn" id="menu-btn" aria-label="Open navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-label="Navigation" aria-modal="true">
+  <a href="../work.html"    class="mobile-menu__link active">Work</a>
+  <a href="../journey.html" class="mobile-menu__link">Journey</a>
+  <a href="../about.html"   class="mobile-menu__link">About</a>
+  <a href="../contact.html" class="mobile-menu__link">Contact</a>
+</div>
+
+<main>
+
+  <!-- Hero -->
+  <section class="project-hero section container">
+
+    <a href="../work.html" class="project-hero__back fade-up" aria-label="Back to all work">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M12.5 8h-9M6.5 4L3 8l3.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      All Work
+    </a>
+
+    <div class="project-hero__tags fade-up fade-up--d1">
+      <span class="project-hero__tag">Interaction Design</span>
+      <span class="project-hero__tag">Public Installation</span>
+      <span class="project-hero__tag">Group Project</span>
+    </div>
+
+    <h1 class="project-hero__title fade-up fade-up--d2">
+      MAP Mima Sonic Link: Music as Public Space
+    </h1>
+
+    <p class="project-hero__summary fade-up fade-up--d3">
+      A group project to design a mobile experience letting individuals shape the soundscape and light choreography of a public catenary installation in real time. I contributed interaction design and the MQTT communication layer, required by the brief.
+    </p>
+
+    <div class="project-meta fade-up fade-up--d4">
+      <div><p class="project-meta__label">Context</p><p class="project-meta__value">Master's project</p></div>
+      <div><p class="project-meta__label">Year</p><p class="project-meta__value">2022</p></div>
+      <div><p class="project-meta__label">My role</p><p class="project-meta__value">Interaction Design + MQTT</p></div>
+      <div><p class="project-meta__label">Team</p><p class="project-meta__value">Group project</p></div>
+    </div>
+
+  </section>
+
+  <!-- Cover image -->
+  <div class="container">
+    <div class="project-cover fade-up">
+      <img src="../images/projects/sonic-link/site.png"
+           onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/site.78ef68a4d4710dcc5a45.png'"
+           alt="MAP Mima Sonic Link public installation site"
+           loading="lazy">
+    </div>
+  </div>
+
+  <!-- Case study body -->
+  <section class="section container" aria-label="Case study">
+    <div class="project-body">
+
+      <h2>The problem</h2>
+      <p>
+        Public spaces are usually passive. You move through them; they don't respond to you. MAP Mima, a cultural venue built around music, wanted to explore what it would mean to make a physical space genuinely reactive to the people inside it. The brief: design an interactive system that connects mobile phones to a large-scale catenary LED installation and responds to personal music identity.
+      </p>
+
+      <div class="callout">
+        <p><strong>Design challenge:</strong> How do you give an individual a meaningful sense of agency over a shared, public environment, without it feeling chaotic or exclusionary to others in the space?</p>
+      </div>
+
+      <h2>Process</h2>
+
+      <div class="process-steps" aria-label="Design process">
+        <div class="process-step">
+          <div class="process-step__num">1</div>
+          <p class="process-step__label">Research</p>
+        </div>
+        <div class="process-step">
+          <div class="process-step__num">2</div>
+          <p class="process-step__label">Concept</p>
+        </div>
+        <div class="process-step">
+          <div class="process-step__num">3</div>
+          <p class="process-step__label">Lo-fi</p>
+        </div>
+        <div class="process-step">
+          <div class="process-step__num">4</div>
+          <p class="process-step__label">Code</p>
+        </div>
+        <div class="process-step">
+          <div class="process-step__num">5</div>
+          <p class="process-step__label">Install</p>
+        </div>
+      </div>
+
+      <p>
+        The group's research covered service design for shared spaces, reactive public art precedents (teamLab, Random International) and the psychology of collective experience. The key insight: individual agency feels most meaningful when its effects are visible but not dominant, contribution without control.
+      </p>
+
+      <div class="project-img-grid">
+        <div class="project-img">
+          <img src="../images/projects/sonic-link/lofi1.png"
+               onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/lofi1.20a1f5b8ddeea772a238.png'"
+               alt="Lo-fi sketches and early concepts"
+               loading="lazy">
+        </div>
+        <div class="project-img">
+          <img src="../images/projects/sonic-link/proto1.png"
+               onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/proto1.93939e461b31d512ec63.png'"
+               alt="Interactive prototype screens"
+               loading="lazy">
+        </div>
+      </div>
+
+      <h2>My contribution</h2>
+      <p>
+        This was a group project. My contributions were interaction design (the mobile app's UX and UI, from early sketches through to high-fidelity screens) and the <strong>MQTT communication layer</strong> that was a specific technical requirement of the brief. MQTT (Message Queuing Telemetry Transport) is a lightweight publish-subscribe protocol designed for constrained environments; implementing it was part of what we were asked to demonstrate.
+      </p>
+      <p>
+        I chose MQTT specifically for its low latency and ability to handle multiple simultaneous client connections, critical for a public installation where several users might be interacting at once. It was the right tool for the constraint.
+      </p>
+
+      <div class="project-img-grid">
+        <div class="project-img">
+          <img src="../images/projects/sonic-link/hifi1.png"
+               onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/hifi1.a69da420ceecd019b5b0.png'"
+               alt="Hi-fi app screens, palette selection"
+               loading="lazy">
+        </div>
+        <div class="project-img">
+          <img src="../images/projects/sonic-link/hifi2.png"
+               onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/hifi2.cd51ab8075f5b8e2ffe3.png'"
+               alt="Hi-fi app screens, light preview"
+               loading="lazy">
+        </div>
+      </div>
+
+      <h2>Solution</h2>
+      <p>
+        The Sonic Link app presents users with a set of sound palettes, each mapped to a specific colour temperature and light pattern. When a user selects a palette, the choice is published via MQTT to the installation's broker, which translates it into LED commands across the catenary lights above the venue floor.
+      </p>
+      <p>
+        The result: the space breathes differently depending on who's in it and what they're listening to. Individual choices contribute to a collective atmosphere, personal without being solipsistic.
+      </p>
+
+      <div class="project-img">
+        <img src="../images/projects/sonic-link/hifi1.png"
+             onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/hifi1.a69da420ceecd019b5b0.png'"
+             alt="Final hi-fi screens of the Sonic Link experience"
+             loading="lazy">
+      </div>
+
+      <h2>Outcome</h2>
+
+      <div class="stats">
+        <div>
+          <p class="stat__number">1</p>
+          <p class="stat__label">Deployed live at MAP Mima cultural venue</p>
+        </div>
+        <div>
+          <p class="stat__number">◆</p>
+          <p class="stat__label">UX design + MQTT implementation</p>
+        </div>
+        <div>
+          <p class="stat__number">∞</p>
+          <p class="stat__label">Palette combinations across the light system</p>
+        </div>
+      </div>
+
+      <p>
+        Sonic Link was exhibited at MAP Mima. The examiners specifically noted the MQTT implementation as production-grade thinking applied to an academic context, demonstrating that the brief's technical requirement had been understood and executed properly, not just referenced.
+      </p>
+
+    </div>
+  </section>
+
+  <!-- Project nav -->
+  <nav class="project-nav section container" aria-label="Other projects">
+    <a href="atlassian.html" class="project-nav__link" style="text-align:left;">
+      <span class="project-nav__dir">← Previous</span>
+      <span class="project-nav__title">Pilot: Atlassian</span>
+    </a>
+    <a href="last-mile.html" class="project-nav__link" style="text-align:right;">
+      <span class="project-nav__dir">Next project</span>
+      <span class="project-nav__title">Last Mile Delivery →</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="footer" role="contentinfo">
+  <p class="footer__copy">© 2024–2026 Rita Coelho</p>
+  <p class="footer__easter">
+    <span class="footer__diamond" aria-hidden="true"></span>
+    Made with intention
+  </p>
+</footer>
+
+<script src="../js/main.js" defer></script>
+<script src="../js/admin.js" defer></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

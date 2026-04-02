@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Rita Coelho</title>
+  <meta name="description" content="Rita Coelho — UX/UI Designer based in Zurich. About, interests and background.">
+  <link rel="canonical" href="https://rita-coelho.com/about">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="theme-color" content="#251605">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<header class="nav" id="nav" role="banner">
+  <a href="index.html" class="nav__logo" aria-label="Rita Coelho — home">RC<span>.</span></a>
+  <nav aria-label="Main navigation">
+    <ul class="nav__links" role="list">
+      <li><a href="work.html"    class="nav__link">Work</a></li>
+      <li><a href="journey.html" class="nav__link">Journey</a></li>
+      <li><a href="about.html"   class="nav__link active">About</a></li>
+      <li><a href="contact.html" class="nav__link">Contact</a></li>
+    </ul>
+  </nav>
+  <button class="nav__menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-label="Navigation" aria-modal="true">
+  <a href="work.html"    class="mobile-menu__link">Work</a>
+  <a href="journey.html" class="mobile-menu__link">Journey</a>
+  <a href="about.html"   class="mobile-menu__link active">About</a>
+  <a href="contact.html" class="mobile-menu__link">Contact</a>
+</div>
+
+<main>
+  <div class="container">
+
+    <header class="page-header">
+      <a href="index.html" class="page-header__back fade-up">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M11 7H3M5.5 3.5L2.5 7l3 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Home
+      </a>
+      <h1 class="page-title fade-up fade-up--d1">Who I am</h1>
+    </header>
+
+    <!-- Bio + Skills + Photo -->
+    <section aria-label="About Rita" class="about-grid">
+
+      <div class="about-bio fade-up fade-up--d3">
+        <!-- Portrait photo -->
+        <div style="margin-bottom:2rem;">
+          <img src="images/rita.jpg"
+               alt="Rita Coelho in front of the Sydney Opera House"
+               style="width:140px;height:140px;border-radius:50%;object-fit:cover;object-position:center top;border:3px solid var(--border);display:block;">
+        </div>
+        <p>
+          I'm a <strong>UX/UI and Interaction Designer</strong> based in Zurich, currently at Hexagon Geosystems. My background is in computer science: I studied at Instituto Superior Técnico in Lisbon before doing a Master's in Interaction Design at the University of Sydney.
+        </p>
+        <p>
+          That combination shapes how I work. I understand how things are built, which means I can push design further without losing sight of what's feasible. It also means I sometimes just build things myself, like the <a href="projects/sonic-link.html" style="color:var(--brown);border-bottom:1px solid currentColor;padding-bottom:1px;">MQTT communication layer</a> for a public installation I designed during my master's.
+        </p>
+        <p>
+          I care about clarity. In design, in code, in how a product explains itself to the person using it. Less interested in novelty for its own sake, more interested in things that are quietly, reliably useful.
+        </p>
+      </div>
+
+      <aside class="fade-up fade-up--d4">
+
+        <div class="skills-group">
+          <p class="skills-group__label">Design</p>
+          <div class="skills-list">
+            <span class="skill-tag">UX Research</span>
+            <span class="skill-tag">Interaction Design</span>
+            <span class="skill-tag">UI Design</span>
+            <span class="skill-tag">Prototyping</span>
+            <span class="skill-tag">Design Systems</span>
+          </div>
+        </div>
+        <div class="skills-group">
+          <p class="skills-group__label">Engineering</p>
+          <div class="skills-list">
+            <span class="skill-tag">JavaScript</span>
+            <span class="skill-tag">HTML / CSS</span>
+            <span class="skill-tag">React</span>
+            <span class="skill-tag">Node.js</span>
+            <span class="skill-tag">Java</span>
+            <span class="skill-tag">Python</span>
+          </div>
+        </div>
+        <div class="skills-group">
+          <p class="skills-group__label">Tools</p>
+          <div class="skills-list">
+            <span class="skill-tag">Figma</span>
+            <span class="skill-tag">FigJam</span>
+            <span class="skill-tag">Adobe CC</span>
+            <span class="skill-tag">Miro</span>
+          </div>
+        </div>
+        <div class="skills-group">
+          <p class="skills-group__label">3D / Creative</p>
+          <div class="skills-list">
+            <span class="skill-tag">Rhino 3D</span>
+            <span class="skill-tag">Grasshopper</span>
+            <span class="skill-tag">Unity</span>
+            <span class="skill-tag">Blender</span>
+          </div>
+        </div>
+      </aside>
+
+    </section>
+
+    <!-- Interests -->
+    <section id="interests" aria-label="Interests" style="margin:2rem 0 5rem;">
+      <h2 class="interests-heading fade-up">Outside of work</h2>
+      <div class="interests">
+
+        <article class="interest-card interest-card--gaming fade-up">
+          <span class="interest-card__icon" aria-hidden="true">🎮</span>
+          <h3 class="interest-card__title">Games</h3>
+          <p class="interest-card__desc">Still spending way too much time with The Sims, Crash Bandicoot and Zoo Tycoon, plus whatever story-driven RPG I'm currently on. There's a reason this portfolio nods at The Sims.</p>
+        </article>
+
+        <article class="interest-card interest-card--interiors fade-up fade-up--d1">
+          <span class="interest-card__icon" aria-hidden="true">🪑</span>
+          <h3 class="interest-card__title">Interiors</h3>
+          <p class="interest-card__desc">Mid-century modern obsession, lots of YouTube rabbit holes, and the occasional impulsive furniture repaint. Always some project on the go.</p>
+        </article>
+
+        <article class="interest-card interest-card--film fade-up fade-up--d2">
+          <span class="interest-card__icon" aria-hidden="true">🎬</span>
+          <h3 class="interest-card__title">Film &amp; TV</h3>
+          <p class="interest-card__desc">Once Upon a Time in Hollywood is probably my favourite film. Currently rinsing Severance for the third time.</p>
+        </article>
+
+        <article class="interest-card interest-card--photo fade-up fade-up--d3">
+          <span class="interest-card__icon" aria-hidden="true">📷</span>
+          <h3 class="interest-card__title">Photography</h3>
+          <p class="interest-card__desc">Getting more serious about it. Mostly street and interior shots, increasingly obsessed with light.
+            <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer"
+               style="display:inline-block;margin-top:0.75rem;font-size:0.7rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:inherit;border-bottom:1px solid currentColor;padding-bottom:1px;opacity:0.75;">
+              Instagram ↗
+            </a>
+          </p>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- Bridge to Work -->
+    <aside class="fade-up" style="margin:0 0 5rem;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;padding:2rem 2.5rem;background:var(--bg-alt);border-radius:20px;border:1.5px solid var(--border);">
+      <div>
+        <p style="font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);margin-bottom:0.35rem;">See the work</p>
+        <p style="font-size:1rem;font-weight:500;color:var(--text);margin:0;">Case studies from the past few years.</p>
+      </div>
+      <a href="work.html" class="btn btn--light">
+        View work
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </aside>
+
+  </div>
+</main>
+
+<footer class="footer" role="contentinfo">
+  <p class="footer__copy">© 2024–2026 Rita Coelho</p>
+  <p class="footer__easter">
+    <span class="footer__diamond" aria-hidden="true"></span>
+    Made with intention
+  </p>
+</footer>
+
+<script src="js/main.js" defer></script>
+<script src="js/admin.js" defer></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
