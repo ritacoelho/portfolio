@@ -51,23 +51,33 @@
       <h1 class="page-title fade-up fade-up--d1">Who I am</h1>
     </header>
 
-    <!-- Bio + Skills + Photo -->
-    <section aria-label="About Rita" class="about-grid">
+    <!-- Photo strip — full-width horizontal scroll -->
+    <div style="position:relative;margin:0 calc(-1 * var(--gutter));overflow:hidden;">
+      <div class="about-strip" id="about-strip">
+        <!-- Track is duplicated in JS for seamless looping; images added here or via admin upload -->
+        <div class="about-strip__track" id="about-strip-track">
+          <img class="about-strip__img" src="images/rita.jpg" alt="Rita Coelho" loading="eager">
+          <!-- Additional photos load from API or can be left as single image; strip loops via CSS -->
+        </div>
+        <div class="about-strip__track" aria-hidden="true" id="about-strip-track2">
+          <img class="about-strip__img" src="images/rita.jpg" alt="" loading="lazy">
+        </div>
+      </div>
+      <input type="file" id="about-strip-file" accept="image/*" style="display:none">
+      <button class="about-strip__add-btn is-admin-only" id="about-strip-upload-btn" style="display:none">+ Add photo</button>
+    </div>
+
+    <!-- Bio + Skills -->
+    <section aria-label="About Rita" class="about-grid" style="margin-top:3rem;">
 
       <div class="about-bio fade-up fade-up--d3">
-        <!-- Portrait photo -->
-        <div style="margin-bottom:2rem;">
-          <img src="images/rita.jpg"
-               alt="Rita Coelho in front of the Sydney Opera House"
-               style="width:140px;height:140px;border-radius:50%;object-fit:cover;object-position:center top;border:3px solid var(--border);display:block;">
-        </div>
-        <p>
+        <p data-about-field="bio-1">
           I'm a <strong>UX/UI and Interaction Designer</strong> based in Zurich, currently at Hexagon Geosystems. My background is in computer science: I studied at Instituto Superior Técnico in Lisbon before doing a Master's in Interaction Design at the University of Sydney.
         </p>
-        <p>
+        <p data-about-field="bio-2">
           That combination shapes how I work. I understand how things are built, which means I can push design further without losing sight of what's feasible. It also means I sometimes just build things myself, like the <a href="projects/sonic-link.html" style="color:var(--brown);border-bottom:1px solid currentColor;padding-bottom:1px;">MQTT communication layer</a> for a public installation I designed during my master's.
         </p>
-        <p>
+        <p data-about-field="bio-3">
           I care about clarity. In design, in code, in how a product explains itself to the person using it. Less interested in novelty for its own sake, more interested in things that are quietly, reliably useful.
         </p>
       </div>
@@ -76,7 +86,7 @@
 
         <div class="skills-group">
           <p class="skills-group__label">Design</p>
-          <div class="skills-list">
+          <div class="skills-list" data-about-field="skills-design">
             <span class="skill-tag">UX Research</span>
             <span class="skill-tag">Interaction Design</span>
             <span class="skill-tag">UI Design</span>
@@ -86,7 +96,7 @@
         </div>
         <div class="skills-group">
           <p class="skills-group__label">Engineering</p>
-          <div class="skills-list">
+          <div class="skills-list" data-about-field="skills-engineering">
             <span class="skill-tag">JavaScript</span>
             <span class="skill-tag">HTML / CSS</span>
             <span class="skill-tag">React</span>
@@ -97,7 +107,7 @@
         </div>
         <div class="skills-group">
           <p class="skills-group__label">Tools</p>
-          <div class="skills-list">
+          <div class="skills-list" data-about-field="skills-tools">
             <span class="skill-tag">Figma</span>
             <span class="skill-tag">FigJam</span>
             <span class="skill-tag">Adobe CC</span>
@@ -106,7 +116,7 @@
         </div>
         <div class="skills-group">
           <p class="skills-group__label">3D / Creative</p>
-          <div class="skills-list">
+          <div class="skills-list" data-about-field="skills-3d">
             <span class="skill-tag">Rhino 3D</span>
             <span class="skill-tag">Grasshopper</span>
             <span class="skill-tag">Unity</span>
@@ -124,26 +134,26 @@
 
         <article class="interest-card interest-card--gaming fade-up">
           <span class="interest-card__icon" aria-hidden="true">🎮</span>
-          <h3 class="interest-card__title">Games</h3>
-          <p class="interest-card__desc">Still spending way too much time with The Sims, Crash Bandicoot and Zoo Tycoon, plus whatever story-driven RPG I'm currently on. There's a reason this portfolio nods at The Sims.</p>
+          <h3 class="interest-card__title" data-about-field="interest-games-title">Games</h3>
+          <p class="interest-card__desc" data-about-field="interest-games-desc">Still spending way too much time with The Sims, Crash Bandicoot and Zoo Tycoon, plus whatever story-driven RPG I'm currently on. There's a reason this portfolio nods at The Sims.</p>
         </article>
 
         <article class="interest-card interest-card--interiors fade-up fade-up--d1">
           <span class="interest-card__icon" aria-hidden="true">🪑</span>
-          <h3 class="interest-card__title">Interiors</h3>
-          <p class="interest-card__desc">Mid-century modern obsession, lots of YouTube rabbit holes, and the occasional impulsive furniture repaint. Always some project on the go.</p>
+          <h3 class="interest-card__title" data-about-field="interest-interiors-title">Interiors</h3>
+          <p class="interest-card__desc" data-about-field="interest-interiors-desc">Mid-century modern obsession, lots of YouTube rabbit holes, and the occasional impulsive furniture repaint. Always some project on the go.</p>
         </article>
 
         <article class="interest-card interest-card--film fade-up fade-up--d2">
           <span class="interest-card__icon" aria-hidden="true">🎬</span>
-          <h3 class="interest-card__title">Film &amp; TV</h3>
-          <p class="interest-card__desc">Once Upon a Time in Hollywood is probably my favourite film. Currently rinsing Severance for the third time.</p>
+          <h3 class="interest-card__title" data-about-field="interest-film-title">Film &amp; TV</h3>
+          <p class="interest-card__desc" data-about-field="interest-film-desc">Once Upon a Time in Hollywood is probably my favourite film. Currently rinsing Severance for the third time.</p>
         </article>
 
         <article class="interest-card interest-card--photo fade-up fade-up--d3">
           <span class="interest-card__icon" aria-hidden="true">📷</span>
-          <h3 class="interest-card__title">Photography</h3>
-          <p class="interest-card__desc">Getting more serious about it. Mostly street and interior shots, increasingly obsessed with light.
+          <h3 class="interest-card__title" data-about-field="interest-photo-title">Photography</h3>
+          <p class="interest-card__desc" data-about-field="interest-photo-desc">Getting more serious about it. Mostly street and interior shots, increasingly obsessed with light.
             <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer"
                style="display:inline-block;margin-top:0.75rem;font-size:0.7rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:inherit;border-bottom:1px solid currentColor;padding-bottom:1px;opacity:0.75;">
               Instagram ↗
@@ -181,6 +191,55 @@
 
 <script src="js/main.js" defer></script>
 <script src="js/admin.js" defer></script>
+<script>
+// ── About photo strip: duplicate track for seamless CSS loop ──────
+(function () {
+  // The CSS animation scrolls track 1+2 together (each is 50% of total width)
+  // So duplicating gives seamless loop regardless of number of photos.
+  // Admin upload adds a new <img> to both tracks.
+  var uploadBtn  = document.getElementById('about-strip-upload-btn');
+  var fileInput  = document.getElementById('about-strip-file');
+  var track1     = document.getElementById('about-strip-track');
+  var track2     = document.getElementById('about-strip-track2');
+
+  if (uploadBtn && fileInput) {
+    uploadBtn.addEventListener('click', function () { fileInput.click(); });
+    fileInput.addEventListener('change', async function () {
+      var file  = fileInput.files[0]; if (!file) { return; }
+      var token = sessionStorage.getItem('rc_admin_token');
+      uploadBtn.textContent = 'Uploading…';
+      try {
+        var r    = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: file,
+        });
+        var data = await r.json();
+        if (data.url) {
+          [track1, track2].forEach(function (t) {
+            if (!t) { return; }
+            var img = document.createElement('img');
+            img.className = 'about-strip__img';
+            img.src = data.url; img.alt = ''; img.loading = 'lazy';
+            t.appendChild(img);
+          });
+          uploadBtn.textContent = '+ Add photo';
+        } else {
+          uploadBtn.textContent = 'Upload failed';
+          setTimeout(function(){ uploadBtn.textContent = '+ Add photo'; }, 2000);
+        }
+      } catch (e) {
+        uploadBtn.textContent = 'Error';
+        setTimeout(function(){ uploadBtn.textContent = '+ Add photo'; }, 2000);
+      }
+    });
+  }
+
+  window.addEventListener('rc-admin-enabled', function () {
+    if (uploadBtn) { uploadBtn.style.display = ''; }
+  });
+})();
+</script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

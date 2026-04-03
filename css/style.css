@@ -73,7 +73,11 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
+main { flex: 1; }
 img { display: block; max-width: 100%; }
 a  { color: inherit; text-decoration: none; }
 ul { list-style: none; }
@@ -1397,6 +1401,37 @@ button { font-family: inherit; cursor: pointer; }
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
   opacity: 0.4;
 }
+
+/* ==================
+   ABOUT PHOTO STRIP
+   ================== */
+.about-strip {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  height: 340px;
+  overflow: hidden;
+  display: flex;
+  position: relative;
+}
+.about-strip__track {
+  display: flex;
+  height: 100%;
+  animation: strip-scroll 40s linear infinite;
+  will-change: transform;
+}
+.about-strip__track:hover { animation-play-state: paused; }
+.about-strip__img {
+  height: 100%;
+  width: auto;
+  object-fit: cover;
+  display: block;
+  flex-shrink: 0;
+}
+@keyframes strip-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+/* When only 1-2 photos exist, duplicate track handles seamless loop */
 
 /* ==================
    ANIMATIONS

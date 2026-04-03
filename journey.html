@@ -65,8 +65,8 @@
           <button class="journey-filter" data-filter="edu">Education</button>
         </div>
 
-        <div style="margin-top:1.25rem;" class="work-sort">
-          <span class="work-sort__label" style="margin-bottom:0.5rem;">Sort</span>
+        <div style="margin-top:1.25rem;display:flex;align-items:center;gap:0.65rem;" class="work-sort">
+          <span class="work-sort__label">Sort</span>
           <div class="sort-select" id="sort-btn" role="group">
             <button class="sort-select__btn" aria-haspopup="listbox" aria-expanded="false">
               <span class="sort-select__val">Newest first</span>
@@ -84,7 +84,7 @@
         <!-- Admin: manage button -->
         <div class="is-admin-only" style="display:none;margin-top:1.5rem;">
           <a href="admin/journey.html" class="btn btn--light" style="font-size:0.75rem;width:100%;justify-content:center;">
-            Manage entries
+            Manage all entries →
           </a>
         </div>
 
@@ -135,7 +135,235 @@
   </p>
 </footer>
 
+<!-- Admin: add/edit journey entry modal -->
 <script src="js/main.js" defer></script>
+<script>
+// ── Admin: Add/Edit journey entry modal ─────────────────────────
+(function () {
+  var SESSION_KEY = 'rc_admin_token';
+  function getToken() { return sessionStorage.getItem(SESSION_KEY); }
+  function authH()   { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }; }
+
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var bullets = [];
+
+  function buildJourneyForm() {
+    return [
+      '<div class="pm-section" style="background:#fff;border:1.5px solid var(--border,#eee);border-radius:14px;padding:1.25rem;margin-bottom:1rem;">',
+        '<div style="margin-bottom:0.75rem;">',
+          '<span style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);display:block;margin-bottom:0.4rem;">Type</span>',
+          '<div class="pm-type-toggle" id="ajm-toggle" role="group">',
+            '<button class="pm-type-toggle__btn active" data-type="work" type="button">Work</button>',
+            '<button class="pm-type-toggle__btn" data-type="edu" type="button">Education</button>',
+          '</div>',
+          '<input type="hidden" id="ajm-type" value="work">',
+        '</div>',
+        '<div class="pm-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;">',
+          '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Role / Degree *</label>',
+            '<input id="ajm-role" class="pm-input" type="text" placeholder="UX Designer">',
+          '</div>',
+          '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Organisation *</label>',
+            '<input id="ajm-org" class="pm-input" type="text" placeholder="Company or university">',
+          '</div>',
+          '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Start year</label>',
+            '<input id="ajm-sy" class="pm-input" type="number" placeholder="2022" min="1990" max="2099">',
+          '</div>',
+          '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Start month (1–12)</label>',
+            '<input id="ajm-sm" class="pm-input" type="number" placeholder="8" min="1" max="12">',
+          '</div>',
+          '<div style="display:flex;flex-direction:column;gap:0.25rem;" id="ajm-ey-wrap">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">End year</label>',
+            '<input id="ajm-ey" class="pm-input" type="number" placeholder="2024" min="1990" max="2099">',
+          '</div>',
+          '<div style="display:flex;flex-direction:column;gap:0.25rem;" id="ajm-em-wrap">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">End month (1–12)</label>',
+            '<input id="ajm-em" class="pm-input" type="number" placeholder="1" min="1" max="12">',
+          '</div>',
+          '<div style="grid-column:1/-1;display:flex;align-items:center;gap:0.5rem;">',
+            '<input type="checkbox" id="ajm-current" style="width:16px;height:16px;accent-color:var(--brown,#251605);">',
+            '<label for="ajm-current" style="font-size:0.85rem;cursor:pointer;">Currently here</label>',
+          '</div>',
+          '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Location</label>',
+            '<input id="ajm-location" class="pm-input" type="text" placeholder="Zurich, Switzerland">',
+          '</div>',
+          '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Description</label>',
+            '<textarea id="ajm-desc" class="pm-input" rows="4" placeholder="A paragraph describing this role…" style="resize:vertical;min-height:88px;"></textarea>',
+          '</div>',
+          '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Bullet points</label>',
+            '<div id="ajm-bullets" style="display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.4rem;"></div>',
+            '<button id="ajm-add-bullet" class="pm-add-bullet" type="button">+ Add bullet</button>',
+          '</div>',
+        '</div>',
+      '</div>',
+      '<div style="display:flex;gap:0.65rem;align-items:center;">',
+        '<button class="ac-btn ac-btn--primary" id="ajm-save">Save entry</button>',
+        '<button class="ac-btn ac-btn--ghost"   id="ajm-cancel">Cancel</button>',
+        '<span id="ajm-status" style="font-size:0.8rem;color:var(--muted,#888);"></span>',
+      '</div>',
+    ].join('');
+  }
+
+  function renderBullets(container) {
+    container.innerHTML = '';
+    bullets.forEach(function (text, idx) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:0.4rem;align-items:center;';
+      var inp = document.createElement('input');
+      inp.className = 'pm-input'; inp.type = 'text';
+      inp.placeholder = 'Bullet point…'; inp.value = text;
+      inp.style.flex = '1';
+      inp.addEventListener('input', function () { bullets[idx] = inp.value; });
+      var rem = document.createElement('button');
+      rem.type = 'button'; rem.style.cssText = 'background:none;border:none;color:#bbb;cursor:pointer;font-size:1.1rem;padding:0.15rem 0.3rem;';
+      rem.textContent = '×';
+      rem.addEventListener('click', function () { bullets.splice(idx,1); renderBullets(container); });
+      row.appendChild(inp); row.appendChild(rem);
+      container.appendChild(row);
+    });
+  }
+
+  function wireModalForm(editingId) {
+    var toggle = document.getElementById('ajm-toggle');
+    toggle.addEventListener('click', function (e) {
+      var btn = e.target.closest('.pm-type-toggle__btn');
+      if (!btn) { return; }
+      toggle.querySelectorAll('.pm-type-toggle__btn').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      document.getElementById('ajm-type').value = btn.dataset.type;
+    });
+
+    document.getElementById('ajm-current').addEventListener('change', function () {
+      var on = this.checked;
+      document.getElementById('ajm-ey-wrap').style.opacity = on ? '0.35' : '';
+      document.getElementById('ajm-em-wrap').style.opacity = on ? '0.35' : '';
+      document.getElementById('ajm-ey').disabled = on;
+      document.getElementById('ajm-em').disabled = on;
+    });
+
+    var bulletsEl = document.getElementById('ajm-bullets');
+    document.getElementById('ajm-add-bullet').addEventListener('click', function () {
+      bullets.push('');
+      renderBullets(bulletsEl);
+      var rows = bulletsEl.querySelectorAll('input');
+      if (rows.length) { rows[rows.length-1].focus(); }
+    });
+
+    var overlay = document.getElementById('rc-journey-modal');
+    document.getElementById('ajm-cancel').onclick = function () { overlay.remove(); };
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) { overlay.remove(); } });
+
+    document.getElementById('ajm-save').addEventListener('click', async function () {
+      var role = (document.getElementById('ajm-role').value||'').trim();
+      var org  = (document.getElementById('ajm-org').value||'').trim();
+      if (!role || !org) { document.getElementById('ajm-status').textContent = 'Role and organisation required'; return; }
+      this.disabled = true;
+      document.getElementById('ajm-status').textContent = 'Saving…';
+
+      var isC = document.getElementById('ajm-current').checked;
+      var payload = {
+        role:        role,
+        org:         org,
+        type:        document.getElementById('ajm-type').value || 'work',
+        location:    (document.getElementById('ajm-location').value||'').trim() || null,
+        startYear:   parseInt(document.getElementById('ajm-sy').value,10)||null,
+        startMonth:  parseInt(document.getElementById('ajm-sm').value,10)||null,
+        endYear:     isC ? null : (parseInt(document.getElementById('ajm-ey').value,10)||null),
+        endMonth:    isC ? null : (parseInt(document.getElementById('ajm-em').value,10)||null),
+        isCurrent:   isC,
+        description: (document.getElementById('ajm-desc').value||'').trim()||null,
+        bullets:     bullets.filter(function(b){return b.trim()!=='';})
+      };
+      if (editingId) { payload.id = editingId; }
+
+      try {
+        var r    = await fetch('/api/journey', { method: editingId?'PATCH':'POST', headers: authH(), body: JSON.stringify(payload) });
+        var data = await r.json();
+        if (r.ok) {
+          overlay.remove();
+          // Refresh page to show updated entry
+          window.location.reload();
+        } else {
+          document.getElementById('ajm-status').textContent = data.error || 'Error saving';
+          this.disabled = false;
+        }
+      } catch (err) {
+        document.getElementById('ajm-status').textContent = 'Network error';
+        this.disabled = false;
+      }
+    });
+  }
+
+  function openJourneyModal(title, entry) {
+    bullets = entry && Array.isArray(entry.bullets) ? entry.bullets.slice() : [];
+    var overlay = document.createElement('div');
+    overlay.className = 'rc-modal-overlay';
+    overlay.id        = 'rc-journey-modal';
+    overlay.innerHTML = [
+      '<div class="rc-modal-card">',
+        '<button class="rc-modal-close" onclick="document.getElementById(\'rc-journey-modal\').remove()" aria-label="Close">',
+          '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+        '</button>',
+        '<h2 class="rc-modal-title">' + title + '</h2>',
+        buildJourneyForm(),
+      '</div>',
+    ].join('');
+    document.body.appendChild(overlay);
+
+    // Prefill if editing
+    if (entry) {
+      var type = entry.type === 'edu' ? 'edu' : 'work';
+      document.getElementById('ajm-toggle').querySelectorAll('.pm-type-toggle__btn').forEach(function(b){
+        b.classList.toggle('active', b.dataset.type === type);
+      });
+      document.getElementById('ajm-type').value    = type;
+      document.getElementById('ajm-role').value     = entry.role     || '';
+      document.getElementById('ajm-org').value      = entry.org      || '';
+      document.getElementById('ajm-location').value = entry.location || '';
+      document.getElementById('ajm-sy').value       = entry.startYear  || '';
+      document.getElementById('ajm-sm').value       = entry.startMonth || '';
+      document.getElementById('ajm-ey').value       = entry.endYear    || '';
+      document.getElementById('ajm-em').value       = entry.endMonth   || '';
+      document.getElementById('ajm-desc').value     = entry.description|| '';
+      document.getElementById('ajm-current').checked = !!entry.isCurrent;
+      if (entry.isCurrent) {
+        document.getElementById('ajm-ey-wrap').style.opacity = '0.35';
+        document.getElementById('ajm-em-wrap').style.opacity = '0.35';
+        document.getElementById('ajm-ey').disabled = true;
+        document.getElementById('ajm-em').disabled = true;
+      }
+    }
+
+    renderBullets(document.getElementById('ajm-bullets'));
+    wireModalForm(entry ? entry.id : null);
+  }
+
+  // Listen for edit events from admin.js timeline controls
+  window.addEventListener('rc-journey-edit', async function (e) {
+    var id = e.detail && e.detail.id;
+    if (!id) { return; }
+    var r    = await fetch('/api/journey?id=' + encodeURIComponent(id), { headers: authH() });
+    var data = await r.json();
+    openJourneyModal('Edit entry', data);
+  });
+
+  window.addEventListener('rc-admin-enabled', function () {
+    // FAB
+    var fab = document.createElement('button');
+    fab.className = 'rc-admin-fab';
+    fab.id        = 'rc-add-entry-fab';
+    fab.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> New entry';
+    document.body.appendChild(fab);
+    fab.addEventListener('click', function () { openJourneyModal('New entry', null); });
+  });
+})();
+</script>
 <script>
 (function () {
   var timeline    = document.getElementById('timeline');
@@ -233,6 +461,9 @@
     filtered.forEach(function (entry) {
       timeline.insertAdjacentHTML('beforeend', buildItem(entry));
     });
+
+    // Mark items visible immediately (bypasses IntersectionObserver for dynamic content)
+    timeline.querySelectorAll('.timeline__item').forEach(function (el) { el.classList.add('visible'); });
 
     // Re-init admin controls
     if (typeof window.__rcInitTimeline === 'function') {

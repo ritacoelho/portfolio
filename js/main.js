@@ -218,6 +218,7 @@
 
     activeTrigger    = trigger;
     activeCard       = card;
+    window.__rcActiveCard = card; // expose for admin.js
     activeCardLocked = card.classList.contains('project-card--is-locked');
     card.classList.add('card--menu-open');
 
@@ -259,6 +260,11 @@
 
     trigger.classList.add('active');
     ctxMenu.classList.add('open');
+
+    // Notify admin.js so it can sync admin item labels
+    if (typeof window.__rcOnCtxOpen === 'function') {
+      window.__rcOnCtxOpen(card);
+    }
   }
 
   function closeCtxMenu() {
@@ -498,6 +504,11 @@
       }
     });
   }, 80);
+
+  // Expose helper: mark dynamically-added elements visible immediately
+  window.__rcReveal = function (els) {
+    (els || []).forEach(function (el) { el.classList.add('visible'); });
+  };
 
 
   // ==================

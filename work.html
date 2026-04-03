@@ -79,14 +79,9 @@
       Hover a card, click <span style="color:var(--brown);" aria-label="diamond">◆</span> to inspect, copy link, show love or enquire.
     </p>
 
-    <!-- Admin: add project button -->
+    <!-- Admin: manage link (non-preview only) -->
     <div class="is-admin-only" style="display:none;margin-bottom:1.5rem;">
-      <a href="admin/projects.html" class="btn btn--light" style="font-size:0.82rem;">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style="margin-right:0.3rem">
-          <path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        Manage projects
-      </a>
+      <a href="admin/projects.html" class="btn btn--light" style="font-size:0.82rem;">Manage all projects →</a>
     </div>
 
     <section aria-label="Projects">
@@ -126,7 +121,130 @@
   </p>
 </footer>
 
+<!-- Admin: add project FAB + modal (injected by script below) -->
 <script src="js/main.js" defer></script>
+<script>
+// ── Admin: Add project modal ────────────────────────────────────
+(function () {
+  var SESSION_KEY = 'rc_admin_token';
+  function getToken() { return sessionStorage.getItem(SESSION_KEY); }
+  function authHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }; }
+
+  function esc2(str) {
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  var FORM_HTML = [
+    '<div class="pm-section" style="background:#fff;border:1.5px solid var(--border,#eee);border-radius:14px;padding:1.25rem;margin-bottom:1rem;">',
+      '<div class="pm-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;">',
+        '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.25rem;">',
+          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Title *</label>',
+          '<input id="apr-title" class="pm-input" type="text" placeholder="Project title" required>',
+        '</div>',
+        '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.25rem;">',
+          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Summary (card description)</label>',
+          '<textarea id="apr-summary" class="pm-input" rows="3" placeholder="One or two sentences…" style="resize:vertical;min-height:72px;"></textarea>',
+        '</div>',
+        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Tags (comma separated)</label>',
+          '<input id="apr-tags" class="pm-input" type="text" placeholder="UX Design, Product Strategy">',
+        '</div>',
+        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Year</label>',
+          '<input id="apr-year" class="pm-input" type="number" placeholder="2024" min="2000" max="2099">',
+        '</div>',
+        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">My role</label>',
+          '<input id="apr-role" class="pm-input" type="text" placeholder="UX Designer">',
+        '</div>',
+        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Company / Client</label>',
+          '<input id="apr-company" class="pm-input" type="text" placeholder="Company name">',
+        '</div>',
+        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Period</label>',
+          '<input id="apr-period" class="pm-input" type="text" placeholder="Jan 2023 to Dec 2023">',
+        '</div>',
+        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Location</label>',
+          '<input id="apr-location" class="pm-input" type="text" placeholder="Zurich, Switzerland">',
+        '</div>',
+      '</div>',
+    '</div>',
+    '<div style="display:flex;gap:0.75rem;align-items:center;">',
+      '<button class="ac-btn ac-btn--primary" id="apr-save">Create project</button>',
+      '<button class="ac-btn ac-btn--ghost"   id="apr-cancel">Cancel</button>',
+      '<span id="apr-status" style="font-size:0.8rem;color:var(--muted,#888);"></span>',
+    '</div>',
+  ].join('');
+
+  function openAddModal() {
+    var overlay = document.createElement('div');
+    overlay.className = 'rc-modal-overlay';
+    overlay.id = 'rc-add-project-modal';
+    overlay.innerHTML = [
+      '<div class="rc-modal-card">',
+        '<button class="rc-modal-close" id="apr-close" aria-label="Close">',
+          '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+        '</button>',
+        '<h2 class="rc-modal-title">New project</h2>',
+        FORM_HTML,
+      '</div>',
+    ].join('');
+    document.body.appendChild(overlay);
+
+    document.getElementById('apr-close').onclick  = function () { overlay.remove(); };
+    document.getElementById('apr-cancel').onclick = function () { overlay.remove(); };
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) { overlay.remove(); } });
+
+    document.getElementById('apr-save').addEventListener('click', async function () {
+      var title = (document.getElementById('apr-title').value || '').trim();
+      if (!title) { document.getElementById('apr-status').textContent = 'Title is required'; return; }
+      this.disabled = true;
+      document.getElementById('apr-status').textContent = 'Creating…';
+
+      var tagsRaw = document.getElementById('apr-tags').value || '';
+      var payload = {
+        title:    title,
+        summary:  (document.getElementById('apr-summary').value  || '').trim(),
+        tags:     tagsRaw ? tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean) : [],
+        year:     parseInt(document.getElementById('apr-year').value, 10) || null,
+        role:     (document.getElementById('apr-role').value     || '').trim(),
+        company:  (document.getElementById('apr-company').value  || '').trim(),
+        period:   (document.getElementById('apr-period').value   || '').trim(),
+        location: (document.getElementById('apr-location').value || '').trim(),
+        content:  [],
+        order:    99,
+      };
+
+      try {
+        var r    = await fetch('/api/projects', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+        var data = await r.json();
+        if (r.ok && data.slug) {
+          overlay.remove();
+          window.location.href = 'projects/view.html?slug=' + encodeURIComponent(data.slug) + '&edit=1';
+        } else {
+          document.getElementById('apr-status').textContent = data.error || 'Error creating project';
+          this.disabled = false;
+        }
+      } catch (err) {
+        document.getElementById('apr-status').textContent = 'Network error';
+        this.disabled = false;
+      }
+    });
+  }
+
+  window.addEventListener('rc-admin-enabled', function () {
+    // FAB button
+    var fab = document.createElement('button');
+    fab.className = 'rc-admin-fab';
+    fab.id        = 'rc-add-project-fab';
+    fab.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> New project';
+    document.body.appendChild(fab);
+    fab.addEventListener('click', openAddModal);
+  });
+})();
+</script>
 <script>
 (function () {
   var SVG_ARROW = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -310,6 +428,8 @@
       buildFilterChips(allProjects);
       renderGrid(allProjects);
       applySort();
+      // Mark dynamically-inserted cards as visible (bypasses IntersectionObserver)
+      grid.querySelectorAll('.project-card').forEach(function (c) { c.classList.add('visible'); });
     })
     .catch(function () {
       if (loadingEl) {

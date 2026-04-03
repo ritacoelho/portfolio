@@ -105,8 +105,28 @@
     }
   }
 
+  // ── Check edit mode ────────────────────────────────────────────
+  var editMode = params.get('edit') === '1' && !!sessionStorage.getItem('rc_admin_token');
+
+  // ── Render a content block (view mode) ─────────────────────────
+  function renderBlockView(block, idx) {
+    var base = renderBlock(block);
+    if (!editMode) { return base; }
+    // Wrap each block with an edit overlay in edit mode
+    return '<div class="pv-block-wrap" data-block-idx="' + idx + '" style="position:relative;">' +
+           base +
+           '<div class="pv-block-controls">' +
+             '<button class="pv-block-btn pv-block-edit"  data-idx="' + idx + '">Edit</button>' +
+             '<button class="pv-block-btn pv-block-del"   data-idx="' + idx + '">×</button>' +
+           '</div>' +
+           '</div>';
+  }
+
   // ── Render the full project ────────────────────────────────────
+  var currentProject = null;
+
   function renderProject(p) {
+    currentProject = JSON.parse(JSON.stringify(p)); // deep copy
     document.title = p.title + ' — Rita Coelho';
 
     var tags = (p.tags || []).map(function (t) {
@@ -114,46 +134,63 @@
     }).join('');
 
     var metaItems = [];
-    if (p.company)  { metaItems.push({ label: 'Company',  value: p.company  }); }
-    if (p.period)   { metaItems.push({ label: 'Period',   value: p.period   }); }
-    if (p.role)     { metaItems.push({ label: 'My role',  value: p.role     }); }
-    if (p.location) { metaItems.push({ label: 'Location', value: p.location }); }
+    if (p.company)  { metaItems.push({ label: 'Company',  key: 'company',  value: p.company  }); }
+    if (p.period)   { metaItems.push({ label: 'Period',   key: 'period',   value: p.period   }); }
+    if (p.role)     { metaItems.push({ label: 'My role',  key: 'role',     value: p.role     }); }
+    if (p.location) { metaItems.push({ label: 'Location', key: 'location', value: p.location }); }
 
     var metaHtml = metaItems.map(function (m) {
+      var editAttr = editMode ? ' contenteditable="true" data-pv-field="' + m.key + '" class="pv-editable"' : '';
       return '<div><p class="project-meta__label">' + esc(m.label) + '</p>' +
-             '<p class="project-meta__value">' + esc(m.value) + '</p></div>';
+             '<p class="project-meta__value"' + editAttr + '>' + esc(m.value) + '</p></div>';
     }).join('');
 
     var coverHtml = p.coverImage
-      ? '<div class="project-hero__cover" style="margin:2rem 0 0;">' +
-          '<img src="' + esc(p.coverImage) + '" alt="" style="width:100%;border-radius:16px;display:block;" loading="lazy">' +
+      ? '<div class="project-hero__cover" style="margin:2rem 0 0;position:relative;">' +
+          '<img src="' + esc(p.coverImage) + '" alt="" id="pv-cover-img" style="width:100%;border-radius:16px;display:block;" loading="lazy">' +
+          (editMode ? '<button class="pv-cover-upload-btn" id="pv-cover-btn">Change cover</button><input type="file" id="pv-cover-file" accept="image/*" style="display:none">' : '') +
         '</div>'
-      : '';
+      : (editMode ? '<div style="margin:1rem 0;"><button class="pv-cover-upload-btn" id="pv-cover-btn">+ Add cover image</button><input type="file" id="pv-cover-file" accept="image/*" style="display:none"></div>' : '');
 
-    var blocksHtml = (p.content || []).map(renderBlock).join('');
+    var blocksHtml = (p.content || []).map(function (b, i) { return renderBlockView(b, i); }).join('');
 
-    var adminEdit = '<div class="admin-only" style="margin-bottom:1rem;">' +
-      '<a href="/admin/projects.html?edit=' + esc(slug) + '" class="btn btn--light" style="font-size:0.78rem;">Edit project</a>' +
-    '</div>';
+    var titleEditAttr   = editMode ? ' contenteditable="true" data-pv-field="title"   class="pv-editable"' : '';
+    var summaryEditAttr = editMode ? ' contenteditable="true" data-pv-field="summary" class="pv-editable"' : '';
+
+    var adminBar = editMode
+      ? '<div class="rc-view-admin-bar" style="display:flex;">' +
+          '<span style="opacity:0.7;flex:1;">Editing <strong>' + esc(p.title) + '</strong></span>' +
+          '<button class="ac-btn ac-btn--primary" id="pv-save-btn" style="font-size:0.78rem;">Save changes</button>' +
+          '<button class="ac-btn ac-btn--ghost"   id="pv-add-block-btn" style="font-size:0.78rem;">+ Block</button>' +
+          (p.isHidden
+            ? '<button class="ac-btn ac-btn--ghost" id="pv-toggle-hide" style="font-size:0.78rem;">Show project</button>'
+            : '<button class="ac-btn ac-btn--ghost" id="pv-toggle-hide" style="font-size:0.78rem;">Hide project</button>') +
+          '<button class="ac-btn ac-btn--danger" id="pv-delete-btn" style="font-size:0.78rem;">Delete</button>' +
+          '<span id="pv-save-status" style="font-size:0.78rem;color:var(--muted,#888);"></span>' +
+        '</div>'
+      : '<div class="admin-only" style="margin-bottom:1rem;display:flex;gap:0.5rem;">' +
+          '<a href="?slug=' + esc(slug) + '&edit=1" class="btn btn--light" style="font-size:0.78rem;">Edit project</a>' +
+        '</div>';
 
     var html = [
       '<section class="project-hero section container">',
         '<a href="../work.html" class="project-hero__back fade-up" aria-label="Back to all work">',
           SVG_BACK + ' All Work',
         '</a>',
-        adminEdit,
+        adminBar,
         '<div class="project-hero__tags fade-up fade-up--d1">' + tags + '</div>',
-        '<h1 class="project-hero__title fade-up fade-up--d2">' + esc(p.title) + '</h1>',
-        p.summary
-          ? '<p class="project-hero__summary fade-up fade-up--d3">' + esc(p.summary) + '</p>'
+        '<h1 class="project-hero__title fade-up fade-up--d2"' + titleEditAttr + '>' + esc(p.title) + '</h1>',
+        p.summary || editMode
+          ? '<p class="project-hero__summary fade-up fade-up--d3"' + summaryEditAttr + '>' + esc(p.summary || '') + '</p>'
           : '',
         metaHtml ? '<div class="project-meta fade-up fade-up--d4">' + metaHtml + '</div>' : '',
         coverHtml,
       '</section>',
       '<section class="section container" aria-label="Case study">',
-        '<div class="project-body">',
+        '<div class="project-body" id="pv-body">',
           blocksHtml,
         '</div>',
+        editMode ? '<div id="pv-add-block-panel" style="margin-top:1.5rem;display:none;"></div>' : '',
       '</section>',
     ].join('');
 
@@ -162,10 +199,165 @@
 
     // Trigger fade-up animations
     setTimeout(function () {
-      main.querySelectorAll('.fade-up').forEach(function (el) {
-        el.classList.add('visible');
-      });
+      main.querySelectorAll('.fade-up').forEach(function (el) { el.classList.add('visible'); });
     }, 60);
+
+    if (editMode) { wireEditMode(p); }
+  }
+
+  // ── Edit mode wiring ───────────────────────────────────────────
+  function wireEditMode(p) {
+    var token = sessionStorage.getItem('rc_admin_token');
+    function authHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }; }
+    function showToast(msg) {
+      var t = document.createElement('div'); t.className = 'rc-toast'; t.textContent = msg;
+      document.body.appendChild(t); setTimeout(function(){t.remove();}, 2200);
+    }
+
+    // Sync inline editable fields back to currentProject
+    document.querySelectorAll('[data-pv-field]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        currentProject[el.dataset.pvField] = el.innerText.trim();
+      });
+    });
+
+    // Block delete
+    document.querySelectorAll('.pv-block-del').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(btn.dataset.idx, 10);
+        currentProject.content.splice(idx, 1);
+        renderProject(currentProject);
+      });
+    });
+
+    // Block edit (simple textarea prompt for text blocks)
+    document.querySelectorAll('.pv-block-edit').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx   = parseInt(btn.dataset.idx, 10);
+        var block = currentProject.content[idx];
+        if (!block) { return; }
+        var newText = prompt('Edit block text:', block.text || JSON.stringify(block));
+        if (newText !== null) {
+          if (block.text !== undefined)       { currentProject.content[idx].text = newText; }
+          else if (block.url !== undefined)   { currentProject.content[idx].url = newText; }
+          renderProject(currentProject);
+        }
+      });
+    });
+
+    // Add block panel toggle
+    var addBlockBtn = document.getElementById('pv-add-block-btn');
+    var addBlockPanel = document.getElementById('pv-add-block-panel');
+    if (addBlockBtn && addBlockPanel) {
+      addBlockBtn.addEventListener('click', function () {
+        addBlockPanel.style.display = addBlockPanel.style.display === 'none' ? '' : 'none';
+        if (addBlockPanel.style.display !== 'none') {
+          addBlockPanel.innerHTML = [
+            '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">',
+              ['heading','paragraph','image','callout','divider'].map(function(t){
+                return '<button class="pm-add-block-btn pv-add-block-type" data-btype="'+t+'" style="border:1.5px dashed var(--border,#ddd);border-radius:7px;padding:0.35rem 0.8rem;background:transparent;font-size:0.72rem;cursor:pointer;font-family:inherit;color:var(--muted,#888);">+ '+t.charAt(0).toUpperCase()+t.slice(1)+'</button>';
+              }).join(''),
+            '</div>',
+          ].join('');
+          addBlockPanel.querySelectorAll('.pv-add-block-type').forEach(function (b) {
+            b.addEventListener('click', function () {
+              var type = b.dataset.btype;
+              var newBlock = { type: type };
+              if (type === 'heading')   { newBlock.level = 2; newBlock.text = 'New heading'; }
+              if (type === 'paragraph') { newBlock.text = 'New paragraph text.'; }
+              if (type === 'image')     { newBlock.url = ''; newBlock.alt = ''; }
+              if (type === 'callout')   { newBlock.text = 'Callout text.'; }
+              if (type === 'divider')   {} // no fields
+              currentProject.content.push(newBlock);
+              renderProject(currentProject);
+            });
+          });
+        }
+      });
+    }
+
+    // Cover image upload
+    var coverBtn  = document.getElementById('pv-cover-btn');
+    var coverFile = document.getElementById('pv-cover-file');
+    if (coverBtn && coverFile) {
+      coverBtn.addEventListener('click', function () { coverFile.click(); });
+      coverFile.addEventListener('change', async function () {
+        var file = coverFile.files[0]; if (!file) { return; }
+        coverBtn.textContent = 'Uploading…';
+        try {
+          var r    = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
+            method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: file,
+          });
+          var data = await r.json();
+          if (data.url) {
+            currentProject.coverImage = data.url;
+            var img = document.getElementById('pv-cover-img');
+            if (img) { img.src = data.url; }
+            coverBtn.textContent = 'Change cover';
+          } else { coverBtn.textContent = 'Upload failed'; }
+        } catch (e) { coverBtn.textContent = 'Error'; }
+      });
+    }
+
+    // Hide/Show toggle
+    var toggleHideBtn = document.getElementById('pv-toggle-hide');
+    if (toggleHideBtn) {
+      toggleHideBtn.addEventListener('click', async function () {
+        currentProject.isHidden = !currentProject.isHidden;
+        await fetch('/api/projects', {
+          method: 'PATCH', headers: authHeaders(),
+          body: JSON.stringify({ slug: slug, isHidden: currentProject.isHidden }),
+        });
+        this.textContent = currentProject.isHidden ? 'Show project' : 'Hide project';
+        showToast(currentProject.isHidden ? 'Project hidden' : 'Project now visible');
+      });
+    }
+
+    // Delete
+    var deleteBtn = document.getElementById('pv-delete-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', function () {
+        if (typeof window.__rcShowConfirm === 'function') {
+          window.__rcShowConfirm(
+            'Deleting <strong>"' + (currentProject.title || slug) + '"</strong> is permanent and cannot be undone.',
+            async function () {
+              var r = await fetch('/api/projects', {
+                method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ slug: slug }),
+              });
+              if (r.ok) { window.location.href = '../work.html'; }
+              else { showToast('Could not delete project'); }
+            }
+          );
+        }
+      });
+    }
+
+    // Save changes
+    var saveBtn    = document.getElementById('pv-save-btn');
+    var saveStatus = document.getElementById('pv-save-status');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async function () {
+        saveBtn.disabled = true;
+        if (saveStatus) { saveStatus.textContent = 'Saving…'; }
+        try {
+          var r = await fetch('/api/projects', {
+            method: 'PATCH', headers: authHeaders(),
+            body: JSON.stringify({ ...currentProject, slug: slug }),
+          });
+          var data = await r.json();
+          if (r.ok) {
+            if (saveStatus) { saveStatus.textContent = 'Saved!'; }
+            showToast('Project saved');
+            setTimeout(function () { if (saveStatus) { saveStatus.textContent = ''; } }, 2000);
+          } else {
+            if (saveStatus) { saveStatus.textContent = data.error || 'Error'; }
+          }
+        } catch (e) {
+          if (saveStatus) { saveStatus.textContent = 'Network error'; }
+        }
+        saveBtn.disabled = false;
+      });
+    }
   }
 
   // ── Load from API ──────────────────────────────────────────────
