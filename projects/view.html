@@ -108,18 +108,34 @@
   // ── Check edit mode ────────────────────────────────────────────
   var editMode = params.get('edit') === '1' && !!sessionStorage.getItem('rc_admin_token');
 
-  // ── Render a content block (view mode) ─────────────────────────
+  // ── Render a content block in edit mode (contenteditable inline) ─
   function renderBlockView(block, idx) {
-    var base = renderBlock(block);
-    if (!editMode) { return base; }
-    // Wrap each block with an edit overlay in edit mode
-    return '<div class="pv-block-wrap" data-block-idx="' + idx + '" style="position:relative;">' +
-           base +
-           '<div class="pv-block-controls">' +
-             '<button class="pv-block-btn pv-block-edit"  data-idx="' + idx + '">Edit</button>' +
-             '<button class="pv-block-btn pv-block-del"   data-idx="' + idx + '">×</button>' +
-           '</div>' +
-           '</div>';
+    if (!editMode) { return renderBlock(block); }
+
+    // Delete button shown on hover via CSS
+    var del = '<button class="pv-block-del pv-block-btn" data-idx="' + idx + '" aria-label="Delete block">×</button>';
+    var wrap = function (inner) {
+      return '<div class="pv-block-wrap" data-block-idx="' + idx + '">' + inner + del + '</div>';
+    };
+
+    switch (block.type) {
+      case 'heading': {
+        var level = block.level || 2;
+        return wrap('<h' + level + ' contenteditable="true"' +
+                    ' data-pv-block-idx="' + idx + '" data-pv-block-field="text"' +
+                    ' class="pv-editable pv-block-editable">' + esc(block.text) + '</h' + level + '>');
+      }
+      case 'paragraph':
+        return wrap('<p contenteditable="true"' +
+                    ' data-pv-block-idx="' + idx + '" data-pv-block-field="text"' +
+                    ' class="pv-editable pv-block-editable">' + esc(block.text) + '</p>');
+      case 'callout':
+        return wrap('<div class="callout"><p contenteditable="true"' +
+                    ' data-pv-block-idx="' + idx + '" data-pv-block-field="text"' +
+                    ' class="pv-editable pv-block-editable">' + esc(block.text) + '</p></div>');
+      default:
+        return wrap(renderBlock(block));
+    }
   }
 
   // ── Render the full project ────────────────────────────────────
@@ -203,6 +219,9 @@
     }, 60);
 
     if (editMode) { wireEditMode(p); }
+
+    // Notify page ctx trigger script that project is ready
+    window.dispatchEvent(new CustomEvent('rc-project-rendered', { detail: p }));
   }
 
   // ── Edit mode wiring ───────────────────────────────────────────
@@ -214,10 +233,25 @@
       document.body.appendChild(t); setTimeout(function(){t.remove();}, 2200);
     }
 
-    // Sync inline editable fields back to currentProject
+    // Sync hero/meta field edits (title, summary, company, period…)
     document.querySelectorAll('[data-pv-field]').forEach(function (el) {
       el.addEventListener('input', function () {
         currentProject[el.dataset.pvField] = el.innerText.trim();
+      });
+    });
+
+    // Sync inline block edits — no prompt(), just type directly in the block
+    document.querySelectorAll('[data-pv-block-idx]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var idx   = parseInt(el.dataset.pvBlockIdx, 10);
+        var field = el.dataset.pvBlockField;
+        if (currentProject.content[idx] !== undefined) {
+          currentProject.content[idx][field] = el.innerText.trim();
+        }
+      });
+      // Prevent Enter from inserting <div> / <br> — just add a newline char
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); }
       });
     });
 
@@ -227,21 +261,6 @@
         var idx = parseInt(btn.dataset.idx, 10);
         currentProject.content.splice(idx, 1);
         renderProject(currentProject);
-      });
-    });
-
-    // Block edit (simple textarea prompt for text blocks)
-    document.querySelectorAll('.pv-block-edit').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var idx   = parseInt(btn.dataset.idx, 10);
-        var block = currentProject.content[idx];
-        if (!block) { return; }
-        var newText = prompt('Edit block text:', block.text || JSON.stringify(block));
-        if (newText !== null) {
-          if (block.text !== undefined)       { currentProject.content[idx].text = newText; }
-          else if (block.url !== undefined)   { currentProject.content[idx].url = newText; }
-          renderProject(currentProject);
-        }
       });
     });
 
@@ -384,6 +403,72 @@
 })();
 </script>
 <script src="../js/admin.js" defer></script>
+<script>
+// ── Project page context menu trigger ──────────────────────────────
+(function () {
+  // Inject floating ctx trigger once the project data is rendered
+  window.addEventListener('rc-project-rendered', function (e) {
+    var project = e.detail;
+    if (!project) { return; }
+
+    // Remove existing trigger if re-rendered
+    var existing = document.getElementById('rc-page-ctx-trigger');
+    if (existing) { existing.remove(); }
+
+    var btn = document.createElement('button');
+    btn.id        = 'rc-page-ctx-trigger';
+    btn.className = 'rc-page-ctx-trigger ctx-trigger';
+    btn.setAttribute('aria-label', 'Project actions');
+    // data needed by ctx-menu actions
+    btn.dataset.ctxRoot = '1'; // sentinel for wireCtxTrigger
+    document.body.appendChild(btn);
+
+    // Create a synthetic "item" element that carries project data
+    // for the ctx-menu handlers (slug, title, url, ctxType)
+    var proxy = document.createElement('div');
+    proxy.dataset.slug    = project.slug || '';
+    proxy.dataset.title   = project.title || '';
+    proxy.dataset.url     = window.location.href;
+    proxy.dataset.ctxType = 'project';
+    proxy.dataset.adminHidden = project.isHidden ? '1' : '0';
+    proxy.classList.add('project-card'); // so openCtxMenu recognises it as a card
+
+    // Override wireCtxTrigger's .closest() — use the proxy as the item
+    btn._ctxProxyItem = proxy;
+
+    // After a short delay show the button (page needs to scroll a bit)
+    setTimeout(function () { btn.classList.add('is-visible'); }, 400);
+
+    if (typeof window.__rcInitCtx === 'function') { window.__rcInitCtx(); }
+
+    // Wire manually using proxy
+    if (!btn._ctxWired) {
+      btn._ctxWired = true;
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        var ctxMenu = document.getElementById('ctx-menu');
+        if (ctxMenu && ctxMenu.classList.contains('open') &&
+            window.__rcActiveCard === proxy) {
+          if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
+        } else {
+          if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
+          if (typeof window.__rcOpenCtxMenu  === 'function') { window.__rcOpenCtxMenu(btn, proxy); }
+        }
+      });
+    }
+  });
+
+  // Listen for admin edit start (triggered by ctx-menu edit click on project page)
+  window.addEventListener('rc-project-edit-start', function () {
+    var params = new URLSearchParams(window.location.search);
+    var slug   = params.get('slug');
+    if (slug) {
+      window.location.href = '?slug=' + encodeURIComponent(slug) + '&edit=1';
+    }
+  });
+})();
+</script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

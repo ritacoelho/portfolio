@@ -79,11 +79,6 @@
       Hover a card, click <span style="color:var(--brown);" aria-label="diamond">◆</span> to inspect, copy link, show love or enquire.
     </p>
 
-    <!-- Admin: manage link (non-preview only) -->
-    <div class="is-admin-only" style="display:none;margin-bottom:1.5rem;">
-      <a href="admin/projects.html" class="btn btn--light" style="font-size:0.82rem;">Manage all projects →</a>
-    </div>
-
     <section aria-label="Projects">
       <div class="work-grid" id="work-grid">
         <!-- Cards loaded from API -->
@@ -110,9 +105,6 @@
   </div>
 </main>
 
-<!-- Shared context menu (kept for main.js) -->
-<nav id="ctx-menu" class="ctx-menu" role="dialog" aria-label="Project actions" aria-modal="true" hidden></nav>
-
 <footer class="footer" role="contentinfo">
   <p class="footer__copy">© 2024–2026 Rita Coelho</p>
   <p class="footer__easter">
@@ -134,51 +126,91 @@
     return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  var FORM_HTML = [
-    '<div class="pm-section" style="background:#fff;border:1.5px solid var(--border,#eee);border-radius:14px;padding:1.25rem;margin-bottom:1rem;">',
-      '<div class="pm-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;">',
-        '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.25rem;">',
-          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Title *</label>',
-          '<input id="apr-title" class="pm-input" type="text" placeholder="Project title" required>',
-        '</div>',
-        '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.25rem;">',
-          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Summary (card description)</label>',
-          '<textarea id="apr-summary" class="pm-input" rows="3" placeholder="One or two sentences…" style="resize:vertical;min-height:72px;"></textarea>',
-        '</div>',
-        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
-          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Tags (comma separated)</label>',
-          '<input id="apr-tags" class="pm-input" type="text" placeholder="UX Design, Product Strategy">',
-        '</div>',
-        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
-          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Year</label>',
-          '<input id="apr-year" class="pm-input" type="number" placeholder="2024" min="2000" max="2099">',
-        '</div>',
-        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
-          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">My role</label>',
-          '<input id="apr-role" class="pm-input" type="text" placeholder="UX Designer">',
-        '</div>',
-        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
-          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Company / Client</label>',
-          '<input id="apr-company" class="pm-input" type="text" placeholder="Company name">',
-        '</div>',
-        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
-          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Period</label>',
-          '<input id="apr-period" class="pm-input" type="text" placeholder="Jan 2023 to Dec 2023">',
-        '</div>',
-        '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
-          '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Location</label>',
-          '<input id="apr-location" class="pm-input" type="text" placeholder="Zurich, Switzerland">',
+  var MONTH_NAMES   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var MONTH_ABBR    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function monthOpts(noneLabel) {
+    return '<option value="">' + (noneLabel || 'Month (optional)') + '</option>' +
+      MONTH_NAMES.map(function (m, i) {
+        return '<option value="' + (i+1) + '">' + m + '</option>';
+      }).join('');
+  }
+
+  // Compose "Jan 2023 to Dec 2024" or "Mar 2022 to Present" etc.
+  function composePeriod() {
+    var sm = parseInt(document.getElementById('apr-ps-m').value, 10) || null;
+    var sy = parseInt(document.getElementById('apr-ps-y').value, 10) || null;
+    var em = parseInt(document.getElementById('apr-pe-m').value, 10) || null;
+    var ey = parseInt(document.getElementById('apr-pe-y').value, 10) || null;
+    var start = sm ? MONTH_ABBR[sm-1] + ' ' + sy : (sy ? String(sy) : '');
+    var end   = ey ? (em ? MONTH_ABBR[em-1] + ' ' + ey : String(ey)) : (sm || sy ? 'Present' : '');
+    if (start && end) { return start + ' to ' + end; }
+    return start || '';
+  }
+
+  function buildFormHTML() {
+    return [
+      '<div class="pm-section" style="background:#fff;border:1.5px solid var(--border,#eee);border-radius:14px;padding:1.25rem;margin-bottom:1rem;">',
+        '<div class="pm-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;">',
+          '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label class="pm-label">Title *</label>',
+            '<input id="apr-title" class="pm-input" type="text" placeholder="Project title" required>',
+          '</div>',
+          '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label class="pm-label">Summary (card description)</label>',
+            '<textarea id="apr-summary" class="pm-input" rows="3" placeholder="One or two sentences…" style="resize:vertical;min-height:72px;"></textarea>',
+          '</div>',
+          '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label class="pm-label">Tags (comma-separated)</label>',
+            '<input id="apr-tags" class="pm-input" type="text" placeholder="UX Design, Product Strategy">',
+          '</div>',
+          '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label class="pm-label">My role</label>',
+            '<input id="apr-role" class="pm-input" type="text" placeholder="UX Designer">',
+          '</div>',
+          '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label class="pm-label">Company / Client</label>',
+            '<input id="apr-company" class="pm-input" type="text" placeholder="Company name">',
+          '</div>',
+          '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
+            '<label class="pm-label">Location</label>',
+            '<input id="apr-location" class="pm-input" type="text" placeholder="Zurich, Switzerland">',
+          '</div>',
+          '<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:0.4rem;">',
+            '<label class="pm-label">Period</label>',
+            '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">',
+              '<div class="pm-month-year-pick" style="flex:1;min-width:180px;">',
+                '<select id="apr-ps-m" class="pm-select">' + monthOpts('Start month') + '</select>',
+                '<input id="apr-ps-y" class="pm-input pm-year-input" type="number" placeholder="Year" min="2000" max="2099">',
+              '</div>',
+              '<span style="font-size:0.82rem;color:var(--muted,#888);flex-shrink:0;">to</span>',
+              '<div class="pm-month-year-pick" style="flex:1;min-width:180px;">',
+                '<select id="apr-pe-m" class="pm-select">' + monthOpts('End month (or present)') + '</select>',
+                '<input id="apr-pe-y" class="pm-input pm-year-input" type="number" placeholder="Year" min="2000" max="2099">',
+              '</div>',
+            '</div>',
+          '</div>',
         '</div>',
       '</div>',
-    '</div>',
-    '<div style="display:flex;gap:0.75rem;align-items:center;">',
-      '<button class="ac-btn ac-btn--primary" id="apr-save">Create project</button>',
-      '<button class="ac-btn ac-btn--ghost"   id="apr-cancel">Cancel</button>',
-      '<span id="apr-status" style="font-size:0.8rem;color:var(--muted,#888);"></span>',
-    '</div>',
-  ].join('');
+      /* Generate with Claude section */
+      '<div id="apr-ai-section" style="border:1.5px solid var(--border,#eee);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:0.75rem;background:var(--bg-alt,#fafafa);">',
+        '<div style="flex:1;">',
+          '<p style="margin:0;font-size:0.82rem;font-weight:600;color:var(--text,#2c2c2c);">Generate a first draft with Claude ✨</p>',
+          '<p style="margin:0.2rem 0 0;font-size:0.75rem;color:var(--muted,#888);">Fills the case study with a structured starting point based on the details above.</p>',
+        '</div>',
+        '<button id="apr-ai-btn" class="ac-btn ac-btn--ghost" type="button" style="flex-shrink:0;font-size:0.78rem;">Generate draft</button>',
+      '</div>',
+      '<div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">',
+        '<button class="ac-btn ac-btn--primary" id="apr-save">Create project</button>',
+        '<button class="ac-btn ac-btn--ghost"   id="apr-cancel">Cancel</button>',
+        '<span id="apr-status" style="font-size:0.8rem;color:var(--muted,#888);"></span>',
+      '</div>',
+    ].join('');
+  }
 
   function openAddModal() {
+    var _aiContent = null; // stores Claude-generated blocks
+
     var overlay = document.createElement('div');
     overlay.className = 'rc-modal-overlay';
     overlay.id = 'rc-add-project-modal';
@@ -188,7 +220,7 @@
           '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
         '</button>',
         '<h2 class="rc-modal-title">New project</h2>',
-        FORM_HTML,
+        buildFormHTML(),
       '</div>',
     ].join('');
     document.body.appendChild(overlay);
@@ -197,6 +229,50 @@
     document.getElementById('apr-cancel').onclick = function () { overlay.remove(); };
     overlay.addEventListener('click', function (e) { if (e.target === overlay) { overlay.remove(); } });
 
+    // ── Generate with Claude ───────────────────────────────────────
+    document.getElementById('apr-ai-btn').addEventListener('click', async function () {
+      var title = (document.getElementById('apr-title').value || '').trim();
+      if (!title) {
+        document.getElementById('apr-status').textContent = 'Enter a title first';
+        document.getElementById('apr-title').focus();
+        return;
+      }
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Generating…';
+      document.getElementById('apr-status').textContent = '';
+
+      var tagsRaw = document.getElementById('apr-tags').value || '';
+      var draftPayload = {
+        title:   title,
+        summary: (document.getElementById('apr-summary').value || '').trim(),
+        tags:    tagsRaw ? tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean) : [],
+        role:    (document.getElementById('apr-role').value    || '').trim(),
+        company: (document.getElementById('apr-company').value || '').trim(),
+        period:  composePeriod(),
+      };
+
+      try {
+        var r    = await fetch('/api/ai-draft', { method: 'POST', headers: authHeaders(), body: JSON.stringify(draftPayload) });
+        var data = await r.json();
+        if (r.ok && data.content) {
+          _aiContent = data.content;
+          btn.textContent = '✓ Draft ready';
+          btn.style.cssText = 'background:var(--success-faint,#e6f6ee);color:var(--success,#1a7a4a);border-color:var(--success,#1a7a4a);font-size:0.78rem;flex-shrink:0;';
+          document.getElementById('apr-status').textContent = 'Draft generated — create the project to review it.';
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Generate draft';
+          document.getElementById('apr-status').textContent = data.error || 'Generation failed';
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Generate draft';
+        document.getElementById('apr-status').textContent = 'Network error';
+      }
+    });
+
+    // ── Create project ─────────────────────────────────────────────
     document.getElementById('apr-save').addEventListener('click', async function () {
       var title = (document.getElementById('apr-title').value || '').trim();
       if (!title) { document.getElementById('apr-status').textContent = 'Title is required'; return; }
@@ -204,16 +280,17 @@
       document.getElementById('apr-status').textContent = 'Creating…';
 
       var tagsRaw = document.getElementById('apr-tags').value || '';
+      var startYear = parseInt(document.getElementById('apr-ps-y').value, 10) || null;
       var payload = {
         title:    title,
         summary:  (document.getElementById('apr-summary').value  || '').trim(),
         tags:     tagsRaw ? tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean) : [],
-        year:     parseInt(document.getElementById('apr-year').value, 10) || null,
+        year:     startYear,
         role:     (document.getElementById('apr-role').value     || '').trim(),
         company:  (document.getElementById('apr-company').value  || '').trim(),
-        period:   (document.getElementById('apr-period').value   || '').trim(),
+        period:   composePeriod(),
         location: (document.getElementById('apr-location').value || '').trim(),
-        content:  [],
+        content:  _aiContent || [],
         order:    99,
       };
 

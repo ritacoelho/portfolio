@@ -331,22 +331,20 @@
   // ── Context menu admin extension ──────────────────────────────
   function addCtxMenuAdminItems() {
     var menu = document.getElementById('ctx-menu');
-    if (!menu || menu.querySelector('.ctx-admin-sep')) { return; }
+    if (!menu || menu.querySelector('.ctx-admin-only')) { return; }
 
     var SVG_EDIT = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3-8 8H3v-3l8-8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
     var SVG_EYE_OFF = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2l12 12M6.5 6.7A2.5 2.5 0 0 0 9.3 9.5M4.2 4.4C3 5.3 2 6.6 1.5 8c1 2.8 3.8 5 6.5 5 1.1 0 2.2-.3 3.1-.8M6 3.2A6.7 6.7 0 0 1 8 3c2.7 0 5.5 2.2 6.5 5-.4 1.1-1 2-1.8 2.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
-    var SVG_TRASH = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5L13 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-    var sep = document.createElement('div');
-    sep.className = 'ctx-admin-sep';
-    menu.appendChild(sep);
+    var SVG_EYE_ON  = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1.5 8C2.5 5.2 5.3 3 8 3s5.5 2.2 6.5 5c-1 2.8-3.8 5-6.5 5S2.5 10.8 1.5 8Z" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/></svg>';
+    var SVG_TRASH   = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5L13 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
     function makeAdminOpt(action, icon, label) {
       var div = document.createElement('div');
-      div.className = 'ctx-option ctx-admin-opt';
+      div.className  = 'ctx-option ctx-admin-only';
       div.dataset.action = action;
-      div.innerHTML = '<button class="ctx-option__btn" aria-label="' + label + '">' + icon + '</button>' +
-                      '<span class="ctx-option__label" id="ctx-admin-label-' + action + '">' + label + '</span>';
+      div.innerHTML  =
+        '<button class="ctx-option__btn" aria-label="' + label + '">' + icon + '</button>' +
+        '<span class="ctx-option__label" id="ctx-admin-label-' + action + '">' + label + '</span>';
       return div;
     }
 
@@ -358,56 +356,106 @@
     menu.appendChild(hideOpt);
     menu.appendChild(deleteOpt);
 
-    // Sync hide label when menu opens
-    window.__rcOnCtxOpen = function (card) {
-      var isHidden = card && card.dataset.adminHidden === '1';
-      var label = document.getElementById('ctx-admin-label-admin-hide');
-      if (label) { label.textContent = isHidden ? 'Show' : 'Hide'; }
+    // Sync hide label + icon when menu opens on any item type
+    window.__rcOnCtxOpen = function (item) {
+      var isHidden = item && item.dataset.adminHidden === '1';
+      var labelEl  = document.getElementById('ctx-admin-label-admin-hide');
+      var hideBtn  = hideOpt.querySelector('button');
+      if (labelEl) { labelEl.textContent = isHidden ? 'Show' : 'Hide'; }
+      if (hideBtn) { hideBtn.innerHTML   = isHidden ? SVG_EYE_ON : SVG_EYE_OFF;
+                     hideBtn.setAttribute('aria-label', isHidden ? 'Show' : 'Hide'); }
     };
 
-    function getActiveCard() { return window.__rcActiveCard || null; }
+    function getActiveItem() { return window.__rcActiveCard || null; }
 
-    editOpt.addEventListener('click', function () {
-      var card = getActiveCard(); if (!card) { return; }
-      var slug = card.dataset.slug;
-      if (slug) { window.location.href = 'projects/view.html?slug=' + encodeURIComponent(slug) + '&edit=1'; }
-    });
-
-    hideOpt.addEventListener('click', async function () {
-      var card = getActiveCard(); if (!card) { return; }
-      var slug   = card.dataset.slug;
-      var hidden = card.dataset.adminHidden === '1';
-      var token  = getToken();
-      await fetch('/api/projects', {
-        method:  'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body:    JSON.stringify({ slug: slug, isHidden: !hidden }),
-      });
-      card.dataset.adminHidden = hidden ? '0' : '1';
-      card.classList.toggle('rc-hidden-card', !hidden);
-      var label = document.getElementById('ctx-admin-label-admin-hide');
-      if (label) { label.textContent = hidden ? 'Hide' : 'Show'; }
-      showToast(hidden ? 'Project now visible' : 'Project hidden');
-    });
-
-    deleteOpt.addEventListener('click', function () {
-      var card = getActiveCard(); if (!card) { return; }
-      var slug  = card.dataset.slug;
-      var title = card.dataset.title || slug;
-      showConfirm('Deleting <strong>"' + title + '"</strong> is permanent and cannot be undone.', async function () {
-        var token = getToken();
-        var r = await fetch('/api/projects', {
-          method:  'DELETE',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body:    JSON.stringify({ slug: slug }),
-        });
-        if (r.ok) {
-          card.remove();
-          showToast('Project deleted');
-        } else {
-          showToast('Could not delete project');
+    // ── Edit ──
+    editOpt.querySelector('button').addEventListener('click', function () {
+      var item = getActiveItem(); if (!item) { return; }
+      var type = item.dataset.ctxType || 'project';
+      if (type === 'journey') {
+        var id = item.dataset.id;
+        if (id) { window.dispatchEvent(new CustomEvent('rc-journey-edit', { detail: { id: id } })); }
+      } else {
+        // Navigate to project page with edit mode
+        var slug = item.dataset.slug;
+        var isOnProjectPage = window.location.pathname.includes('projects/view');
+        if (isOnProjectPage) {
+          // Already on project page — trigger inline edit
+          window.dispatchEvent(new CustomEvent('rc-project-edit-start'));
+        } else if (slug) {
+          window.location.href = 'projects/view.html?slug=' + encodeURIComponent(slug) + '&edit=1';
         }
-      });
+      }
+      if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
+    });
+
+    // ── Hide / Show ──
+    hideOpt.querySelector('button').addEventListener('click', async function () {
+      var item   = getActiveItem(); if (!item) { return; }
+      var type   = item.dataset.ctxType || 'project';
+      var hidden = item.dataset.adminHidden === '1';
+      var token  = getToken();
+      var newHidden = !hidden;
+
+      try {
+        if (type === 'journey') {
+          await fetch('/api/journey', {
+            method:  'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body:    JSON.stringify({ id: item.dataset.id, isHidden: newHidden }),
+          });
+          item.dataset.adminHidden = newHidden ? '1' : '0';
+          item.classList.toggle('rc-hidden-entry', newHidden);
+        } else {
+          await fetch('/api/projects', {
+            method:  'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body:    JSON.stringify({ slug: item.dataset.slug, isHidden: newHidden }),
+          });
+          item.dataset.adminHidden = newHidden ? '1' : '0';
+          item.classList.toggle('rc-hidden-card', newHidden);
+        }
+        showToast(newHidden ? 'Hidden from public' : 'Now visible to public');
+      } catch (e) { showToast('Could not update visibility'); }
+
+      if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
+    });
+
+    // ── Delete ──
+    deleteOpt.querySelector('button').addEventListener('click', function () {
+      var item  = getActiveItem(); if (!item) { return; }
+      var type  = item.dataset.ctxType || 'project';
+      var label = (item.querySelector('.timeline__title, .project-card__title a') || {}).textContent
+                  || item.dataset.title || item.dataset.slug || item.dataset.id || 'this item';
+      showConfirm('Deleting <strong>"' + label.trim() + '"</strong> is permanent and cannot be undone.',
+        async function () {
+          var token = getToken();
+          var r;
+          if (type === 'journey') {
+            r = await fetch('/api/journey', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+              body:   JSON.stringify({ id: item.dataset.id }),
+            });
+          } else {
+            r = await fetch('/api/projects', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+              body:   JSON.stringify({ slug: item.dataset.slug }),
+            });
+          }
+          if (r && r.ok) {
+            item.remove();
+            showToast('Deleted');
+            if (type === 'project' && window.location.pathname.includes('projects/view')) {
+              window.location.href = '../work.html';
+            }
+          } else {
+            showToast('Could not delete');
+          }
+        }
+      );
+      if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
     });
   }
 
@@ -420,59 +468,27 @@
     // Card admin actions are now in the context menu — nothing extra needed on the card itself
   }
 
-  function injectTimelineAdminControls(item) {
-    if (item.querySelector('.rc-timeline-admin')) { return; }
-    var id     = item.dataset.id || '';
-    var hidden = item.dataset.adminHidden === '1';
+  function injectTimelineCtxTrigger(item) {
+    if (item.querySelector('.timeline-ctx-trigger')) { return; }
+    // Mark as journey type so admin actions know which API to call
+    item.dataset.ctxType = 'journey';
 
-    var controls = document.createElement('div');
-    controls.className = 'rc-timeline-admin';
-    controls.innerHTML = [
-      '<button class="rc-timeline-admin__btn rc-tl-edit"   title="Edit entry">Edit</button>',
-      '<button class="rc-timeline-admin__btn rc-tl-hide"   title="Toggle visibility">' + (hidden ? 'Show' : 'Hide') + '</button>',
-      '<button class="rc-timeline-admin__btn rc-tl-delete" title="Delete entry" style="color:#c0392b;">Delete</button>',
-    ].join('');
+    var SVG_DOTS = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="2.5" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="11.5" r="1.2" fill="currentColor"/></svg>';
+    var btn = document.createElement('button');
+    btn.className = 'timeline-ctx-trigger ctx-trigger';
+    btn.setAttribute('aria-label', 'Entry actions');
+    btn.innerHTML = SVG_DOTS;
+    item.appendChild(btn);
 
-    controls.querySelector('.rc-tl-edit').addEventListener('click', function () {
-      window.dispatchEvent(new CustomEvent('rc-journey-edit', { detail: { id: id } }));
-    });
-
-    controls.querySelector('.rc-tl-hide').addEventListener('click', async function () {
-      var isHidden = item.dataset.adminHidden === '1';
-      var token    = getToken();
-      await fetch('/api/journey', {
-        method:  'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body:    JSON.stringify({ id: id, isHidden: !isHidden }),
-      });
-      item.dataset.adminHidden = isHidden ? '0' : '1';
-      item.classList.toggle('rc-hidden-entry', !isHidden);
-      this.textContent = isHidden ? 'Hide' : 'Show';
-      showToast(isHidden ? 'Entry now visible' : 'Entry hidden');
-    });
-
-    controls.querySelector('.rc-tl-delete').addEventListener('click', function () {
-      var role = item.querySelector('.timeline__title') ? item.querySelector('.timeline__title').textContent : id;
-      showConfirm('Deleting <strong>"' + role + '"</strong> is permanent and cannot be undone.', async function () {
-        var token = getToken();
-        var r = await fetch('/api/journey', {
-          method:  'DELETE',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body:    JSON.stringify({ id: id }),
-        });
-        if (r.ok) { item.remove(); showToast('Entry deleted'); }
-        else       { showToast('Could not delete entry'); }
-      });
-    });
-
-    item.appendChild(controls);
+    // Wire up immediately via main.js helper if available
+    if (typeof window.__rcInitCtx === 'function') { window.__rcInitCtx(); }
   }
 
   // ── Expose timeline init hook for journey.html ─────────────────
   window.__rcInitTimeline = function () {
     if (!isAdminLoggedIn() || isPreviewMode()) { return; }
     document.querySelectorAll('.timeline__item').forEach(function (item) {
-      injectTimelineAdminControls(item);
+      injectTimelineCtxTrigger(item);
     });
   };
 
