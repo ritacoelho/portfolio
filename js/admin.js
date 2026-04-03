@@ -107,12 +107,13 @@
         '</svg>',
         'Admin',
       '</span>',
-      '<label class="rc-admin-bar__toggle" title="Preview as public user">',
-        '<input type="checkbox" id="rc-preview-toggle"' + (isPreviewMode() ? ' checked' : '') + '>',
-        '<span>Preview public</span>',
-      '</label>',
-      isOnPage('admin/access-codes.html') ? '' :
-        '<a class="rc-admin-bar__link" href="/admin/access-codes.html">Access codes</a>',
+      isOnPage('admin/access-codes.html') ? '' : [
+        '<label class="rc-admin-bar__toggle" title="Preview as public user">',
+          '<input type="checkbox" id="rc-preview-toggle"' + (isPreviewMode() ? ' checked' : '') + '>',
+          '<span>Preview public</span>',
+        '</label>',
+        '<a class="rc-admin-bar__link" href="/admin/access-codes.html">Access codes</a>'
+      ].join(''),
       '<button class="rc-admin-bar__logout" id="rc-logout">Log out</button>'
     ].join('');
 
@@ -121,10 +122,12 @@
     document.getElementById('rc-logout').addEventListener('click', logout);
 
     var toggle = document.getElementById('rc-preview-toggle');
-    toggle.addEventListener('change', function () {
-      setPreviewMode(toggle.checked);
-      document.body.classList.toggle('admin-preview', toggle.checked);
-    });
+    if (toggle) {
+      toggle.addEventListener('change', function () {
+        setPreviewMode(toggle.checked);
+        document.body.classList.toggle('admin-preview', toggle.checked);
+      });
+    }
   }
 
   function isOnPage(fragment) {
@@ -196,15 +199,7 @@
 
   // ── Footer link ───────────────────────────────────────────────
   function updateFooterLink() {
-    var el = document.getElementById('rc-admin-footer-link');
-    if (!el) { return; }
-    if (isAdminLoggedIn()) {
-      el.textContent = 'Log out';
-      el.title       = 'Exit admin mode';
-    } else {
-      el.textContent = '·';
-      el.title       = 'Admin login';
-    }
+    // Footer link is always just a discrete dot — no text change needed
   }
 
   function injectFooterLink() {
@@ -214,19 +209,18 @@
     var link = document.createElement('button');
     link.id        = 'rc-admin-footer-link';
     link.className = 'rc-admin-footer-btn';
-    link.setAttribute('aria-label', 'Admin');
-    link.title     = 'Admin login';
+    link.setAttribute('aria-label', 'Admin login');
+    link.title     = '';
     link.textContent = '·';
 
     easter.appendChild(link);
-    updateFooterLink();
 
     link.addEventListener('click', function () {
       if (isAdminLoggedIn()) {
-        logout();
-      } else {
-        showLoginModal();
+        // Already logged in — do nothing (logout is in the admin bar)
+        return;
       }
+      showLoginModal();
     });
   }
 
@@ -299,7 +293,7 @@
     controls.querySelector('button').addEventListener('click', function () {
       var hidden = item.dataset.adminHidden === '1';
       item.dataset.adminHidden = hidden ? '0' : '1';
-      item.style.opacity = hidden ? '' : '0.35';
+      item.classList.toggle('rc-hidden-entry', !hidden);
       this.textContent = hidden ? 'Hide' : 'Show';
     });
 

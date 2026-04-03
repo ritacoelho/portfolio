@@ -120,9 +120,13 @@
   color: #fff;
 }
 
-/* When admin bar is present, push page content down */
+/* When admin bar is present, push nav + content down */
 body.is-admin {
   padding-top: 34px;
+}
+
+body.is-admin .nav {
+  top: 34px;
 }
 
 /* ── Footer admin button ──────────────────────────────────────── */
@@ -324,11 +328,16 @@ body.admin-preview .rc-card-admin {
   color: #222;
 }
 
-/* Hidden card indicator */
+/* Hidden card indicator — disabled look for admin, fully gone in preview */
 .rc-hidden-card {
-  opacity: 0.4;
-  outline: 2px dashed #aaa;
-  outline-offset: -2px;
+  opacity: 0.38;
+  filter: grayscale(0.6) saturate(0.4);
+  pointer-events: none;
+}
+
+/* Re-enable pointer events on admin controls only */
+.rc-hidden-card .rc-card-admin {
+  pointer-events: all;
 }
 
 body.admin-preview .rc-hidden-card {
@@ -355,6 +364,16 @@ body.admin-preview .rc-hidden-card {
 }
 
 body.admin-preview .rc-timeline-admin {
+  display: none;
+}
+
+/* Hidden journey entries: dimmed for admin, invisible in preview */
+.timeline__item.rc-hidden-entry {
+  opacity: 0.35;
+  filter: grayscale(0.5);
+}
+
+body.admin-preview .timeline__item.rc-hidden-entry {
   display: none;
 }
 
@@ -388,24 +407,25 @@ body.is-admin:not(.admin-preview) .admin-only {
 
 /* ── Access codes page ───────────────────────────────────────── */
 .ac-page {
-  max-width: 780px;
+  max-width: min(1200px, calc(100vw - 3rem));
   margin: 0 auto;
   padding: 2.5rem 1.5rem 4rem;
-  font-family: var(--font-sans, sans-serif);
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
 }
 
 .ac-page__title {
-  font-family: var(--font-serif, serif);
+  font-family: var(--font-display, 'DM Sans', sans-serif);
   font-size: 1.6rem;
-  font-weight: 600;
-  color: var(--ink, #2c2c2c);
+  font-weight: 700;
+  color: var(--text, #2c2c2c);
   margin: 0 0 0.25rem;
 }
 
 .ac-page__subtitle {
-  font-size: 0.85rem;
-  color: #888;
+  font-size: 0.88rem;
+  color: var(--muted, #888);
   margin: 0 0 2rem;
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
 }
 
 /* Create form card */
@@ -418,11 +438,12 @@ body.is-admin:not(.admin-preview) .admin-only {
 }
 
 .ac-create__title {
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 0.75rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #888;
+  color: var(--muted, #888);
   margin: 0 0 1rem;
 }
 
@@ -452,12 +473,12 @@ body.is-admin:not(.admin-preview) .admin-only {
 
 .ac-form__input {
   padding: 0.55rem 0.8rem;
-  border: 1.5px solid #ddd;
+  border: 1.5px solid var(--border, #ddd);
   border-radius: 9px;
-  font-size: 0.85rem;
-  font-family: inherit;
-  color: var(--ink, #2c2c2c);
-  background: #fafafa;
+  font-size: 0.88rem;
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  color: var(--text, #2c2c2c);
+  background: var(--bg-alt, #fafafa);
   transition: border-color 150ms, box-shadow 150ms;
   outline: none;
 }
@@ -577,20 +598,23 @@ body.is-admin:not(.admin-preview) .admin-only {
 .ac-table th {
   text-align: left;
   padding: 0.75rem 1rem;
-  background: #fafafa;
+  background: var(--bg-alt, #fafafa);
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 600;
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: #888;
-  border-bottom: 1.5px solid #eee;
+  color: var(--muted, #888);
+  border-bottom: 1.5px solid var(--border, #eee);
   white-space: nowrap;
 }
 
 .ac-table td {
   padding: 0.8rem 1rem;
-  border-bottom: 1px solid #f0f0f0;
-  color: var(--ink, #2c2c2c);
+  border-bottom: 1px solid var(--border, #f0f0f0);
+  color: var(--text, #2c2c2c);
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 0.88rem;
   vertical-align: middle;
 }
 

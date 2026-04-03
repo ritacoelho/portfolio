@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Journey — Admin | Rita Coelho</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    .pm-section { background:#fff;border:1.5px solid var(--border,#eee);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem; }
+    .pm-section__title { font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted,#888);margin:0 0 1.25rem; }
+    .pm-grid { display:grid;grid-template-columns:1fr 1fr;gap:0.75rem; }
+    .pm-field { display:flex;flex-direction:column;gap:0.3rem; }
+    .pm-field--full { grid-column:1/-1; }
+    .pm-label { font-size:0.72rem;font-weight:600;color:var(--muted,#666);letter-spacing:0.04em;text-transform:uppercase; }
+    .pm-input { padding:0.55rem 0.8rem;border:1.5px solid var(--border,#ddd);border-radius:9px;font-size:0.88rem;font-family:var(--font-sans,'DM Sans',sans-serif);color:var(--text,#2c2c2c);background:var(--bg-alt,#fafafa);outline:none;transition:border-color 150ms,box-shadow 150ms;width:100%;box-sizing:border-box; }
+    .pm-input:focus { border-color:var(--mist-blue,#8ABDD8);box-shadow:0 0 0 3px rgba(138,189,216,0.18); }
+    .pm-textarea { min-height:100px;resize:vertical; }
+    .pm-card-list { display:flex;flex-direction:column;gap:0.75rem; }
+    .pm-card { background:#fff;border:1.5px solid var(--border,#eee);border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem; }
+    .pm-card.is-hidden { opacity:0.5;filter:grayscale(0.5); }
+    .pm-card__badge { font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:0.2rem 0.55rem;border-radius:20px;flex-shrink:0; }
+    .pm-card__badge--work { background:#e8f4f0;color:#2a7a5e; }
+    .pm-card__badge--edu  { background:#eef2fb;color:#4a62b0; }
+    .pm-card__info { flex:1;min-width:0; }
+    .pm-card__title { font-size:0.9rem;font-weight:600;color:var(--text,#222);margin:0 0 0.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .pm-card__meta  { font-size:0.75rem;color:var(--muted,#888); }
+    .pm-card__actions { display:flex;gap:0.4rem;flex-shrink:0; }
+    .pm-type-toggle { display:flex;gap:0;border:1.5px solid var(--border,#ddd);border-radius:9px;overflow:hidden; }
+    .pm-type-toggle__btn { flex:1;padding:0.5rem 1rem;border:none;background:var(--bg-alt,#fafafa);font-size:0.82rem;font-family:var(--font-sans,'DM Sans',sans-serif);color:var(--muted,#888);cursor:pointer;transition:background 120ms,color 120ms; }
+    .pm-type-toggle__btn.active { background:var(--brown,#7c5c3a);color:#fff; }
+    .pm-bullet-list { display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.5rem; }
+    .pm-bullet-row { display:flex;gap:0.4rem;align-items:center; }
+    .pm-bullet-row input { flex:1; }
+    .pm-bullet-remove { background:none;border:none;color:var(--muted,#bbb);cursor:pointer;font-size:1.1rem;line-height:1;padding:0.15rem 0.3rem;border-radius:4px;transition:color 150ms;flex-shrink:0; }
+    .pm-bullet-remove:hover { color:#c0392b; }
+    .pm-add-bullet { font-size:0.75rem;padding:0.35rem 0.75rem;border:1.5px dashed var(--border,#ddd);border-radius:7px;background:transparent;color:var(--muted,#888);cursor:pointer;font-family:inherit;transition:border-color 150ms,color 150ms; }
+    .pm-add-bullet:hover { border-color:var(--mist-blue,#8ABDD8);color:var(--text,#333); }
+    .pm-checkbox-row { display:flex;align-items:center;gap:0.5rem; }
+    .pm-checkbox-row input[type="checkbox"] { width:16px;height:16px;accent-color:var(--brown,#7c5c3a);cursor:pointer;flex-shrink:0; }
+    .pm-checkbox-row label { font-size:0.85rem;color:var(--text,#333);cursor:pointer; }
+    @media (max-width:640px) { .pm-grid { grid-template-columns:1fr; } .pm-field--full { grid-column:1; } }
+  </style>
+</head>
+<body>
+
+<header class="nav" id="nav" role="banner">
+  <a href="../index.html" class="nav__logo" aria-label="Rita Coelho — home">RC<span>.</span></a>
+  <nav aria-label="Main navigation">
+    <ul class="nav__links" role="list">
+      <li><a href="../work.html"    class="nav__link">Work</a></li>
+      <li><a href="../journey.html" class="nav__link">Journey</a></li>
+      <li><a href="../about.html"   class="nav__link">About</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+<div class="ac-page" id="jm-page" style="display:none">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem;">
+    <h1 class="ac-page__title" id="jm-heading">Journey</h1>
+    <button class="ac-btn ac-btn--primary" id="jm-add-btn" style="font-size:0.82rem;">+ New entry</button>
+  </div>
+  <p class="ac-page__subtitle">Add, edit, hide or delete career and education entries.</p>
+
+  <!-- ── Entry list ── -->
+  <div id="jm-list-view">
+    <div id="jm-card-list" class="pm-card-list">
+      <div class="ac-loading">Loading…</div>
+    </div>
+  </div>
+
+  <!-- ── Entry form (hidden by default) ── -->
+  <div id="jm-form-view" style="display:none">
+    <button class="ac-btn ac-btn--ghost" id="jm-back-btn" style="margin-bottom:1.5rem;">← Back to list</button>
+
+    <!-- Basic info -->
+    <div class="pm-section">
+      <p class="pm-section__title">Entry details</p>
+
+      <!-- Type toggle -->
+      <div class="pm-field pm-field--full" style="margin-bottom:0.75rem;">
+        <span class="pm-label" style="margin-bottom:0.4rem;">Type</span>
+        <div class="pm-type-toggle" id="jm-type-toggle" role="group" aria-label="Entry type">
+          <button class="pm-type-toggle__btn active" data-type="work" type="button">Work</button>
+          <button class="pm-type-toggle__btn" data-type="edu" type="button">Education</button>
+        </div>
+        <input type="hidden" id="jm-type" value="work">
+      </div>
+
+      <div class="pm-grid">
+        <div class="pm-field pm-field--full">
+          <label class="pm-label" for="jm-role">Role / Degree *</label>
+          <input class="pm-input" id="jm-role" type="text" placeholder="e.g. UX Designer or Master's in Interaction Design">
+        </div>
+        <div class="pm-field pm-field--full">
+          <label class="pm-label" for="jm-org">Organisation *</label>
+          <input class="pm-input" id="jm-org" type="text" placeholder="Company or university name">
+        </div>
+        <div class="pm-field">
+          <label class="pm-label" for="jm-location">Location</label>
+          <input class="pm-input" id="jm-location" type="text" placeholder="Zurich, Switzerland">
+        </div>
+        <div class="pm-field">
+          <!-- spacer on desktop -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Period -->
+    <div class="pm-section">
+      <p class="pm-section__title">Period</p>
+      <div class="pm-grid">
+        <div class="pm-field">
+          <label class="pm-label" for="jm-start-year">Start year *</label>
+          <input class="pm-input" id="jm-start-year" type="number" placeholder="2022" min="1990" max="2099">
+        </div>
+        <div class="pm-field">
+          <label class="pm-label" for="jm-start-month">Start month (1–12)</label>
+          <input class="pm-input" id="jm-start-month" type="number" placeholder="8" min="1" max="12">
+        </div>
+        <div class="pm-field" id="jm-end-year-field">
+          <label class="pm-label" for="jm-end-year">End year</label>
+          <input class="pm-input" id="jm-end-year" type="number" placeholder="2024" min="1990" max="2099">
+        </div>
+        <div class="pm-field" id="jm-end-month-field">
+          <label class="pm-label" for="jm-end-month">End month (1–12)</label>
+          <input class="pm-input" id="jm-end-month" type="number" placeholder="1" min="1" max="12">
+        </div>
+        <div class="pm-field pm-field--full">
+          <div class="pm-checkbox-row">
+            <input type="checkbox" id="jm-is-current">
+            <label for="jm-is-current">Currently here — hides end date</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description & bullets -->
+    <div class="pm-section">
+      <p class="pm-section__title">Description</p>
+      <div class="pm-field pm-field--full" style="margin-bottom:0.75rem;">
+        <label class="pm-label" for="jm-description">Description</label>
+        <textarea class="pm-input pm-textarea" id="jm-description" rows="4" placeholder="A paragraph describing this role or degree…"></textarea>
+      </div>
+
+      <p class="pm-label" style="margin-bottom:0.5rem;">Bullet points (optional)</p>
+      <div class="pm-bullet-list" id="jm-bullets"></div>
+      <button class="pm-add-bullet" id="jm-add-bullet" type="button">+ Add bullet</button>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;align-items:center;padding-top:0.5rem;">
+      <button class="ac-btn ac-btn--primary" id="jm-save-btn">Save entry</button>
+      <span id="jm-save-status" style="font-size:0.82rem;color:var(--muted)"></span>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<script src="../js/main.js" defer></script>
+<script src="../js/admin.js" defer></script>
+<script>
+(function () {
+  'use strict';
+
+  var SESSION_KEY = 'rc_admin_token';
+  function getToken() { return sessionStorage.getItem(SESSION_KEY); }
+  function authHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }; }
+
+  function showToast(msg) {
+    var t = document.createElement('div'); t.className = 'rc-toast'; t.textContent = msg;
+    document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2200);
+  }
+  function esc(str) {
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function formatPeriod(e) {
+    var s = e.startMonth ? MONTHS[e.startMonth-1]+' '+e.startYear : (e.startYear ? String(e.startYear) : '');
+    var end = e.isCurrent ? 'Present' : (e.endMonth ? MONTHS[e.endMonth-1]+' '+e.endYear : (e.endYear ? String(e.endYear) : ''));
+    if (s && end) return s + ' – ' + end;
+    return s || end || '';
+  }
+
+  // ── Auth guard ─────────────────────────────────────────────────
+  setTimeout(function () {
+    if (!getToken()) { window.location.href = '../index.html'; return; }
+    document.getElementById('jm-page').style.display = '';
+    loadEntries();
+    checkEditParam();
+  }, 60);
+
+  window.addEventListener('rc-admin-enabled', function () {
+    var p = document.getElementById('jm-page');
+    if (p) { p.style.display = ''; }
+  });
+
+  // ── Check for ?edit= param ─────────────────────────────────────
+  function checkEditParam() {
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('edit');
+    if (id) { loadEntryForEdit(id); }
+  }
+
+  // ── LIST VIEW ──────────────────────────────────────────────────
+  var entries = [];
+
+  async function loadEntries() {
+    var r   = await fetch('/api/journey', { headers: authHeaders() });
+    entries = await r.json();
+    renderList();
+  }
+
+  function renderList() {
+    var list = document.getElementById('jm-card-list');
+    if (!entries.length) {
+      list.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;">No entries yet. Add one above.</p>';
+      return;
+    }
+    list.innerHTML = '';
+
+    // Sort: newest first (same as journey page)
+    var sorted = entries.slice().sort(function (a, b) {
+      var av = (a.isCurrent ? 9999 : (a.endYear||a.startYear||0)) * 12 + ((a.isCurrent ? 12 : a.endMonth)||a.startMonth||0);
+      var bv = (b.isCurrent ? 9999 : (b.endYear||b.startYear||0)) * 12 + ((b.isCurrent ? 12 : b.endMonth)||b.startMonth||0);
+      return bv - av;
+    });
+
+    sorted.forEach(function (e) {
+      var card = document.createElement('div');
+      var type = e.type === 'edu' ? 'edu' : 'work';
+      card.className = 'pm-card' + (e.isHidden ? ' is-hidden' : '');
+      card.innerHTML = [
+        '<span class="pm-card__badge pm-card__badge--' + type + '">' + (type === 'edu' ? 'Education' : 'Work') + '</span>',
+        '<div class="pm-card__info">',
+          '<p class="pm-card__title">' + esc(e.role) + ' · ' + esc(e.org) + '</p>',
+          '<p class="pm-card__meta">' + esc(formatPeriod(e)) + (e.location ? ' · ' + esc(e.location) : '') + (e.isHidden ? ' · Hidden' : '') + '</p>',
+        '</div>',
+        '<div class="pm-card__actions">',
+          '<button class="ac-btn ac-btn--ghost" data-action="edit" data-id="' + esc(e.id) + '" style="font-size:0.75rem">Edit</button>',
+          '<button class="ac-btn ac-btn--ghost" data-action="toggle-hide" data-id="' + esc(e.id) + '" style="font-size:0.75rem">' + (e.isHidden ? 'Show' : 'Hide') + '</button>',
+          '<button class="ac-btn ac-btn--danger" data-action="delete" data-id="' + esc(e.id) + '" style="font-size:0.75rem">Delete</button>',
+        '</div>',
+      ].join('');
+      list.appendChild(card);
+    });
+
+    list.querySelectorAll('[data-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = btn.dataset.action, id = btn.dataset.id;
+        if (action === 'edit')        { loadEntryForEdit(id); }
+        if (action === 'toggle-hide') { toggleHide(id); }
+        if (action === 'delete')      { deleteEntry(id); }
+      });
+    });
+  }
+
+  async function toggleHide(id) {
+    var e = entries.find(function (x) { return x.id === id; });
+    if (!e) { return; }
+    await fetch('/api/journey', { method:'PATCH', headers:authHeaders(), body: JSON.stringify({ id: id, isHidden: !e.isHidden }) });
+    showToast(e.isHidden ? 'Entry shown' : 'Entry hidden');
+    loadEntries();
+  }
+
+  async function deleteEntry(id) {
+    var e = entries.find(function (x) { return x.id === id; });
+    if (!e) { return; }
+    if (!confirm('Delete "' + e.role + ' at ' + e.org + '"? This cannot be undone.')) { return; }
+    await fetch('/api/journey', { method:'DELETE', headers:authHeaders(), body: JSON.stringify({ id: id }) });
+    showToast('Entry deleted');
+    loadEntries();
+  }
+
+  // ── FORM VIEW ──────────────────────────────────────────────────
+  var editingId = null;
+  var bullets   = [];
+
+  function showForm() {
+    document.getElementById('jm-list-view').style.display = 'none';
+    document.getElementById('jm-form-view').style.display = '';
+    document.getElementById('jm-add-btn').style.display   = 'none';
+  }
+  function showList() {
+    document.getElementById('jm-form-view').style.display = 'none';
+    document.getElementById('jm-list-view').style.display = '';
+    document.getElementById('jm-add-btn').style.display   = '';
+    editingId = null;
+    bullets   = [];
+    renderBullets();
+    clearForm();
+    history.replaceState(null,'',window.location.pathname);
+  }
+
+  document.getElementById('jm-add-btn').addEventListener('click', function () {
+    editingId = null;
+    clearForm();
+    showForm();
+  });
+  document.getElementById('jm-back-btn').addEventListener('click', function () {
+    showList(); loadEntries();
+  });
+
+  // ── Type toggle ────────────────────────────────────────────────
+  document.getElementById('jm-type-toggle').addEventListener('click', function (e) {
+    var btn = e.target.closest('.pm-type-toggle__btn');
+    if (!btn) { return; }
+    document.querySelectorAll('.pm-type-toggle__btn').forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('jm-type').value = btn.dataset.type;
+  });
+
+  // ── isCurrent toggle ───────────────────────────────────────────
+  document.getElementById('jm-is-current').addEventListener('change', function () {
+    var isC = this.checked;
+    document.getElementById('jm-end-year-field').style.opacity  = isC ? '0.35' : '';
+    document.getElementById('jm-end-month-field').style.opacity = isC ? '0.35' : '';
+    document.getElementById('jm-end-year').disabled  = isC;
+    document.getElementById('jm-end-month').disabled = isC;
+  });
+
+  function clearForm() {
+    // Type toggle → default Work
+    document.querySelectorAll('.pm-type-toggle__btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.type === 'work');
+    });
+    document.getElementById('jm-type').value = 'work';
+
+    ['jm-role','jm-org','jm-location','jm-start-year','jm-start-month',
+     'jm-end-year','jm-end-month','jm-description'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) { el.value = ''; el.disabled = false; }
+    });
+    document.getElementById('jm-is-current').checked = false;
+    document.getElementById('jm-end-year-field').style.opacity  = '';
+    document.getElementById('jm-end-month-field').style.opacity = '';
+    document.getElementById('jm-save-status').textContent = '';
+    bullets = [];
+    renderBullets();
+  }
+
+  async function loadEntryForEdit(id) {
+    var r = await fetch('/api/journey?id=' + encodeURIComponent(id), { headers: authHeaders() });
+    if (!r.ok) { showToast('Could not load entry'); return; }
+    var e = await r.json();
+    editingId = id;
+
+    // Type
+    var type = e.type === 'edu' ? 'edu' : 'work';
+    document.querySelectorAll('.pm-type-toggle__btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.type === type);
+    });
+    document.getElementById('jm-type').value = type;
+
+    document.getElementById('jm-role').value        = e.role        || '';
+    document.getElementById('jm-org').value         = e.org         || '';
+    document.getElementById('jm-location').value    = e.location    || '';
+    document.getElementById('jm-start-year').value  = e.startYear   || '';
+    document.getElementById('jm-start-month').value = e.startMonth  || '';
+    document.getElementById('jm-end-year').value    = e.endYear     || '';
+    document.getElementById('jm-end-month').value   = e.endMonth    || '';
+    document.getElementById('jm-description').value = e.description || '';
+
+    var isC = !!e.isCurrent;
+    document.getElementById('jm-is-current').checked = isC;
+    document.getElementById('jm-end-year').disabled  = isC;
+    document.getElementById('jm-end-month').disabled = isC;
+    document.getElementById('jm-end-year-field').style.opacity  = isC ? '0.35' : '';
+    document.getElementById('jm-end-month-field').style.opacity = isC ? '0.35' : '';
+
+    bullets = Array.isArray(e.bullets) ? e.bullets.slice() : [];
+    renderBullets();
+    showForm();
+  }
+
+  // ── Bullet points ──────────────────────────────────────────────
+  function renderBullets() {
+    var container = document.getElementById('jm-bullets');
+    container.innerHTML = '';
+    bullets.forEach(function (text, idx) {
+      var row = document.createElement('div');
+      row.className = 'pm-bullet-row';
+      row.innerHTML = [
+        '<input class="pm-input" type="text" placeholder="Bullet point…" value="' + esc(text) + '" data-bullet="' + idx + '">',
+        '<button class="pm-bullet-remove" data-remove="' + idx + '" title="Remove bullet" type="button">×</button>',
+      ].join('');
+      row.querySelector('[data-bullet]').addEventListener('input', function (ev) {
+        bullets[idx] = ev.target.value;
+      });
+      row.querySelector('[data-remove]').addEventListener('click', function () {
+        bullets.splice(idx, 1);
+        renderBullets();
+      });
+      container.appendChild(row);
+    });
+  }
+
+  document.getElementById('jm-add-bullet').addEventListener('click', function () {
+    bullets.push('');
+    renderBullets();
+    // Focus the new input
+    var rows = document.getElementById('jm-bullets').querySelectorAll('input');
+    if (rows.length) { rows[rows.length-1].focus(); }
+  });
+
+  // ── Save ───────────────────────────────────────────────────────
+  document.getElementById('jm-save-btn').addEventListener('click', async function () {
+    var role = document.getElementById('jm-role').value.trim();
+    var org  = document.getElementById('jm-org').value.trim();
+    if (!role || !org) { showToast('Role and organisation are required'); return; }
+
+    var statusEl = document.getElementById('jm-save-status');
+    this.disabled = true; statusEl.textContent = 'Saving…';
+
+    var isC        = document.getElementById('jm-is-current').checked;
+    var startYear  = parseInt(document.getElementById('jm-start-year').value,10) || null;
+    var startMonth = parseInt(document.getElementById('jm-start-month').value,10) || null;
+    var endYear    = isC ? null : (parseInt(document.getElementById('jm-end-year').value,10) || null);
+    var endMonth   = isC ? null : (parseInt(document.getElementById('jm-end-month').value,10) || null);
+
+    var payload = {
+      role:        role,
+      org:         org,
+      type:        document.getElementById('jm-type').value || 'work',
+      location:    document.getElementById('jm-location').value.trim() || null,
+      startYear:   startYear,
+      startMonth:  startMonth,
+      endYear:     endYear,
+      endMonth:    endMonth,
+      isCurrent:   isC,
+      description: document.getElementById('jm-description').value.trim() || null,
+      bullets:     bullets.filter(function (b) { return b.trim() !== ''; }),
+    };
+
+    try {
+      var method = editingId ? 'PATCH' : 'POST';
+      var body   = editingId ? Object.assign({}, payload, { id: editingId }) : payload;
+      var r      = await fetch('/api/journey', { method: method, headers: authHeaders(), body: JSON.stringify(body) });
+      var data   = await r.json();
+      if (r.ok) {
+        statusEl.textContent = 'Saved!';
+        showToast('Entry saved');
+        setTimeout(function() { showList(); loadEntries(); }, 800);
+      } else {
+        statusEl.textContent = data.error || 'Error saving';
+      }
+    } catch (err) {
+      statusEl.textContent = 'Error — check connection';
+    }
+    this.disabled = false;
+  });
+
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

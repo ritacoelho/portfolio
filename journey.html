@@ -65,7 +65,7 @@
           <button class="journey-filter" data-filter="edu">Education</button>
         </div>
 
-        <div style="margin-top:1.25rem;" class="work-sort" style="flex-direction:column;align-items:flex-start;">
+        <div style="margin-top:1.25rem;" class="work-sort">
           <span class="work-sort__label" style="margin-bottom:0.5rem;">Sort</span>
           <div class="sort-select" id="sort-btn" role="group">
             <button class="sort-select__btn" aria-haspopup="listbox" aria-expanded="false">
@@ -81,6 +81,13 @@
           </div>
         </div>
 
+        <!-- Admin: manage button -->
+        <div class="is-admin-only" style="display:none;margin-top:1.5rem;">
+          <a href="admin/journey.html" class="btn btn--light" style="font-size:0.75rem;width:100%;justify-content:center;">
+            Manage entries
+          </a>
+        </div>
+
         <div style="margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);">
           <p style="font-size:0.8rem;color:var(--muted);line-height:1.65;margin-bottom:1rem;">See what I built along the way.</p>
           <a href="work.html" class="btn btn--light" style="font-size:0.7rem;padding:0.6rem 1.1rem;gap:0.4rem;">
@@ -94,92 +101,10 @@
 
       <!-- Timeline -->
       <div>
-        <ul class="timeline" role="list" aria-label="Career and education timeline">
-
-          <!-- Hexagon (current) -->
-          <li class="timeline__item" data-type="work">
-            <div class="timeline__dot" aria-hidden="true"></div>
-            <span class="timeline__badge timeline__badge--work">Work</span>
-            <p class="timeline__date">May 2024 to Present</p>
-            <h2 class="timeline__title">UX/UI Designer</h2>
-            <p class="timeline__company">Hexagon Geosystems · Zurich, Switzerland</p>
-            <p class="timeline__desc">
-              Working on UX/UI for geospatial and industrial software products at one of the world's leading digital reality companies. Cross-functional collaboration across design, product and engineering.
-            </p>
+        <ul class="timeline" id="timeline" role="list" aria-label="Career and education timeline">
+          <li id="journey-loading" style="list-style:none;padding:2rem 0;color:var(--muted);font-size:0.88rem;">
+            Loading timeline…
           </li>
-
-          <!-- Master's (Sydney) — overlaps with Hexagon start -->
-          <li class="timeline__item" data-type="edu">
-            <div class="timeline__dot" aria-hidden="true"></div>
-            <span class="timeline__badge timeline__badge--edu">Education</span>
-            <p class="timeline__date">Aug 2022 to Jan 2024</p>
-            <h2 class="timeline__title">Master's in Interaction Design &amp; Electronic Arts</h2>
-            <p class="timeline__company">University of Sydney · Sydney, Australia</p>
-            <p class="timeline__desc">
-              Specialising in interaction design, physical computing and electronic arts. Studio projects included the MAP Mima Sonic Link installation, designed, coded and deployed end-to-end.
-            </p>
-          </li>
-
-          <!-- SAP -->
-          <li class="timeline__item" data-type="work">
-            <div class="timeline__dot" aria-hidden="true"></div>
-            <span class="timeline__badge timeline__badge--work">Work</span>
-            <p class="timeline__date">Nov 2021 to Jul 2022</p>
-            <h2 class="timeline__title">UX &amp; Cloud Associate Development Consultant</h2>
-            <p class="timeline__company">SAP · Lisbon, Portugal</p>
-            <p class="timeline__desc">
-              Part of a multidisciplinary team developing SAP Fiori Elements for UX projects on cloud using CDS and Node.js. Bridging UX and frontend implementation.
-            </p>
-          </li>
-
-          <!-- Vodafone -->
-          <li class="timeline__item" data-type="work">
-            <div class="timeline__dot" aria-hidden="true"></div>
-            <span class="timeline__badge timeline__badge--work">Work</span>
-            <p class="timeline__date">Nov 2020 to Oct 2021</p>
-            <h2 class="timeline__title">Web Developer</h2>
-            <p class="timeline__company">Vodafone · Lisbon, Portugal</p>
-            <p class="timeline__desc">
-              Responsible for design, development, testing and deployment of an internal web application for the Transport Network Operations team, end-to-end across the full product lifecycle.
-            </p>
-          </li>
-
-          <!-- Build Up Labs -->
-          <li class="timeline__item" data-type="work">
-            <div class="timeline__dot" aria-hidden="true"></div>
-            <span class="timeline__badge timeline__badge--work">Work</span>
-            <p class="timeline__date">Jul 2020 to Sep 2020</p>
-            <h2 class="timeline__title">Mobile / Web Application Developer</h2>
-            <p class="timeline__company">Build Up Labs · Lisbon, Portugal</p>
-            <p class="timeline__desc">
-              Startup studio internship. Contributed to the full development cycle of a mobile app, from business strategy and competitor analysis through to wireframing and front-end development with back-end integration.
-            </p>
-          </li>
-
-          <!-- Baseform -->
-          <li class="timeline__item" data-type="work">
-            <div class="timeline__dot" aria-hidden="true"></div>
-            <span class="timeline__badge timeline__badge--work">Work</span>
-            <p class="timeline__date">Sep 2019 to Dec 2019</p>
-            <h2 class="timeline__title">User Experience</h2>
-            <p class="timeline__company">Baseform · Lisbon, Portugal</p>
-            <p class="timeline__desc">
-              Supported product development in user interface design and user activity notifications for a water infrastructure software platform.
-            </p>
-          </li>
-
-          <!-- Bachelor's IST -->
-          <li class="timeline__item" data-type="edu">
-            <div class="timeline__dot" aria-hidden="true"></div>
-            <span class="timeline__badge timeline__badge--edu">Education</span>
-            <p class="timeline__date">2015 to 2020</p>
-            <h2 class="timeline__title">Bachelor's in Computer Science &amp; Engineering</h2>
-            <p class="timeline__company">Instituto Superior Técnico · Lisbon, Portugal</p>
-            <p class="timeline__desc">
-              Foundation in software engineering, algorithms, systems and human-computer interaction. The CS background informs how I think about design constraints, technical feasibility and working across disciplines.
-            </p>
-          </li>
-
         </ul>
       </div>
 
@@ -211,6 +136,152 @@
 </footer>
 
 <script src="js/main.js" defer></script>
+<script>
+(function () {
+  var timeline    = document.getElementById('timeline');
+  var loadingEl   = document.getElementById('journey-loading');
+  var filterBtns  = document.querySelectorAll('.journey-filter');
+  var sortEl      = document.getElementById('sort-btn');
+  var allEntries  = [];
+  var activeFilter = 'all';
+  var sortOrder    = 'newest';
+
+  // ── Format date label ──────────────────────────────────────────
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function formatPeriod(entry) {
+    var start = '';
+    var end   = '';
+    if (entry.startMonth && entry.startYear) {
+      start = MONTHS[entry.startMonth - 1] + ' ' + entry.startYear;
+    } else if (entry.startYear) {
+      start = String(entry.startYear);
+    }
+    if (entry.isCurrent) {
+      end = 'Present';
+    } else if (entry.endMonth && entry.endYear) {
+      end = MONTHS[entry.endMonth - 1] + ' ' + entry.endYear;
+    } else if (entry.endYear) {
+      end = String(entry.endYear);
+    }
+    if (start && end)  { return start + ' to ' + end; }
+    if (start)         { return start; }
+    return '';
+  }
+
+  // ── Build item HTML ────────────────────────────────────────────
+  function buildItem(entry) {
+    var type       = entry.type === 'edu' ? 'edu' : 'work';
+    var badgeLabel = type === 'edu' ? 'Education' : 'Work';
+    var period     = formatPeriod(entry);
+    var hiddenCls  = entry.isHidden ? ' rc-hidden-entry' : '';
+    var hiddenData = entry.isHidden ? ' data-admin-hidden="1"' : '';
+    var bullets    = Array.isArray(entry.bullets) ? entry.bullets : [];
+
+    var bulletsHtml = '';
+    if (bullets.length) {
+      bulletsHtml = '<ul style="margin:0.5rem 0 0 1.1rem;padding:0;font-size:0.875rem;color:var(--muted);line-height:1.7;">' +
+        bullets.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') +
+      '</ul>';
+    }
+
+    return [
+      '<li class="timeline__item' + hiddenCls + '" data-type="' + esc(type) + '"',
+           ' data-id="' + esc(entry.id) + '"' + hiddenData + '>',
+        '<div class="timeline__dot" aria-hidden="true"></div>',
+        '<span class="timeline__badge timeline__badge--' + type + '">' + badgeLabel + '</span>',
+        period ? '<p class="timeline__date">' + esc(period) + '</p>' : '',
+        '<h2 class="timeline__title">' + esc(entry.role) + '</h2>',
+        '<p class="timeline__company">' + esc(entry.org) +
+          (entry.location ? ' · ' + esc(entry.location) : '') + '</p>',
+        entry.description
+          ? '<p class="timeline__desc">' + esc(entry.description) + '</p>'
+          : '',
+        bulletsHtml,
+      '</li>'
+    ].join('');
+  }
+
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+      .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Render timeline ────────────────────────────────────────────
+  function renderTimeline(entries) {
+    // Remove old items (keep loading placeholder if present to avoid flicker)
+    timeline.querySelectorAll('li:not(#journey-loading)').forEach(function (el) { el.remove(); });
+
+    var sorted = entries.slice().sort(function (a, b) {
+      var ay = (a.endYear || a.startYear || 0) * 12 + (a.endMonth || a.startMonth || 0);
+      var by = (b.endYear || b.startYear || 0) * 12 + (b.endMonth || b.startMonth || 0);
+      return sortOrder === 'newest' ? by - ay : ay - by;
+    });
+
+    var filtered = sorted.filter(function (e) {
+      if (activeFilter === 'all') { return true; }
+      return (e.type || 'work') === activeFilter;
+    });
+
+    if (filtered.length === 0) {
+      timeline.insertAdjacentHTML('beforeend',
+        '<li style="list-style:none;padding:1rem 0;color:var(--muted);font-size:0.88rem;">No entries to show.</li>');
+      return;
+    }
+
+    filtered.forEach(function (entry) {
+      timeline.insertAdjacentHTML('beforeend', buildItem(entry));
+    });
+
+    // Re-init admin controls
+    if (typeof window.__rcInitTimeline === 'function') {
+      window.__rcInitTimeline();
+    }
+  }
+
+  // ── Filter ─────────────────────────────────────────────────────
+  filterBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      filterBtns.forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter || 'all';
+      renderTimeline(allEntries);
+    });
+  });
+
+  // ── Sort ───────────────────────────────────────────────────────
+  if (sortEl) {
+    sortEl.addEventListener('sort-change', function (e) {
+      sortOrder = e.detail.value;
+      renderTimeline(allEntries);
+    });
+  }
+
+  // ── Admin manage button ────────────────────────────────────────
+  window.addEventListener('rc-admin-enabled', function () {
+    document.querySelectorAll('.is-admin-only').forEach(function (el) {
+      el.style.display = '';
+    });
+  });
+
+  // ── Load from API ──────────────────────────────────────────────
+  var token   = sessionStorage.getItem('rc_admin_token');
+  var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+
+  fetch('/api/journey', { headers: headers })
+    .then(function (r) { return r.json(); })
+    .then(function (entries) {
+      allEntries = entries || [];
+      if (loadingEl) { loadingEl.remove(); }
+      renderTimeline(allEntries);
+    })
+    .catch(function () {
+      if (loadingEl) { loadingEl.textContent = 'Could not load timeline. Please refresh.'; }
+    });
+
+})();
+</script>
 <script src="js/admin.js" defer></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
