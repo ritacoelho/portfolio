@@ -333,9 +333,11 @@
     var menu = document.getElementById('ctx-menu');
     if (!menu || menu.querySelector('.ctx-admin-only')) { return; }
 
-    var SVG_EDIT = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3-8 8H3v-3l8-8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+    var SVG_EDIT    = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3-8 8H3v-3l8-8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
     var SVG_EYE_OFF = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2l12 12M6.5 6.7A2.5 2.5 0 0 0 9.3 9.5M4.2 4.4C3 5.3 2 6.6 1.5 8c1 2.8 3.8 5 6.5 5 1.1 0 2.2-.3 3.1-.8M6 3.2A6.7 6.7 0 0 1 8 3c2.7 0 5.5 2.2 6.5 5-.4 1.1-1 2-1.8 2.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
     var SVG_EYE_ON  = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1.5 8C2.5 5.2 5.3 3 8 3s5.5 2.2 6.5 5c-1 2.8-3.8 5-6.5 5S2.5 10.8 1.5 8Z" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/></svg>';
+    var SVG_LOCK    = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+    var SVG_UNLOCK  = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
     var SVG_TRASH   = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5L13 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
     function makeAdminOpt(action, icon, label) {
@@ -348,22 +350,32 @@
       return div;
     }
 
-    var editOpt   = makeAdminOpt('admin-edit',   SVG_EDIT,    'Edit');
-    var hideOpt   = makeAdminOpt('admin-hide',   SVG_EYE_OFF, 'Hide');
-    var deleteOpt = makeAdminOpt('admin-delete', SVG_TRASH,   'Delete');
+    var editOpt   = makeAdminOpt('admin-edit',   SVG_EDIT,   'Edit');
+    var hideOpt   = makeAdminOpt('admin-hide',   SVG_EYE_OFF,'Hide');
+    var lockOpt   = makeAdminOpt('admin-lock',   SVG_LOCK,   'Lock');
+    var deleteOpt = makeAdminOpt('admin-delete', SVG_TRASH,  'Delete');
 
     menu.appendChild(editOpt);
     menu.appendChild(hideOpt);
+    menu.appendChild(lockOpt);
     menu.appendChild(deleteOpt);
 
-    // Sync hide label + icon when menu opens on any item type
+    // Sync hide + lock labels/icons when menu opens
     window.__rcOnCtxOpen = function (item) {
       var isHidden = item && item.dataset.adminHidden === '1';
-      var labelEl  = document.getElementById('ctx-admin-label-admin-hide');
-      var hideBtn  = hideOpt.querySelector('button');
-      if (labelEl) { labelEl.textContent = isHidden ? 'Show' : 'Hide'; }
-      if (hideBtn) { hideBtn.innerHTML   = isHidden ? SVG_EYE_ON : SVG_EYE_OFF;
-                     hideBtn.setAttribute('aria-label', isHidden ? 'Show' : 'Hide'); }
+      var isLocked = item && item.dataset.isLocked    === '1';
+
+      var hideLabelEl = document.getElementById('ctx-admin-label-admin-hide');
+      var hideBtn     = hideOpt.querySelector('button');
+      if (hideLabelEl) { hideLabelEl.textContent = isHidden ? 'Show' : 'Hide'; }
+      if (hideBtn)     { hideBtn.innerHTML = isHidden ? SVG_EYE_ON : SVG_EYE_OFF;
+                         hideBtn.setAttribute('aria-label', isHidden ? 'Show' : 'Hide'); }
+
+      var lockLabelEl = document.getElementById('ctx-admin-label-admin-lock');
+      var lockBtn     = lockOpt.querySelector('button');
+      if (lockLabelEl) { lockLabelEl.textContent = isLocked ? 'Unlock' : 'Lock'; }
+      if (lockBtn)     { lockBtn.innerHTML = isLocked ? SVG_UNLOCK : SVG_LOCK;
+                         lockBtn.setAttribute('aria-label', isLocked ? 'Unlock' : 'Lock'); }
     };
 
     function getActiveItem() { return window.__rcActiveCard || null; }
@@ -376,14 +388,13 @@
         var id = item.dataset.id;
         if (id) { window.dispatchEvent(new CustomEvent('rc-journey-edit', { detail: { id: id } })); }
       } else {
-        // Navigate to project page with edit mode
         var slug = item.dataset.slug;
         var isOnProjectPage = window.location.pathname.includes('projects/view');
         if (isOnProjectPage) {
-          // Already on project page — trigger inline edit
+          // Already on project page — trigger client-side edit mode toggle
           window.dispatchEvent(new CustomEvent('rc-project-edit-start'));
         } else if (slug) {
-          window.location.href = 'projects/view.html?slug=' + encodeURIComponent(slug) + '&edit=1';
+          window.location.href = 'projects/view.html?slug=' + encodeURIComponent(slug);
         }
       }
       if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
@@ -418,6 +429,31 @@
         showToast(newHidden ? 'Hidden from public' : 'Now visible to public');
       } catch (e) { showToast('Could not update visibility'); }
 
+      if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
+    });
+
+    // ── Lock / Unlock ──
+    lockOpt.querySelector('button').addEventListener('click', async function () {
+      var item     = getActiveItem(); if (!item) { return; }
+      var type     = item.dataset.ctxType || 'project';
+      if (type === 'journey') {
+        // Lock doesn't apply to journey entries
+        showToast('Lock is for projects only');
+        if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
+        return;
+      }
+      var isLocked = item.dataset.isLocked === '1';
+      var newLocked = !isLocked;
+      var token    = getToken();
+      try {
+        await fetch('/api/projects', {
+          method:  'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body:    JSON.stringify({ slug: item.dataset.slug, isLocked: newLocked }),
+        });
+        item.dataset.isLocked = newLocked ? '1' : '0';
+        showToast(newLocked ? 'Project locked (NDA)' : 'Project unlocked');
+      } catch (e) { showToast('Could not update lock'); }
       if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
     });
 

@@ -337,8 +337,14 @@ body.admin-preview .rc-card-admin {
 }
 
 /* Re-enable pointer events on admin controls only */
-.rc-hidden-card .rc-card-admin {
+.rc-hidden-card .rc-card-admin,
+.rc-hidden-card .ctx-trigger {
   pointer-events: all;
+}
+/* Keep hidden card ctx-trigger fully visible to admin */
+body.is-admin:not(.admin-preview) .rc-hidden-card .ctx-trigger {
+  opacity: 1;
+  transform: scale(1);
 }
 
 body.admin-preview .rc-hidden-card {
@@ -711,11 +717,16 @@ body.about-edit-mode .about-strip__img-delete { display: flex; }
 .skill-tag__remove {
   background: none; border: none;
   color: inherit; cursor: pointer;
-  font-size: 0.8rem; margin-left: 3px;
-  padding: 0; line-height: 1;
+  font-size: 0.75rem; margin-left: 4px;
+  padding: 0 0 1px;  /* tiny bottom pad to optical-center the × on the text cap-line */
+  line-height: 1;
   opacity: 0;
   transition: opacity 140ms;
+  display: inline-flex;
+  align-items: center;
   vertical-align: middle;
+  position: relative;
+  top: -0.5px; /* nudge into cap-height optical alignment */
 }
 body.about-edit-mode .skill-tag__remove { opacity: 0.5; }
 body.about-edit-mode .skill-tag:hover .skill-tag__remove,
@@ -724,10 +735,17 @@ body.about-edit-mode .skill-tag__remove:hover { opacity: 1; }
 body.about-edit-mode .skill-tag--add {
   border: 1.5px dashed var(--border, #ddd);
   background: transparent;
+  color: var(--muted, #888);  /* ensure legible on hover */
   opacity: 0.7;
-  transition: opacity 140ms, border-color 140ms;
+  transition: opacity 140ms, border-color 140ms, color 140ms;
 }
-body.about-edit-mode .skill-tag--add:hover { opacity: 1; border-color: var(--mist-blue, #8ABDD8); }
+/* On hover keep text dark so '+' stays legible */
+body.about-edit-mode .skill-tag--add:hover {
+  opacity: 1;
+  border-color: var(--mist-blue, #8ABDD8);
+  color: var(--text, #2c2c2c);
+  background: transparent; /* never invert background */
+}
 
 .skill-tag--input {
   border: 1.5px solid var(--mist-blue, #8ABDD8) !important;
@@ -818,22 +836,166 @@ body:not(.about-edit-mode) .skill-tag--add    { display: none; }
 body.is-admin:not(.admin-preview) .rc-admin-fab { display: flex; }
 .rc-admin-fab:hover { background: var(--brown-dark, #160C02); transform: translateY(-2px); }
 
-/* Project view edit bar */
-.rc-view-admin-bar {
-  display: none;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  padding: 0.75rem 1.25rem;
-  background: #1a1a1a;
-  color: #e0e0e0;
+/* Project view edit bar — DEPRECATED (removed from template; kept for safety) */
+.rc-view-admin-bar { display: none !important; }
+
+/* ── Sticky project edit / save-cancel FAB ───────────────────── */
+/* Same pattern as .rc-about-edit-btn */
+.rc-project-edit-fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 900;
+  background: var(--brown, #251605);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 0.6rem 1.1rem;
   font-size: 0.78rem;
   font-family: var(--font-sans, 'DM Sans', sans-serif);
-  margin-bottom: 1.5rem;
-  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  display: none;
+  align-items: center;
+  gap: 0.45rem;
+  transition: background 180ms, transform 150ms;
 }
+body.is-admin:not(.admin-preview) .project-page .rc-project-edit-fab { display: flex; }
+.rc-project-edit-fab:hover { background: var(--brown-dark, #160C02); transform: translateY(-1px); }
 
-body.is-admin:not(.admin-preview) .rc-view-admin-bar { display: flex; }
+/* Save+Cancel row shown in edit mode */
+.rc-project-save-bar {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 900;
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+body.project-edit-mode .rc-project-save-bar { display: flex; }
+body.project-edit-mode .rc-project-edit-fab  { display: none !important; }
+
+/* +Block FAB — wrapper (bottom center) */
+.rc-block-add-fab-wrap {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+body.project-edit-mode .rc-block-add-fab-wrap { display: flex; }
+
+/* The circular + button */
+.rc-block-add-fab {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--brown, #251605);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+  transition: background 150ms, transform 200ms var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1));
+}
+.rc-block-add-fab:hover  { background: var(--brown-dark, #160C02); }
+.rc-block-add-fab.active { background: var(--burgundy, #5C0A13); transform: rotate(45deg); }
+
+/* Block type menu — stacked above the FAB */
+.rc-block-add-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  opacity: 0;
+  transform: translateY(8px) scale(0.95);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1));
+}
+.rc-block-add-menu.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+.rc-block-add-opt {
+  background: var(--brown, #251605);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 0.32rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: background 150ms;
+}
+.rc-block-add-opt:hover { background: var(--brown-dark, #160C02); }
+
+/* ── Drag-to-reorder ──────────────────────────────────────────── */
+.pv-block-drag {
+  position: absolute;
+  left: -1.6rem;
+  top: 0;
+  bottom: 0;
+  width: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted, #aaa);
+  cursor: grab;
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 150ms;
+  user-select: none;
+}
+.pv-block-wrap:hover .pv-block-drag { opacity: 1; }
+.pv-block-wrap.drag-dragging { opacity: 0.4; outline: 2px dashed var(--muted, #ccc); outline-offset: 4px; border-radius: 4px; }
+.pv-block-wrap.drag-over     { outline: 2px dashed var(--brown, #251605); outline-offset: 5px; border-radius: 4px; }
+
+/* ── Toggle switch (shared for isLocked + AI toggle in modals) ── */
+.rc-toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.rc-toggle-switch input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+}
+.rc-toggle-track {
+  display: block;
+  width: 36px; height: 20px;
+  border-radius: 999px;
+  background: #ccc;
+  position: relative;
+  transition: background 200ms;
+  flex-shrink: 0;
+}
+.rc-toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 200ms var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1));
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.rc-toggle-switch input:checked ~ .rc-toggle-track { background: var(--brown, #251605); }
+.rc-toggle-switch input:checked ~ .rc-toggle-track::after { transform: translateX(16px); }
 
 /* ── Access codes page ───────────────────────────────────────── */
 .ac-page {
@@ -1198,6 +1360,8 @@ body.is-admin:not(.admin-preview) .rc-view-admin-bar { display: flex; }
   position: relative;
   border-radius: 8px;
   transition: background 150ms;
+  /* Leave room for the drag handle (absolute, left: -1.6rem) */
+  margin-left: 1.8rem;
 }
 .pv-block-wrap:hover { background: rgba(0,0,0,0.018); }
 
@@ -1215,6 +1379,13 @@ body.is-admin:not(.admin-preview) .rc-view-admin-bar { display: flex; }
   opacity: 1;
   pointer-events: auto;
 }
+/* Divider has no text to hover on — always show delete button */
+.pv-block-wrap--divider .pv-block-del {
+  opacity: 0.45;
+  pointer-events: auto;
+}
+.pv-block-wrap--divider:hover .pv-block-del { opacity: 1; }
+.pv-block-wrap--divider { padding-right: 2rem; }
 
 .pv-block-btn {
   background: rgba(255,255,255,0.92);
@@ -1254,24 +1425,25 @@ body.is-admin:not(.admin-preview) .rc-view-admin-bar { display: flex; }
   top: 0.4rem;
   right: 0;
   width: 30px; height: 30px;
-  background: transparent;
+  background: var(--brown, #251605);
   border: none;
   cursor: pointer;
   border-radius: 50%;
   display: none; /* shown only in admin mode (not preview) */
   align-items: center;
   justify-content: center;
-  color: var(--muted, #888);
+  color: #fff;
   opacity: 0;
-  transition: opacity 150ms, background 150ms, color 150ms;
+  transition: opacity 150ms, background 150ms;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
 }
+
+/* Suppress the project-card diamond ::before on timeline trigger */
+.timeline-ctx-trigger::before { display: none; }
 
 .timeline__item:hover .timeline-ctx-trigger { opacity: 1; }
-
-.timeline-ctx-trigger:hover {
-  background: rgba(0,0,0,0.06);
-  color: var(--text, #2c2c2c);
-}
+.timeline-ctx-trigger.active { background: var(--burgundy, #5C0A13); opacity: 1; }
+.timeline-ctx-trigger:hover  { background: var(--brown-dark, #160C02); }
 
 body.is-admin:not(.admin-preview) .timeline-ctx-trigger { display: flex; }
 body.admin-preview .timeline-ctx-trigger { display: none !important; }
@@ -1283,11 +1455,12 @@ body.admin-preview .timeline-ctx-trigger { display: none !important; }
 }
 body.admin-preview .timeline__item.rc-hidden-entry { display: none; }
 
-/* ── Project page ctx trigger (floating, top-right of page) ─── */
+/* ── Project page ctx trigger — absolute within .project-hero ── */
+/* .project-hero must have position:relative (set in renderProject) */
 .rc-page-ctx-trigger {
-  position: fixed;
-  top: 5rem;
-  right: 1.5rem;
+  position: absolute;
+  top: 0;         /* aligned with the top of the hero, JS adjusts to match tags row */
+  right: 0;       /* right edge of the container */
   z-index: 300;
   width: 40px; height: 40px;
   border-radius: 50%;
@@ -1309,14 +1482,13 @@ body.admin-preview .timeline__item.rc-hidden-entry { display: none; }
 }
 .rc-page-ctx-trigger::before {
   content: '';
-  width: 20px; height: 20px;
+  width: 18px; height: 18px;
   background: #fff;
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
 }
 .rc-page-ctx-trigger.active { background: var(--burgundy, #5C0A13); }
 
 body.is-admin { padding-top: 34px; }
-body.is-admin .rc-page-ctx-trigger { top: calc(34px + 4.5rem); }
 
 /* ── Icon-only action buttons (access codes table) ───────────── */
 .ac-icon-btn {

@@ -148,6 +148,22 @@
     return start || '';
   }
 
+  // Default template blocks for new projects (used when AI toggle is off)
+  var DEFAULT_CONTENT = [
+    { type: 'heading',   level: 2, text: 'Context & Brief' },
+    { type: 'paragraph', text: 'Replace with the project background and what you were asked to achieve.' },
+    { type: 'divider' },
+    { type: 'heading',   level: 2, text: 'The Challenge' },
+    { type: 'paragraph', text: 'Describe the core problem or opportunity that drove this project.' },
+    { type: 'divider' },
+    { type: 'heading',   level: 2, text: 'My Approach' },
+    { type: 'paragraph', text: 'Walk through your process, methods, and key decisions.' },
+    { type: 'divider' },
+    { type: 'heading',   level: 2, text: 'Outcome & Impact' },
+    { type: 'callout',   text: 'Add the most notable result or insight here.' },
+    { type: 'paragraph', text: 'Summarise what was shipped, measured, or learned. [add metrics here]' },
+  ];
+
   function buildFormHTML() {
     return [
       '<div class="pm-section" style="background:#fff;border:1.5px solid var(--border,#eee);border-radius:14px;padding:1.25rem;margin-bottom:1rem;">',
@@ -190,20 +206,37 @@
               '</div>',
             '</div>',
           '</div>',
+          /* isLocked toggle */
+          '<div style="grid-column:1/-1;display:flex;align-items:center;gap:0.65rem;padding:0.55rem 0.75rem;background:var(--bg-alt,#fafafa);border:1.5px solid var(--border,#eee);border-radius:10px;">',
+            '<label class="rc-toggle-switch" style="flex-shrink:0;" for="apr-locked">',
+              '<input type="checkbox" id="apr-locked">',
+              '<span class="rc-toggle-track"></span>',
+            '</label>',
+            '<div>',
+              '<p style="margin:0;font-size:0.82rem;font-weight:600;color:var(--text,#2c2c2c);">NDA / Access-code protected</p>',
+              '<p style="margin:0.1rem 0 0;font-size:0.74rem;color:var(--muted,#888);">Blurs thumbnail and requires an access code to view.</p>',
+            '</div>',
+          '</div>',
         '</div>',
       '</div>',
-      /* Generate with Claude section */
-      '<div id="apr-ai-section" style="border:1.5px solid var(--border,#eee);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:0.75rem;background:var(--bg-alt,#fafafa);">',
-        '<div style="flex:1;">',
-          '<p style="margin:0;font-size:0.82rem;font-weight:600;color:var(--text,#2c2c2c);">Generate a first draft with Claude ✨</p>',
-          '<p style="margin:0.2rem 0 0;font-size:0.75rem;color:var(--muted,#888);">Fills the case study with a structured starting point based on the details above.</p>',
+      /* Generate with Claude — toggle row */
+      '<div id="apr-ai-section" style="border:1.5px solid var(--border,#eee);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1rem;background:var(--bg-alt,#fafafa);">',
+        '<div style="display:flex;align-items:flex-start;gap:0.75rem;">',
+          '<label class="rc-toggle-switch" style="flex-shrink:0;margin-top:2px;" for="apr-ai-toggle">',
+            '<input type="checkbox" id="apr-ai-toggle">',
+            '<span class="rc-toggle-track"></span>',
+          '</label>',
+          '<div style="flex:1;">',
+            '<p style="margin:0;font-size:0.82rem;font-weight:600;color:var(--text,#2c2c2c);">Generate first draft with Claude ✨</p>',
+            '<p style="margin:0.2rem 0 0;font-size:0.75rem;color:var(--muted,#888);">When on, clicking "Create project" will ask Claude to fill the case study based on the details above. Requires ANTHROPIC_API_KEY.</p>',
+          '</div>',
         '</div>',
-        '<button id="apr-ai-btn" class="ac-btn ac-btn--ghost" type="button" style="flex-shrink:0;font-size:0.78rem;">Generate draft</button>',
       '</div>',
-      '<div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">',
-        '<button class="ac-btn ac-btn--primary" id="apr-save">Create project</button>',
+      /* CTAs — right-aligned, primary rightmost */
+      '<div style="display:flex;gap:0.75rem;align-items:center;justify-content:flex-end;flex-wrap:wrap;">',
+        '<span id="apr-status" style="font-size:0.8rem;color:var(--muted,#888);margin-right:auto;"></span>',
         '<button class="ac-btn ac-btn--ghost"   id="apr-cancel">Cancel</button>',
-        '<span id="apr-status" style="font-size:0.8rem;color:var(--muted,#888);"></span>',
+        '<button class="ac-btn ac-btn--primary" id="apr-save">Create project</button>',
       '</div>',
     ].join('');
   }
@@ -229,68 +262,59 @@
     document.getElementById('apr-cancel').onclick = function () { overlay.remove(); };
     overlay.addEventListener('click', function (e) { if (e.target === overlay) { overlay.remove(); } });
 
-    // ── Generate with Claude ───────────────────────────────────────
-    document.getElementById('apr-ai-btn').addEventListener('click', async function () {
-      var title = (document.getElementById('apr-title').value || '').trim();
-      if (!title) {
-        document.getElementById('apr-status').textContent = 'Enter a title first';
-        document.getElementById('apr-title').focus();
-        return;
-      }
-      var btn = this;
-      btn.disabled = true;
-      btn.textContent = 'Generating…';
-      document.getElementById('apr-status').textContent = '';
-
-      var tagsRaw = document.getElementById('apr-tags').value || '';
-      var draftPayload = {
-        title:   title,
-        summary: (document.getElementById('apr-summary').value || '').trim(),
-        tags:    tagsRaw ? tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean) : [],
-        role:    (document.getElementById('apr-role').value    || '').trim(),
-        company: (document.getElementById('apr-company').value || '').trim(),
-        period:  composePeriod(),
-      };
-
-      try {
-        var r    = await fetch('/api/ai-draft', { method: 'POST', headers: authHeaders(), body: JSON.stringify(draftPayload) });
-        var data = await r.json();
-        if (r.ok && data.content) {
-          _aiContent = data.content;
-          btn.textContent = '✓ Draft ready';
-          btn.style.cssText = 'background:var(--success-faint,#e6f6ee);color:var(--success,#1a7a4a);border-color:var(--success,#1a7a4a);font-size:0.78rem;flex-shrink:0;';
-          document.getElementById('apr-status').textContent = 'Draft generated — create the project to review it.';
-        } else {
-          btn.disabled = false;
-          btn.textContent = 'Generate draft';
-          document.getElementById('apr-status').textContent = data.error || 'Generation failed';
-        }
-      } catch (err) {
-        btn.disabled = false;
-        btn.textContent = 'Generate draft';
-        document.getElementById('apr-status').textContent = 'Network error';
-      }
-    });
-
-    // ── Create project ─────────────────────────────────────────────
+    // ── Create project (with optional AI draft generation) ─────────
     document.getElementById('apr-save').addEventListener('click', async function () {
       var title = (document.getElementById('apr-title').value || '').trim();
       if (!title) { document.getElementById('apr-status').textContent = 'Title is required'; return; }
-      this.disabled = true;
-      document.getElementById('apr-status').textContent = 'Creating…';
 
-      var tagsRaw = document.getElementById('apr-tags').value || '';
+      var useAI    = document.getElementById('apr-ai-toggle').checked;
+      var saveBtn  = this;
+      saveBtn.disabled = true;
+
+      var tagsRaw   = document.getElementById('apr-tags').value || '';
+      var tagsArr   = tagsRaw ? tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean) : [];
       var startYear = parseInt(document.getElementById('apr-ps-y').value, 10) || null;
+
+      var content = DEFAULT_CONTENT; // fallback template
+
+      // If AI toggle is on, call the draft API first
+      if (useAI) {
+        document.getElementById('apr-status').textContent = 'Generating draft with Claude…';
+        var draftPayload = {
+          title:   title,
+          summary: (document.getElementById('apr-summary').value || '').trim(),
+          tags:    tagsArr,
+          role:    (document.getElementById('apr-role').value    || '').trim(),
+          company: (document.getElementById('apr-company').value || '').trim(),
+          period:  composePeriod(),
+        };
+        try {
+          var dr   = await fetch('/api/ai-draft', { method: 'POST', headers: authHeaders(), body: JSON.stringify(draftPayload) });
+          var ddata = await dr.json();
+          if (dr.ok && ddata.content) {
+            content = ddata.content;
+          } else {
+            document.getElementById('apr-status').textContent = (ddata.error || 'AI draft failed') + ' — using template instead.';
+            // content stays as DEFAULT_CONTENT
+          }
+        } catch (err) {
+          document.getElementById('apr-status').textContent = 'AI draft network error — using template instead.';
+        }
+      } else {
+        document.getElementById('apr-status').textContent = 'Creating…';
+      }
+
       var payload = {
         title:    title,
         summary:  (document.getElementById('apr-summary').value  || '').trim(),
-        tags:     tagsRaw ? tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean) : [],
+        tags:     tagsArr,
         year:     startYear,
         role:     (document.getElementById('apr-role').value     || '').trim(),
         company:  (document.getElementById('apr-company').value  || '').trim(),
         period:   composePeriod(),
         location: (document.getElementById('apr-location').value || '').trim(),
-        content:  _aiContent || [],
+        isLocked: document.getElementById('apr-locked').checked,
+        content:  content,
         order:    99,
       };
 
@@ -299,14 +323,14 @@
         var data = await r.json();
         if (r.ok && data.slug) {
           overlay.remove();
-          window.location.href = 'projects/view.html?slug=' + encodeURIComponent(data.slug) + '&edit=1';
+          window.location.href = 'projects/view.html?slug=' + encodeURIComponent(data.slug);
         } else {
           document.getElementById('apr-status').textContent = data.error || 'Error creating project';
-          this.disabled = false;
+          saveBtn.disabled = false;
         }
       } catch (err) {
         document.getElementById('apr-status').textContent = 'Network error';
-        this.disabled = false;
+        saveBtn.disabled = false;
       }
     });
   }
