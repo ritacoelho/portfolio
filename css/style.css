@@ -755,9 +755,9 @@ body.is-admin:not(.admin-preview) .ctx-menu.open .ctx-option.ctx-public-only {
   pointer-events: none !important;
   transform: translate(-50%, -50%) scale(0.3) !important;
 }
-/* Show admin options */
+/* Show admin options only for logged-in non-preview admin */
 body.is-admin:not(.admin-preview) .ctx-menu.open .ctx-option.ctx-admin-only {
-  opacity: 1; pointer-events: all;
+  opacity: 1 !important; pointer-events: all !important;
 }
 /* Edit — top */
 body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-edit"] {
@@ -779,7 +779,13 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   transform: translate(-50%, calc(-50% + 88px)) scale(1);
   transition-delay: 90ms;
 }
-/* Admin options invisible by default (shown only in admin mode above) */
+/* Admin options invisible by default — use same specificity level as the
+   .ctx-menu.open .ctx-option rule (3 classes) so this wins over it */
+.ctx-menu.open .ctx-option.ctx-admin-only {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+/* (Keep the non-open base rule too for safety) */
 .ctx-option.ctx-admin-only {
   opacity: 0;
   pointer-events: none;

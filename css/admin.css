@@ -336,13 +336,17 @@ body.admin-preview .rc-card-admin {
   pointer-events: none;
 }
 
-/* Re-enable pointer events on admin controls only */
+/* Re-enable pointer events for admin controls on hidden cards */
 .rc-hidden-card .rc-card-admin,
 .rc-hidden-card .ctx-trigger {
   pointer-events: all;
 }
-/* Keep hidden card ctx-trigger fully visible to admin */
-body.is-admin:not(.admin-preview) .rc-hidden-card .ctx-trigger {
+/* Allow admin to hover hidden cards so the trigger can appear */
+body.is-admin:not(.admin-preview) .rc-hidden-card {
+  pointer-events: auto;
+}
+/* Trigger shows on hover like normal cards — no permanent visibility */
+body.is-admin:not(.admin-preview) .rc-hidden-card:hover .ctx-trigger {
   opacity: 1;
   transform: scale(1);
 }
@@ -877,7 +881,7 @@ body.is-admin:not(.admin-preview) .project-page .rc-project-edit-fab { display: 
 body.project-edit-mode .rc-project-save-bar { display: flex; }
 body.project-edit-mode .rc-project-edit-fab  { display: none !important; }
 
-/* +Block FAB — wrapper (bottom center) */
+/* +Block FAB — wrapper: fixed, sized to the button so radial origin = button center */
 .rc-block-add-fab-wrap {
   position: fixed;
   bottom: 1.5rem;
@@ -885,13 +889,11 @@ body.project-edit-mode .rc-project-edit-fab  { display: none !important; }
   transform: translateX(-50%);
   z-index: 900;
   display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+  width: 44px; height: 44px; /* same as button — radial options fan from this center */
 }
-body.project-edit-mode .rc-block-add-fab-wrap { display: flex; }
+body.project-edit-mode .rc-block-add-fab-wrap { display: block; }
 
-/* The circular + button */
+/* The circular + button fills the wrapper */
 .rc-block-add-fab {
   width: 44px; height: 44px;
   border-radius: 50%;
@@ -904,39 +906,38 @@ body.project-edit-mode .rc-block-add-fab-wrap { display: flex; }
   justify-content: center;
   box-shadow: 0 4px 16px rgba(0,0,0,0.22);
   transition: background 150ms, transform 200ms var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1));
+  position: relative; z-index: 1;
 }
 .rc-block-add-fab:hover  { background: var(--brown-dark, #160C02); }
 .rc-block-add-fab.active { background: var(--burgundy, #5C0A13); transform: rotate(45deg); }
 
-/* Block type menu — stacked above the FAB */
+/* Menu: 0×0 anchor at the button's center — options positioned radially via JS */
 .rc-block-add-menu {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-  opacity: 0;
-  transform: translateY(8px) scale(0.95);
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 0; height: 0;
   pointer-events: none;
-  transition: opacity 180ms ease, transform 180ms var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1));
 }
-.rc-block-add-menu.open {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: all;
-}
+.rc-block-add-menu.open { pointer-events: all; }
+
+/* Each option: starts scaled-down at center, animates to radial position */
 .rc-block-add-opt {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(0); /* default: at center, hidden */
+  opacity: 0;
+  transition: transform 220ms var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1)),
+              opacity 160ms ease;
   background: var(--brown, #251605);
   color: #fff;
   border: none;
   border-radius: 999px;
-  padding: 0.32rem 0.9rem;
+  padding: 0.32rem 0.95rem;
   font-size: 0.72rem;
   font-weight: 500;
   font-family: var(--font-sans, 'DM Sans', sans-serif);
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  transition: background 150ms;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.22);
 }
 .rc-block-add-opt:hover { background: var(--brown-dark, #160C02); }
 
@@ -1420,30 +1421,31 @@ body.project-edit-mode .rc-block-add-fab-wrap { display: flex; }
 /* ── Journey timeline ctx-trigger (admin only) ───────────────── */
 .timeline__item { position: relative; }
 
+/* Same visual as the project-card diamond trigger — transparent with ::before diamond */
 .timeline-ctx-trigger {
   position: absolute;
   top: 0.4rem;
   right: 0;
-  width: 30px; height: 30px;
-  background: var(--brown, #251605);
+  width: 44px; height: 44px; /* match project card trigger */
+  background: transparent;   /* transparent — diamond comes from ::before */
   border: none;
   cursor: pointer;
-  border-radius: 50%;
-  display: none; /* shown only in admin mode (not preview) */
+  display: none; /* shown only in admin mode (below) */
   align-items: center;
   justify-content: center;
-  color: #fff;
   opacity: 0;
-  transition: opacity 150ms, background 150ms;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  transition: opacity 150ms;
+}
+/* Prevent the 44→180px active expansion (hit-area trick) from breaking timeline layout */
+.timeline-ctx-trigger.active {
+  width: 44px !important;
+  height: 44px !important;
+  right: 0 !important;
+  top: 0.4rem !important;
 }
 
-/* Suppress the project-card diamond ::before on timeline trigger */
-.timeline-ctx-trigger::before { display: none; }
-
 .timeline__item:hover .timeline-ctx-trigger { opacity: 1; }
-.timeline-ctx-trigger.active { background: var(--burgundy, #5C0A13); opacity: 1; }
-.timeline-ctx-trigger:hover  { background: var(--brown-dark, #160C02); }
+.timeline-ctx-trigger.active { opacity: 1; }
 
 body.is-admin:not(.admin-preview) .timeline-ctx-trigger { display: flex; }
 body.admin-preview .timeline-ctx-trigger { display: none !important; }
@@ -1456,37 +1458,35 @@ body.admin-preview .timeline-ctx-trigger { display: none !important; }
 body.admin-preview .timeline__item.rc-hidden-entry { display: none; }
 
 /* ── Project page ctx trigger — absolute within .project-hero ── */
-/* .project-hero must have position:relative (set in renderProject) */
+/* .project-hero must have position:relative (set in renderProject).
+   Matches project-card trigger visually: transparent with brown diamond ::before */
 .rc-page-ctx-trigger {
   position: absolute;
-  top: 0;         /* aligned with the top of the hero, JS adjusts to match tags row */
-  right: 0;       /* right edge of the container */
+  top: 0;       /* JS overrides to align with tags row */
+  right: 0;
   z-index: 300;
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  background: var(--brown, #251605);
-  color: #fff;
+  width: 44px; height: 44px; /* match project card trigger */
+  background: transparent;   /* transparent — diamond from ::before */
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
   opacity: 0;
   transform: scale(0.8);
   transition: opacity 200ms ease, transform 200ms var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1));
 }
-.rc-page-ctx-trigger.is-visible {
+/* Only show for admins (not public visitors) */
+body.is-admin:not(.admin-preview) .rc-page-ctx-trigger.is-visible {
   opacity: 1;
   transform: scale(1);
 }
-.rc-page-ctx-trigger::before {
-  content: '';
-  width: 18px; height: 18px;
-  background: #fff;
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+/* Prevent 44→180px hit-area expansion from affecting hero layout */
+.rc-page-ctx-trigger.active {
+  width: 44px !important;
+  height: 44px !important;
+  right: 0 !important;
 }
-.rc-page-ctx-trigger.active { background: var(--burgundy, #5C0A13); }
 
 body.is-admin { padding-top: 34px; }
 

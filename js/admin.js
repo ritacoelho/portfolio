@@ -391,10 +391,11 @@
         var slug = item.dataset.slug;
         var isOnProjectPage = window.location.pathname.includes('projects/view');
         if (isOnProjectPage) {
-          // Already on project page — trigger client-side edit mode toggle
+          // Already on project page — toggle edit mode in-place
           window.dispatchEvent(new CustomEvent('rc-project-edit-start'));
         } else if (slug) {
-          window.location.href = 'projects/view.html?slug=' + encodeURIComponent(slug);
+          // Navigate to project page with edit flag so it auto-enters edit mode
+          window.location.href = 'projects/view.html?slug=' + encodeURIComponent(slug) + '&edit=1';
         }
       }
       if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
@@ -509,11 +510,10 @@
     // Mark as journey type so admin actions know which API to call
     item.dataset.ctxType = 'journey';
 
-    var SVG_DOTS = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="2.5" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="11.5" r="1.2" fill="currentColor"/></svg>';
     var btn = document.createElement('button');
     btn.className = 'timeline-ctx-trigger ctx-trigger';
     btn.setAttribute('aria-label', 'Entry actions');
-    btn.innerHTML = SVG_DOTS;
+    // No innerHTML — diamond visual comes from .ctx-trigger::before (consistent with project cards)
     item.appendChild(btn);
 
     // Wire up immediately via main.js helper if available

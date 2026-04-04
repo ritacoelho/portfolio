@@ -374,31 +374,72 @@
 
     var BLOCK_TYPES = [
       { type: 'heading',   label: 'Heading'   },
-      { type: 'paragraph', label: 'Paragraph' },
+      { type: 'paragraph', label: 'Para'      },
       { type: 'callout',   label: 'Callout'   },
       { type: 'divider',   label: 'Divider'   },
       { type: 'image',     label: 'Image'     },
     ];
-    menu.innerHTML = BLOCK_TYPES.map(function (b) {
-      return '<button class="rc-block-add-opt" data-btype="' + b.type + '">' + b.label + '</button>';
-    }).join('');
-    menu.querySelectorAll('.rc-block-add-opt').forEach(function (btn) {
+
+    // Semi-circle above the button: 5 items, angles 180°→360° (left → top → right)
+    var ANGLES  = [180, 225, 270, 315, 360];
+    var RADIUS  = 90; // px from center
+
+    menu.innerHTML = '';
+    BLOCK_TYPES.forEach(function (b, i) {
+      var btn = document.createElement('button');
+      btn.className  = 'rc-block-add-opt';
+      btn.dataset.btype = b.type;
+      btn.textContent   = b.label;
+
+      // Radial position: CSS coordinates (positive Y = down, so sin gives negative for "up")
+      var rad = ANGLES[i] * Math.PI / 180;
+      var x   = Math.round(Math.cos(rad) * RADIUS); // negative = left
+      var y   = Math.round(Math.sin(rad) * RADIUS); // negative = up
+      btn.style.left = x + 'px';
+      btn.style.top  = y + 'px';
+      // Initial: centered + scaled down (animated in below)
+      btn.style.transform = 'translate(-50%, -50%) scale(0)';
+      btn.style.opacity   = '0';
+
       btn.addEventListener('click', function () {
-        addBlock(btn.dataset.btype);
+        addBlock(b.type);
         closeBlockMenu();
       });
+      menu.appendChild(btn);
     });
+
+    // Show menu container
     menu.setAttribute('aria-hidden', 'false');
     menu.classList.add('open');
     fab.setAttribute('aria-expanded', 'true');
     fab.classList.add('active');
+
+    // Animate options into their radial positions (staggered)
+    var opts = menu.querySelectorAll('.rc-block-add-opt');
+    opts.forEach(function (btn, i) {
+      setTimeout(function () {
+        btn.style.transform = 'translate(-50%, -50%) scale(1)';
+        btn.style.opacity   = '1';
+      }, i * 30);
+    });
   }
 
   function closeBlockMenu() {
     var fab  = document.getElementById('pv-add-block-fab');
     var menu = document.getElementById('pv-add-block-menu');
     if (fab)  { fab.setAttribute('aria-expanded', 'false'); fab.classList.remove('active'); }
-    if (menu) { menu.setAttribute('aria-hidden', 'true');   menu.classList.remove('open');  }
+    if (menu) {
+      // Animate back before clearing
+      menu.querySelectorAll('.rc-block-add-opt').forEach(function (btn) {
+        btn.style.transform = 'translate(-50%, -50%) scale(0)';
+        btn.style.opacity   = '0';
+      });
+      setTimeout(function () {
+        menu.setAttribute('aria-hidden', 'true');
+        menu.classList.remove('open');
+        menu.innerHTML = '';
+      }, 180);
+    }
   }
 
   function addBlock(type) {
@@ -600,6 +641,11 @@
       var loadingEl = document.getElementById('project-loading');
       if (loadingEl) { loadingEl.remove(); }
       renderProject(project);
+      // Auto-enter edit mode when navigated via "Edit" ctx action (?edit=1)
+      if (params.get('edit') === '1' && sessionStorage.getItem('rc_admin_token')) {
+        // Small delay: wait for rc-admin-enabled to fire and FABs to be injected
+        setTimeout(function () { enterEditMode(); }, 150);
+      }
     })
     .catch(function () {
       var loadingEl = document.getElementById('project-loading');
