@@ -41,7 +41,7 @@
 <main>
   <div class="container">
 
-    <header class="page-header">
+    <header class="page-header" style="margin-bottom:0;">
       <a href="index.html" class="page-header__back fade-up">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <path d="M11 7H3M5.5 3.5L2.5 7l3 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -52,16 +52,11 @@
     </header>
 
     <!-- Photo strip — full-width horizontal scroll -->
-    <div style="position:relative;margin:0 calc(-1 * var(--gutter));overflow:hidden;">
+    <div style="position:relative;">
       <div class="about-strip" id="about-strip">
-        <!-- Track is duplicated in JS for seamless looping; images added here or via admin upload -->
-        <div class="about-strip__track" id="about-strip-track">
-          <img class="about-strip__img" src="images/rita.jpg" alt="Rita Coelho" loading="eager">
-          <!-- Additional photos load from API or can be left as single image; strip loops via CSS -->
-        </div>
-        <div class="about-strip__track" aria-hidden="true" id="about-strip-track2">
-          <img class="about-strip__img" src="images/rita.jpg" alt="" loading="lazy">
-        </div>
+        <!-- Photos loaded dynamically from API -->
+        <div class="about-strip__track" id="about-strip-track"></div>
+        <div class="about-strip__track" aria-hidden="true" id="about-strip-track2"></div>
       </div>
       <input type="file" id="about-strip-file" accept="image/*" style="display:none">
       <button class="about-strip__add-btn is-admin-only" id="about-strip-upload-btn" style="display:none">+ Add photo</button>
@@ -200,7 +195,57 @@
   var track2    = document.getElementById('about-strip-track2');
 
   var ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-  var MAX_MB = 10;
+  var MAX_MB = 20;
+
+  // ── Load photos from API on page init (public + admin) ─────────
+  function loadPhotosFromAPI() {
+    fetch('/api/about')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var photos = data.photos;
+        if (!Array.isArray(photos) || photos.length === 0) { return; }
+        photos.forEach(function (url) { addPhotoToStrip(url); });
+      })
+      .catch(function () { /* silent fail */ });
+  }
+
+  // ── Save current photos array back to API ───────────────────────
+  function savePhotosToAPI() {
+    var token = sessionStorage.getItem('rc_admin_token');
+    if (!token) { return; }
+    var photos = [];
+    if (track1) {
+      track1.querySelectorAll('.about-strip__img').forEach(function (img) {
+        photos.push(img.src);
+      });
+    }
+    fetch('/api/about', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ photos: photos }),
+    }).catch(function () {});
+  }
+
+  // ── Compress image client-side before storing ───────────────────
+  // Targets ~800 px tall JPEG at 0.82 quality — keeps each photo
+  // well under 200 KB base64 so the KV store stays happy.
+  function compressImage(file, callback) {
+    var objUrl = URL.createObjectURL(file);
+    var img = new Image();
+    img.onerror = function () { URL.revokeObjectURL(objUrl); callback(null); };
+    img.onload = function () {
+      var maxW = 1600, maxH = 900;
+      var w = img.width, h = img.height;
+      var scale = Math.min(1, maxW / w, maxH / h);
+      var canvas = document.createElement('canvas');
+      canvas.width  = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(objUrl);
+      callback(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.src = objUrl;
+  }
 
   // ── Upload preview modal ────────────────────────────────────────
   function showUploadModal(file, onConfirm) {
@@ -232,7 +277,7 @@
         '<p style="font-size:0.78rem;color:var(--muted);margin:0;">' + file.name + ' &ndash; ' + (file.size / 1024).toFixed(0) + ' KB</p>' +
         '</div>' +
         '<div style="display:flex;gap:0.6rem;justify-content:center;margin-top:1.25rem;">' +
-        '<button class="ac-btn ac-btn--primary" id="pu-confirm">Upload photo</button>' +
+        '<button class="ac-btn ac-btn--primary" id="pu-confirm">Add to strip</button>' +
         '<button class="ac-btn ac-btn--ghost"   id="pu-cancel">Cancel</button></div>';
     }
 
@@ -252,27 +297,17 @@
     if (confirmBtn) { confirmBtn.onclick = function () { overlay.remove(); onConfirm(); }; }
   }
 
-  // ── Do upload ───────────────────────────────────────────────────
+  // ── Do upload: compress client-side → strip → save to API ───────
   function doUpload(file) {
-    var token = sessionStorage.getItem('rc_admin_token');
-    if (uploadBtn) { uploadBtn.textContent = 'Uploading…'; }
-    fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: file,
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (data.url) {
-        addPhotoToStrip(data.url);
+    if (uploadBtn) { uploadBtn.textContent = 'Processing…'; }
+    compressImage(file, function (dataUrl) {
+      if (!dataUrl) {
+        alert('Could not process this image — please try another file.');
         if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
-      } else {
-        alert('Upload failed: ' + (data.error || 'Unknown error'));
-        if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
+        return;
       }
-    })
-    .catch(function () {
-      alert('Upload error — check connection and try again.');
+      addPhotoToStrip(dataUrl);
+      savePhotosToAPI();
       if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
     });
     fileInput.value = '';
@@ -293,7 +328,7 @@
       if (!t) { return; }
       var img = document.createElement('img');
       img.className = 'about-strip__img'; img.src = url;
-      img.alt = ''; img.loading = 'lazy';
+      img.alt = ''; img.loading = idx === 0 ? 'eager' : 'lazy';
       t.appendChild(img);
       if (idx === 0) { wrapPhotoDelete(img); }
     });
@@ -319,6 +354,7 @@
           if (t2.src === src) { t2.remove(); }
         });
       }
+      savePhotosToAPI();
     });
   }
 
@@ -326,6 +362,9 @@
     if (!track1) { return; }
     track1.querySelectorAll('.about-strip__img').forEach(wrapPhotoDelete);
   }
+
+  // ── Kick off photo load for all visitors ───────────────────────
+  loadPhotosFromAPI();
 
   // ── Tag management ──────────────────────────────────────────────
   function initTagEditing() {
