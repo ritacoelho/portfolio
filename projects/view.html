@@ -145,23 +145,6 @@
         return wrap('<div class="callout"><p contenteditable="true"' +
                     ' data-pv-block-idx="' + idx + '" data-pv-block-field="text"' +
                     ' class="pv-editable pv-block-editable">' + esc(block.text) + '</p></div>');
-      case 'image': {
-        var imgPreview = block.url
-          ? '<img src="' + esc(block.url) + '" alt="' + esc(block.alt || '') + '" class="pv-img-block-preview">'
-          : '<div class="pv-img-block-placeholder">No image yet</div>';
-        return wrap(
-          '<div class="pv-img-block">' +
-            imgPreview +
-            '<div class="pv-img-block-bar">' +
-              '<button class="pv-cover-upload-btn pv-img-upload-btn" data-block-idx="' + idx + '">Upload image</button>' +
-              '<input class="pm-input pv-img-alt" type="text" placeholder="Alt text"' +
-                     ' value="' + esc(block.alt || '') + '"' +
-                     ' data-pv-block-idx="' + idx + '" data-pv-block-field="alt">' +
-              '<input type="file" accept="image/*" class="pv-img-file" style="display:none">' +
-            '</div>' +
-          '</div>'
-        );
-      }
       default:
         return wrap(renderBlock(block));
     }
@@ -188,35 +171,20 @@
              '<p class="project-meta__value"' + editAttr + '>' + esc(m.value) + '</p></div>';
     }).join('');
 
-    // ── Full-bleed cover (lives OUTSIDE the container) ───────────
-    var coverSectionHtml = '';
-    if (p.coverImage) {
-      coverSectionHtml =
-        '<div class="pv-cover-hero" id="pv-cover-section">' +
-          '<img src="' + esc(p.coverImage) + '" alt="" id="pv-cover-img" loading="lazy">' +
-          (editMode
-            ? '<button class="pv-cover-upload-btn" id="pv-cover-btn">Change cover</button>' +
-              '<input type="file" id="pv-cover-file" accept="image/*" style="display:none">'
-            : '') +
-        '</div>';
-    } else if (editMode) {
-      coverSectionHtml =
-        '<div class="pv-cover-hero pv-cover-hero--empty" id="pv-cover-section">' +
-          '<button class="pv-cover-upload-btn pv-cover-upload-btn--add" id="pv-cover-btn">+ Add cover image</button>' +
-          '<input type="file" id="pv-cover-file" accept="image/*" style="display:none">' +
-        '</div>';
-    }
+    var coverHtml = p.coverImage
+      ? '<div class="project-hero__cover" style="margin:2rem 0 0;position:relative;">' +
+          '<img src="' + esc(p.coverImage) + '" alt="" id="pv-cover-img" style="width:100%;border-radius:16px;display:block;" loading="lazy">' +
+          (editMode ? '<button class="pv-cover-upload-btn" id="pv-cover-btn">Change cover</button><input type="file" id="pv-cover-file" accept="image/*" style="display:none">' : '') +
+        '</div>'
+      : (editMode ? '<div style="margin:1rem 0;"><button class="pv-cover-upload-btn" id="pv-cover-btn">+ Add cover image</button><input type="file" id="pv-cover-file" accept="image/*" style="display:none"></div>' : '');
 
     var blocksHtml = (p.content || []).map(function (b, i) { return renderBlockView(b, i); }).join('');
 
     var titleEditAttr   = editMode ? ' contenteditable="true" data-pv-field="title"   class="pv-editable"' : '';
     var summaryEditAttr = editMode ? ' contenteditable="true" data-pv-field="summary" class="pv-editable"' : '';
 
-    var heroClass = 'project-hero section container' + (p.coverImage ? ' has-cover' : '');
-
     var html = [
-      coverSectionHtml,
-      '<section class="' + heroClass + '" style="position:relative;">',
+      '<section class="project-hero section container" style="position:relative;">',
         '<a href="../work.html" class="project-hero__back fade-up" aria-label="Back to all work">',
           SVG_BACK + ' All Work',
         '</a>',
@@ -226,6 +194,7 @@
           ? '<p class="project-hero__summary fade-up fade-up--d3"' + summaryEditAttr + '>' + esc(p.summary || '') + '</p>'
           : '',
         metaHtml ? '<div class="project-meta fade-up fade-up--d4">' + metaHtml + '</div>' : '',
+        coverHtml,
       '</section>',
       '<section class="section container" aria-label="Case study">',
         '<div class="project-body" id="pv-body">',
@@ -550,7 +519,14 @@
           var data = await r.json();
           if (data.url) {
             currentProject.coverImage = data.url;
-            renderProject(currentProject);
+            var img = document.getElementById('pv-cover-img');
+            if (img) {
+              img.src = data.url;
+              coverBtn.textContent = 'Change cover';
+            } else {
+              renderProject(currentProject);
+              return;
+            }
             showToast('Cover updated');
           } else {
             coverBtn.textContent = 'Upload failed';
@@ -562,45 +538,6 @@
         }
       });
     }
-
-    // Image block uploads
-    document.querySelectorAll('.pv-img-upload-btn').forEach(function (btn) {
-      var blockIdx  = parseInt(btn.dataset.blockIdx, 10);
-      var fileInput = btn.parentElement.querySelector('.pv-img-file');
-      if (!fileInput) { return; }
-      btn.addEventListener('click', function () { fileInput.click(); });
-      fileInput.addEventListener('change', async function () {
-        var file = fileInput.files[0]; if (!file) { return; }
-        btn.textContent = 'Uploading…';
-        try {
-          var r    = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
-            method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: file,
-          });
-          var data = await r.json();
-          if (data.url) {
-            currentProject.content[blockIdx].url = data.url;
-            renderProject(currentProject);
-            showToast('Image uploaded');
-          } else {
-            btn.textContent = 'Upload image';
-            showToast(data.error || 'Upload failed');
-          }
-        } catch (e) {
-          btn.textContent = 'Upload image';
-          showToast('Upload error');
-        }
-      });
-    });
-
-    // Alt text inputs on image blocks
-    document.querySelectorAll('.pv-img-alt').forEach(function (input) {
-      input.addEventListener('input', function () {
-        var idx = parseInt(input.dataset.pvBlockIdx, 10);
-        if (currentProject.content[idx] !== undefined) {
-          currentProject.content[idx].alt = input.value;
-        }
-      });
-    });
   }
 
   // ── Drag-to-reorder blocks ────────────────────────────────────

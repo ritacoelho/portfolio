@@ -316,10 +316,6 @@
     document.querySelectorAll('[data-about-field]').forEach(function (el) {
       fields[el.dataset.aboutField] = el.innerHTML.trim();
     });
-    // Include photo strip URLs so they persist across page loads
-    if (typeof window.__rcGetAboutPhotos === 'function') {
-      fields.photos = window.__rcGetAboutPhotos();
-    }
     try {
       await fetch('/api/about', {
         method:  'PATCH',
