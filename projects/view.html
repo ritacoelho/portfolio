@@ -55,6 +55,8 @@
 <script>
 (function () {
   var SVG_BACK = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12.5 8h-9M6.5 4L3 8l3.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var SVG_EDIT = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M9.5 1.5l3 3-7 7H2.5v-3l7-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+  var SVG_PLUS = '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 3v12M3 9h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
   // ── Get slug from URL ──────────────────────────────────────────
   var params = new URLSearchParams(window.location.search);
@@ -72,12 +74,20 @@
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // ── Render a content block ─────────────────────────────────────
+  // ── State ──────────────────────────────────────────────────────
+  var editMode       = false;
+  var currentProject = null;
+
+  // Expose for ctx-menu edit action
+  window.__rcProjectEnterEdit = function () { enterEditMode(); };
+
+  // ── Render a content block (view mode) ────────────────────────
   function renderBlock(block) {
     switch (block.type) {
-      case 'heading':
+      case 'heading': {
         var level = block.level || 2;
         return '<h' + level + '>' + esc(block.text) + '</h' + level + '>';
+      }
       case 'paragraph':
         return '<p>' + esc(block.text) + '</p>';
       case 'image':
@@ -92,12 +102,13 @@
         ].join('');
       case 'callout':
         return '<div class="callout"><p>' + esc(block.text) + '</p></div>';
-      case 'metrics':
+      case 'metrics': {
         var items = (block.items || []).map(function (item) {
           return '<div><p class="project-meta__label">' + esc(item.label) + '</p>' +
                  '<p class="project-meta__value">' + esc(item.value) + '</p></div>';
         }).join('');
         return '<div class="project-meta" style="margin:2rem 0;">' + items + '</div>';
+      }
       case 'divider':
         return '<hr style="border:none;border-top:1px solid var(--border);margin:2.5rem 0;">';
       default:
@@ -105,28 +116,43 @@
     }
   }
 
-  // ── Check edit mode ────────────────────────────────────────────
-  var editMode = params.get('edit') === '1' && !!sessionStorage.getItem('rc_admin_token');
-
-  // ── Render a content block (view mode) ─────────────────────────
+  // ── Render a content block (edit mode — contenteditable) ───────
   function renderBlockView(block, idx) {
-    var base = renderBlock(block);
-    if (!editMode) { return base; }
-    // Wrap each block with an edit overlay in edit mode
-    return '<div class="pv-block-wrap" data-block-idx="' + idx + '" style="position:relative;">' +
-           base +
-           '<div class="pv-block-controls">' +
-             '<button class="pv-block-btn pv-block-edit"  data-idx="' + idx + '">Edit</button>' +
-             '<button class="pv-block-btn pv-block-del"   data-idx="' + idx + '">×</button>' +
-           '</div>' +
-           '</div>';
+    if (!editMode) { return renderBlock(block); }
+
+    var isDivider  = block.type === 'divider';
+    var extraClass = isDivider ? ' pv-block-wrap--divider' : '';
+    var del        = '<button class="pv-block-del pv-block-btn" data-idx="' + idx + '" aria-label="Delete block" title="Delete">×</button>';
+    var drag       = '<span class="pv-block-drag" aria-hidden="true" title="Drag to reorder">⠿</span>';
+
+    var wrap = function (inner) {
+      return '<div class="pv-block-wrap' + extraClass + '" data-block-idx="' + idx + '" draggable="true">' +
+             drag + inner + del + '</div>';
+    };
+
+    switch (block.type) {
+      case 'heading': {
+        var level = block.level || 2;
+        return wrap('<h' + level + ' contenteditable="true"' +
+                    ' data-pv-block-idx="' + idx + '" data-pv-block-field="text"' +
+                    ' class="pv-editable pv-block-editable">' + esc(block.text) + '</h' + level + '>');
+      }
+      case 'paragraph':
+        return wrap('<p contenteditable="true"' +
+                    ' data-pv-block-idx="' + idx + '" data-pv-block-field="text"' +
+                    ' class="pv-editable pv-block-editable">' + esc(block.text) + '</p>');
+      case 'callout':
+        return wrap('<div class="callout"><p contenteditable="true"' +
+                    ' data-pv-block-idx="' + idx + '" data-pv-block-field="text"' +
+                    ' class="pv-editable pv-block-editable">' + esc(block.text) + '</p></div>');
+      default:
+        return wrap(renderBlock(block));
+    }
   }
 
   // ── Render the full project ────────────────────────────────────
-  var currentProject = null;
-
   function renderProject(p) {
-    currentProject = JSON.parse(JSON.stringify(p)); // deep copy
+    currentProject = JSON.parse(JSON.stringify(p));
     document.title = p.title + ' — Rita Coelho';
 
     var tags = (p.tags || []).map(function (t) {
@@ -157,30 +183,14 @@
     var titleEditAttr   = editMode ? ' contenteditable="true" data-pv-field="title"   class="pv-editable"' : '';
     var summaryEditAttr = editMode ? ' contenteditable="true" data-pv-field="summary" class="pv-editable"' : '';
 
-    var adminBar = editMode
-      ? '<div class="rc-view-admin-bar" style="display:flex;">' +
-          '<span style="opacity:0.7;flex:1;">Editing <strong>' + esc(p.title) + '</strong></span>' +
-          '<button class="ac-btn ac-btn--primary" id="pv-save-btn" style="font-size:0.78rem;">Save changes</button>' +
-          '<button class="ac-btn ac-btn--ghost"   id="pv-add-block-btn" style="font-size:0.78rem;">+ Block</button>' +
-          (p.isHidden
-            ? '<button class="ac-btn ac-btn--ghost" id="pv-toggle-hide" style="font-size:0.78rem;">Show project</button>'
-            : '<button class="ac-btn ac-btn--ghost" id="pv-toggle-hide" style="font-size:0.78rem;">Hide project</button>') +
-          '<button class="ac-btn ac-btn--danger" id="pv-delete-btn" style="font-size:0.78rem;">Delete</button>' +
-          '<span id="pv-save-status" style="font-size:0.78rem;color:var(--muted,#888);"></span>' +
-        '</div>'
-      : '<div class="admin-only" style="margin-bottom:1rem;display:flex;gap:0.5rem;">' +
-          '<a href="?slug=' + esc(slug) + '&edit=1" class="btn btn--light" style="font-size:0.78rem;">Edit project</a>' +
-        '</div>';
-
     var html = [
-      '<section class="project-hero section container">',
+      '<section class="project-hero section container" style="position:relative;">',
         '<a href="../work.html" class="project-hero__back fade-up" aria-label="Back to all work">',
           SVG_BACK + ' All Work',
         '</a>',
-        adminBar,
-        '<div class="project-hero__tags fade-up fade-up--d1">' + tags + '</div>',
+        '<div class="project-hero__tags fade-up fade-up--d1" id="pv-tags-row">' + tags + '</div>',
         '<h1 class="project-hero__title fade-up fade-up--d2"' + titleEditAttr + '>' + esc(p.title) + '</h1>',
-        p.summary || editMode
+        (p.summary || editMode)
           ? '<p class="project-hero__summary fade-up fade-up--d3"' + summaryEditAttr + '>' + esc(p.summary || '') + '</p>'
           : '',
         metaHtml ? '<div class="project-meta fade-up fade-up--d4">' + metaHtml + '</div>' : '',
@@ -190,7 +200,6 @@
         '<div class="project-body" id="pv-body">',
           blocksHtml,
         '</div>',
-        editMode ? '<div id="pv-add-block-panel" style="margin-top:1.5rem;display:none;"></div>' : '',
       '</section>',
     ].join('');
 
@@ -202,22 +211,284 @@
       main.querySelectorAll('.fade-up').forEach(function (el) { el.classList.add('visible'); });
     }, 60);
 
-    if (editMode) { wireEditMode(p); }
+    if (editMode) { wireEditMode(); }
+
+    // Inject ctx trigger inside .project-hero (after HTML is in DOM)
+    injectCtxTrigger(p);
+
+    // Sync edit mode body class + FAB visibility
+    document.body.classList.toggle('project-edit-mode', editMode);
+
+    window.dispatchEvent(new CustomEvent('rc-project-rendered', { detail: p }));
   }
 
-  // ── Edit mode wiring ───────────────────────────────────────────
-  function wireEditMode(p) {
-    var token = sessionStorage.getItem('rc_admin_token');
-    function authHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }; }
-    function showToast(msg) {
-      var t = document.createElement('div'); t.className = 'rc-toast'; t.textContent = msg;
-      document.body.appendChild(t); setTimeout(function(){t.remove();}, 2200);
+  // ── Inject ctx trigger inside .project-hero ───────────────────
+  function injectCtxTrigger(project) {
+    var existing = document.getElementById('rc-page-ctx-trigger');
+    if (existing) { existing.remove(); }
+
+    var hero = document.querySelector('.project-hero');
+    if (!hero) { return; }
+
+    var btn = document.createElement('button');
+    btn.id        = 'rc-page-ctx-trigger';
+    btn.className = 'rc-page-ctx-trigger ctx-trigger';
+    btn.setAttribute('aria-label', 'Project actions');
+    btn.dataset.ctxRoot = '1';
+
+    var proxy = document.createElement('div');
+    proxy.dataset.slug        = project.slug   || '';
+    proxy.dataset.title       = project.title  || '';
+    proxy.dataset.url         = window.location.href;
+    proxy.dataset.ctxType     = 'project';
+    proxy.dataset.adminHidden = project.isHidden ? '1' : '0';
+    proxy.dataset.isLocked    = project.isLocked  ? '1' : '0';
+    proxy.classList.add('project-card');
+    btn._ctxProxyItem = proxy;
+
+    hero.appendChild(btn);
+
+    // Align button vertically with the tags row
+    var tagsRow = document.getElementById('pv-tags-row');
+    if (tagsRow) {
+      btn.style.top = tagsRow.offsetTop + 'px';
+    }
+    setTimeout(function () { btn.classList.add('is-visible'); }, 200);
+
+    if (!btn._ctxWired) {
+      btn._ctxWired = true;
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        var ctxMenu = document.getElementById('ctx-menu');
+        if (ctxMenu && ctxMenu.classList.contains('open') && window.__rcActiveCard === proxy) {
+          if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
+        } else {
+          if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
+          if (typeof window.__rcOpenCtxMenu  === 'function') { window.__rcOpenCtxMenu(btn, proxy); }
+        }
+      });
     }
 
-    // Sync inline editable fields back to currentProject
+    if (typeof window.__rcInitCtx === 'function') { window.__rcInitCtx(); }
+  }
+
+  // ── FABs — injected once, controlled via CSS body classes ─────
+  var _fabsInjected = false;
+
+  function injectFABs() {
+    if (_fabsInjected) { return; }
+    _fabsInjected = true;
+
+    // Edit FAB (bottom-right, visible when not editing)
+    var editFab = document.createElement('button');
+    editFab.id        = 'pv-edit-fab';
+    editFab.className = 'rc-project-edit-fab';
+    editFab.innerHTML = SVG_EDIT + ' Edit page';
+    document.body.appendChild(editFab);
+    editFab.addEventListener('click', enterEditMode);
+
+    // Save + Cancel bar (bottom-right, visible in edit mode)
+    var saveBar = document.createElement('div');
+    saveBar.id        = 'pv-save-bar';
+    saveBar.className = 'rc-project-save-bar';
+    saveBar.innerHTML =
+      '<button class="ac-btn ac-btn--ghost" id="pv-cancel-btn">Cancel</button>' +
+      '<button class="ac-btn ac-btn--primary" id="pv-save-btn">Save changes</button>';
+    document.body.appendChild(saveBar);
+    document.getElementById('pv-cancel-btn').addEventListener('click', exitEditMode);
+    document.getElementById('pv-save-btn').addEventListener('click', saveProject);
+
+    // +Block FAB (bottom-center, visible in edit mode)
+    var addWrap = document.createElement('div');
+    addWrap.id        = 'pv-add-block-wrap';
+    addWrap.className = 'rc-block-add-fab-wrap';
+    addWrap.innerHTML =
+      '<div class="rc-block-add-menu" id="pv-add-block-menu" aria-hidden="true"></div>' +
+      '<button class="rc-block-add-fab" id="pv-add-block-fab" aria-label="Add block" aria-expanded="false">' + SVG_PLUS + '</button>';
+    document.body.appendChild(addWrap);
+    document.getElementById('pv-add-block-fab').addEventListener('click', toggleBlockMenu);
+  }
+
+  // Inject FABs once admin mode is active
+  window.addEventListener('rc-admin-enabled', injectFABs);
+
+  // ── Enter / exit edit mode ────────────────────────────────────
+  function enterEditMode() {
+    if (editMode || !currentProject) { return; }
+    editMode = true;
+    renderProject(currentProject);
+  }
+
+  function exitEditMode() {
+    if (!editMode) { return; }
+    editMode = false;
+    closeBlockMenu();
+    renderProject(currentProject);
+  }
+
+  // ── Save project ──────────────────────────────────────────────
+  async function saveProject() {
+    var token   = sessionStorage.getItem('rc_admin_token');
+    var saveBtn = document.getElementById('pv-save-btn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+    try {
+      var r = await fetch('/api/projects', {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body:    JSON.stringify(Object.assign({}, currentProject, { slug: slug })),
+      });
+      var data = await r.json();
+      if (r.ok) {
+        showToast('Project saved');
+        exitEditMode();
+      } else {
+        showToast(data.error || 'Save failed');
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save changes'; }
+      }
+    } catch (e) {
+      showToast('Network error');
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save changes'; }
+    }
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────
+  function showToast(msg) {
+    var t = document.createElement('div');
+    t.className = 'rc-toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 2200);
+  }
+
+  // ── +Block menu ───────────────────────────────────────────────
+  function toggleBlockMenu() {
+    var fab  = document.getElementById('pv-add-block-fab');
+    if (!fab) { return; }
+    fab.getAttribute('aria-expanded') === 'true' ? closeBlockMenu() : openBlockMenu();
+  }
+
+  function openBlockMenu() {
+    var fab  = document.getElementById('pv-add-block-fab');
+    var menu = document.getElementById('pv-add-block-menu');
+    if (!fab || !menu) { return; }
+
+    var BLOCK_TYPES = [
+      { type: 'heading',   label: 'Heading'   },
+      { type: 'paragraph', label: 'Para'      },
+      { type: 'callout',   label: 'Callout'   },
+      { type: 'divider',   label: 'Divider'   },
+      { type: 'image',     label: 'Image'     },
+    ];
+
+    // Semi-circle above the button: 5 items, angles 180°→360° (left → top → right)
+    var ANGLES  = [180, 225, 270, 315, 360];
+    var RADIUS  = 90; // px from center
+
+    menu.innerHTML = '';
+    BLOCK_TYPES.forEach(function (b, i) {
+      var btn = document.createElement('button');
+      btn.className  = 'rc-block-add-opt';
+      btn.dataset.btype = b.type;
+      btn.textContent   = b.label;
+
+      // Radial position: CSS coordinates (positive Y = down, so sin gives negative for "up")
+      var rad = ANGLES[i] * Math.PI / 180;
+      var x   = Math.round(Math.cos(rad) * RADIUS); // negative = left
+      var y   = Math.round(Math.sin(rad) * RADIUS); // negative = up
+      btn.style.left = x + 'px';
+      btn.style.top  = y + 'px';
+      // Initial: centered + scaled down (animated in below)
+      btn.style.transform = 'translate(-50%, -50%) scale(0)';
+      btn.style.opacity   = '0';
+
+      btn.addEventListener('click', function () {
+        addBlock(b.type);
+        closeBlockMenu();
+      });
+      menu.appendChild(btn);
+    });
+
+    // Show menu container
+    menu.setAttribute('aria-hidden', 'false');
+    menu.classList.add('open');
+    fab.setAttribute('aria-expanded', 'true');
+    fab.classList.add('active');
+
+    // Animate options into their radial positions (staggered)
+    var opts = menu.querySelectorAll('.rc-block-add-opt');
+    opts.forEach(function (btn, i) {
+      setTimeout(function () {
+        btn.style.transform = 'translate(-50%, -50%) scale(1)';
+        btn.style.opacity   = '1';
+      }, i * 30);
+    });
+  }
+
+  function closeBlockMenu() {
+    var fab  = document.getElementById('pv-add-block-fab');
+    var menu = document.getElementById('pv-add-block-menu');
+    if (fab)  { fab.setAttribute('aria-expanded', 'false'); fab.classList.remove('active'); }
+    if (menu) {
+      // Animate back before clearing
+      menu.querySelectorAll('.rc-block-add-opt').forEach(function (btn) {
+        btn.style.transform = 'translate(-50%, -50%) scale(0)';
+        btn.style.opacity   = '0';
+      });
+      setTimeout(function () {
+        menu.setAttribute('aria-hidden', 'true');
+        menu.classList.remove('open');
+        menu.innerHTML = '';
+      }, 180);
+    }
+  }
+
+  function addBlock(type) {
+    var newBlock = { type: type };
+    if (type === 'heading')   { newBlock.level = 2; newBlock.text = 'New heading'; }
+    if (type === 'paragraph') { newBlock.text = 'New paragraph.'; }
+    if (type === 'callout')   { newBlock.text = 'Key insight.'; }
+    if (type === 'image')     { newBlock.url = ''; newBlock.alt = ''; }
+    currentProject.content.push(newBlock);
+    renderProject(currentProject);
+    // Scroll new block into view
+    setTimeout(function () {
+      var body = document.getElementById('pv-body');
+      if (body) {
+        var wraps = body.querySelectorAll('.pv-block-wrap');
+        var last  = wraps[wraps.length - 1];
+        if (last) { last.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      }
+    }, 80);
+  }
+
+  // ── Wire edit mode interactions ───────────────────────────────
+  function wireEditMode() {
+    var token = sessionStorage.getItem('rc_admin_token');
+
+    // Sync hero/meta field edits (title, summary, company, period…)
     document.querySelectorAll('[data-pv-field]').forEach(function (el) {
       el.addEventListener('input', function () {
         currentProject[el.dataset.pvField] = el.innerText.trim();
+      });
+    });
+
+    // Sync inline block edits + Cmd+Shift+U link insertion
+    document.querySelectorAll('[data-pv-block-idx]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var idx   = parseInt(el.dataset.pvBlockIdx, 10);
+        var field = el.dataset.pvBlockField;
+        if (currentProject.content[idx] !== undefined) {
+          currentProject.content[idx][field] = el.innerText.trim();
+        }
+      });
+      el.addEventListener('keydown', function (e) {
+        // Prevent Enter from inserting <div>/<br>
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); }
+        // Cmd/Ctrl+Shift+U → insert link
+        if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyU') {
+          e.preventDefault();
+          insertLink(el);
+        }
       });
     });
 
@@ -230,51 +501,8 @@
       });
     });
 
-    // Block edit (simple textarea prompt for text blocks)
-    document.querySelectorAll('.pv-block-edit').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var idx   = parseInt(btn.dataset.idx, 10);
-        var block = currentProject.content[idx];
-        if (!block) { return; }
-        var newText = prompt('Edit block text:', block.text || JSON.stringify(block));
-        if (newText !== null) {
-          if (block.text !== undefined)       { currentProject.content[idx].text = newText; }
-          else if (block.url !== undefined)   { currentProject.content[idx].url = newText; }
-          renderProject(currentProject);
-        }
-      });
-    });
-
-    // Add block panel toggle
-    var addBlockBtn = document.getElementById('pv-add-block-btn');
-    var addBlockPanel = document.getElementById('pv-add-block-panel');
-    if (addBlockBtn && addBlockPanel) {
-      addBlockBtn.addEventListener('click', function () {
-        addBlockPanel.style.display = addBlockPanel.style.display === 'none' ? '' : 'none';
-        if (addBlockPanel.style.display !== 'none') {
-          addBlockPanel.innerHTML = [
-            '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">',
-              ['heading','paragraph','image','callout','divider'].map(function(t){
-                return '<button class="pm-add-block-btn pv-add-block-type" data-btype="'+t+'" style="border:1.5px dashed var(--border,#ddd);border-radius:7px;padding:0.35rem 0.8rem;background:transparent;font-size:0.72rem;cursor:pointer;font-family:inherit;color:var(--muted,#888);">+ '+t.charAt(0).toUpperCase()+t.slice(1)+'</button>';
-              }).join(''),
-            '</div>',
-          ].join('');
-          addBlockPanel.querySelectorAll('.pv-add-block-type').forEach(function (b) {
-            b.addEventListener('click', function () {
-              var type = b.dataset.btype;
-              var newBlock = { type: type };
-              if (type === 'heading')   { newBlock.level = 2; newBlock.text = 'New heading'; }
-              if (type === 'paragraph') { newBlock.text = 'New paragraph text.'; }
-              if (type === 'image')     { newBlock.url = ''; newBlock.alt = ''; }
-              if (type === 'callout')   { newBlock.text = 'Callout text.'; }
-              if (type === 'divider')   {} // no fields
-              currentProject.content.push(newBlock);
-              renderProject(currentProject);
-            });
-          });
-        }
-      });
-    }
+    // Drag-to-reorder
+    wireDragReorder();
 
     // Cover image upload
     var coverBtn  = document.getElementById('pv-cover-btn');
@@ -292,72 +520,112 @@
           if (data.url) {
             currentProject.coverImage = data.url;
             var img = document.getElementById('pv-cover-img');
-            if (img) { img.src = data.url; }
-            coverBtn.textContent = 'Change cover';
-          } else { coverBtn.textContent = 'Upload failed'; }
-        } catch (e) { coverBtn.textContent = 'Error'; }
-      });
-    }
-
-    // Hide/Show toggle
-    var toggleHideBtn = document.getElementById('pv-toggle-hide');
-    if (toggleHideBtn) {
-      toggleHideBtn.addEventListener('click', async function () {
-        currentProject.isHidden = !currentProject.isHidden;
-        await fetch('/api/projects', {
-          method: 'PATCH', headers: authHeaders(),
-          body: JSON.stringify({ slug: slug, isHidden: currentProject.isHidden }),
-        });
-        this.textContent = currentProject.isHidden ? 'Show project' : 'Hide project';
-        showToast(currentProject.isHidden ? 'Project hidden' : 'Project now visible');
-      });
-    }
-
-    // Delete
-    var deleteBtn = document.getElementById('pv-delete-btn');
-    if (deleteBtn) {
-      deleteBtn.addEventListener('click', function () {
-        if (typeof window.__rcShowConfirm === 'function') {
-          window.__rcShowConfirm(
-            'Deleting <strong>"' + (currentProject.title || slug) + '"</strong> is permanent and cannot be undone.',
-            async function () {
-              var r = await fetch('/api/projects', {
-                method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ slug: slug }),
-              });
-              if (r.ok) { window.location.href = '../work.html'; }
-              else { showToast('Could not delete project'); }
+            if (img) {
+              img.src = data.url;
+              coverBtn.textContent = 'Change cover';
+            } else {
+              renderProject(currentProject);
+              return;
             }
-          );
-        }
-      });
-    }
-
-    // Save changes
-    var saveBtn    = document.getElementById('pv-save-btn');
-    var saveStatus = document.getElementById('pv-save-status');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', async function () {
-        saveBtn.disabled = true;
-        if (saveStatus) { saveStatus.textContent = 'Saving…'; }
-        try {
-          var r = await fetch('/api/projects', {
-            method: 'PATCH', headers: authHeaders(),
-            body: JSON.stringify({ ...currentProject, slug: slug }),
-          });
-          var data = await r.json();
-          if (r.ok) {
-            if (saveStatus) { saveStatus.textContent = 'Saved!'; }
-            showToast('Project saved');
-            setTimeout(function () { if (saveStatus) { saveStatus.textContent = ''; } }, 2000);
+            showToast('Cover updated');
           } else {
-            if (saveStatus) { saveStatus.textContent = data.error || 'Error'; }
+            coverBtn.textContent = 'Upload failed';
+            showToast(data.error || 'Upload failed');
           }
         } catch (e) {
-          if (saveStatus) { saveStatus.textContent = 'Network error'; }
+          coverBtn.textContent = 'Error';
+          showToast('Upload error — check console');
         }
-        saveBtn.disabled = false;
       });
     }
+  }
+
+  // ── Drag-to-reorder blocks ────────────────────────────────────
+  function wireDragReorder() {
+    var body = document.getElementById('pv-body');
+    if (!body) { return; }
+    var dragSrcIdx = null;
+
+    body.querySelectorAll('.pv-block-wrap').forEach(function (wrap) {
+      wrap.addEventListener('dragstart', function (e) {
+        dragSrcIdx = parseInt(wrap.dataset.blockIdx, 10);
+        wrap.classList.add('drag-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(dragSrcIdx));
+      });
+      wrap.addEventListener('dragend', function () {
+        wrap.classList.remove('drag-dragging');
+        body.querySelectorAll('.pv-block-wrap').forEach(function (w) {
+          w.classList.remove('drag-over');
+        });
+      });
+      wrap.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        body.querySelectorAll('.pv-block-wrap').forEach(function (w) { w.classList.remove('drag-over'); });
+        wrap.classList.add('drag-over');
+      });
+      wrap.addEventListener('drop', function (e) {
+        e.preventDefault();
+        var targetIdx = parseInt(wrap.dataset.blockIdx, 10);
+        if (dragSrcIdx === null || dragSrcIdx === targetIdx) { dragSrcIdx = null; return; }
+        var moved = currentProject.content.splice(dragSrcIdx, 1)[0];
+        currentProject.content.splice(targetIdx, 0, moved);
+        dragSrcIdx = null;
+        renderProject(currentProject);
+      });
+    });
+  }
+
+  // ── Cmd+Shift+U — insert link ─────────────────────────────────
+  function insertLink(el) {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) { return; }
+
+    var range       = sel.getRangeAt(0);
+    var savedRange  = range.cloneRange();
+    var rect        = range.getBoundingClientRect();
+
+    var prompt = document.createElement('div');
+    prompt.className = 'pv-link-prompt';
+    prompt.style.cssText =
+      'position:fixed;top:' + (rect.bottom + 8) + 'px;left:' + Math.max(8, rect.left) + 'px;' +
+      'z-index:9999;display:flex;gap:0.4rem;align-items:center;' +
+      'background:#fff;border:1.5px solid var(--border,#ddd);' +
+      'border-radius:10px;padding:0.4rem 0.6rem;' +
+      'box-shadow:0 4px 24px rgba(0,0,0,0.13);font-family:var(--font-sans,sans-serif);';
+    prompt.innerHTML =
+      '<input class="pv-link-input pm-input" type="url" placeholder="https://…"' +
+        ' style="flex:1;min-width:180px;font-size:0.8rem;border:1.5px solid var(--border,#ddd);border-radius:6px;padding:0.3rem 0.55rem;">' +
+      '<button class="ac-btn ac-btn--primary" style="font-size:0.75rem;padding:0.3rem 0.7rem;" id="pv-link-ok">Insert</button>' +
+      '<button class="ac-btn ac-btn--ghost"   style="font-size:0.75rem;padding:0.3rem 0.5rem;" id="pv-link-x">×</button>';
+    document.body.appendChild(prompt);
+
+    var input = prompt.querySelector('.pv-link-input');
+    setTimeout(function () { input.focus(); }, 30);
+
+    function doInsert() {
+      var url = input.value.trim();
+      if (!url) { prompt.remove(); return; }
+      if (!/^https?:\/\//i.test(url)) { url = 'https://' + url; }
+      sel.removeAllRanges();
+      sel.addRange(savedRange);
+      document.execCommand('createLink', false, url);
+      // Update model
+      var idx   = parseInt(el.dataset.pvBlockIdx, 10);
+      var field = el.dataset.pvBlockField;
+      if (currentProject.content[idx] !== undefined) {
+        currentProject.content[idx][field] = el.innerText.trim();
+      }
+      prompt.remove();
+    }
+
+    document.getElementById('pv-link-ok').addEventListener('click', doInsert);
+    document.getElementById('pv-link-x').addEventListener('click', function () { prompt.remove(); });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter')  { e.preventDefault(); doInsert(); }
+      if (e.key === 'Escape') { prompt.remove(); }
+    });
   }
 
   // ── Load from API ──────────────────────────────────────────────
@@ -373,8 +641,13 @@
       var loadingEl = document.getElementById('project-loading');
       if (loadingEl) { loadingEl.remove(); }
       renderProject(project);
+      // Auto-enter edit mode when navigated via "Edit" ctx action (?edit=1)
+      if (params.get('edit') === '1' && sessionStorage.getItem('rc_admin_token')) {
+        // Small delay: wait for rc-admin-enabled to fire and FABs to be injected
+        setTimeout(function () { enterEditMode(); }, 150);
+      }
     })
-    .catch(function (err) {
+    .catch(function () {
       var loadingEl = document.getElementById('project-loading');
       if (loadingEl) {
         loadingEl.innerHTML = '<p>Project not found. <a href="../work.html">Back to work</a></p>';
@@ -384,6 +657,17 @@
 })();
 </script>
 <script src="../js/admin.js" defer></script>
+<script>
+// ── Project page ctx + edit-start listener ─────────────────────────
+(function () {
+  // rc-project-edit-start fired by admin.js ctx-menu Edit action
+  window.addEventListener('rc-project-edit-start', function () {
+    if (typeof window.__rcProjectEnterEdit === 'function') {
+      window.__rcProjectEnterEdit();
+    }
+  });
+})();
+</script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

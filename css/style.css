@@ -691,7 +691,7 @@ button { font-family: inherit; cursor: pointer; }
 /* ── ctx-menu container
    Positioned by JS at trigger centre (left/top = cx, cy).
    Options use absolute + transforms to fan out from that origin.
-   No backdrop div — outside clicks handled by document listener.
+   Labels positioned absolutely below each circle button.
    ── */
 .ctx-menu {
   position: absolute;          /* scrolls with the page, not the viewport */
@@ -701,41 +701,102 @@ button { font-family: inherit; cursor: pointer; }
   pointer-events: none;
 }
 
-/* Option: starts collapsed at origin */
+/* Option box = exactly the button size so transform centres on the circle */
 .ctx-option {
   position: absolute;
   left: 0; top: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  width: 46px; height: 46px;
   transform: translate(-50%, -50%) scale(0.5);
   opacity: 0;
   pointer-events: none;
   transition: transform 280ms var(--ease-spring), opacity 220ms ease;
 }
 
-/* Open state: fan out in cardinal directions */
-.ctx-menu.open .ctx-option {
-  opacity: 1;
-  pointer-events: all;
+/* ── PUBLIC OPTIONS — cardinal fan (inspect top, copy right, love bottom, enquire left) ──
+   Selector targets public-only options by data-action so admin options can be
+   separately positioned without nth-child conflicts.                            */
+
+/* Default open: visible + interactive (overridden per mode below) */
+.ctx-menu.open .ctx-option { opacity: 1; pointer-events: all; }
+
+/* Public options: visible only when NOT in admin mode (or admin preview) */
+body:not(.is-admin) .ctx-menu.open .ctx-option.ctx-public-only,
+body.admin-preview  .ctx-menu.open .ctx-option.ctx-public-only {
+  opacity: 1; pointer-events: all;
 }
-.ctx-menu.open .ctx-option:nth-child(1) {   /* top — Inspect */
-  transform: translate(-50%, calc(-50% - 82px)) scale(1);
+/* Public option positions */
+body:not(.is-admin) .ctx-menu.open [data-action="inspect"],
+body.admin-preview  .ctx-menu.open [data-action="inspect"] {
+  transform: translate(-50%, calc(-50% - 88px)) scale(1);
   transition-delay: 0ms;
 }
-.ctx-menu.open .ctx-option:nth-child(2) {   /* right — Copy link */
-  transform: translate(calc(-50% + 82px), -50%) scale(1);
+body:not(.is-admin) .ctx-menu.open [data-action="copy-link"],
+body.admin-preview  .ctx-menu.open [data-action="copy-link"] {
+  transform: translate(calc(-50% + 88px), -50%) scale(1);
   transition-delay: 35ms;
 }
-.ctx-menu.open .ctx-option:nth-child(3) {   /* bottom — Show Love */
-  transform: translate(-50%, calc(-50% + 82px)) scale(1);
+body:not(.is-admin) .ctx-menu.open [data-action="show-love"],
+body.admin-preview  .ctx-menu.open [data-action="show-love"] {
+  transform: translate(-50%, calc(-50% + 88px)) scale(1);
   transition-delay: 70ms;
 }
-.ctx-menu.open .ctx-option:nth-child(4) {   /* left — Enquire */
-  transform: translate(calc(-50% - 82px), -50%) scale(1);
+body:not(.is-admin) .ctx-menu.open [data-action="enquire"],
+body.admin-preview  .ctx-menu.open [data-action="enquire"] {
+  transform: translate(calc(-50% - 88px), -50%) scale(1);
   transition-delay: 105ms;
 }
+
+/* ── ADMIN OPTIONS — 4 cardinal positions: top, right, left, bottom ── */
+/* Delete is at bottom (least likely to be hit accidentally)            */
+
+/* In admin mode: hide public options */
+body.is-admin:not(.admin-preview) .ctx-menu.open .ctx-option.ctx-public-only {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translate(-50%, -50%) scale(0.3) !important;
+}
+/* Show admin options only for logged-in non-preview admin */
+body.is-admin:not(.admin-preview) .ctx-menu.open .ctx-option.ctx-admin-only {
+  opacity: 1 !important; pointer-events: all !important;
+}
+/* Edit — top */
+body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-edit"] {
+  transform: translate(-50%, calc(-50% - 88px)) scale(1);
+  transition-delay: 0ms;
+}
+/* Hide — right */
+body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-hide"] {
+  transform: translate(calc(-50% + 88px), -50%) scale(1);
+  transition-delay: 30ms;
+}
+/* Lock — left */
+body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-lock"] {
+  transform: translate(calc(-50% - 88px), -50%) scale(1);
+  transition-delay: 60ms;
+}
+/* Delete — bottom (last, hardest to reach) */
+body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
+  transform: translate(-50%, calc(-50% + 88px)) scale(1);
+  transition-delay: 90ms;
+}
+/* Admin options invisible by default — use same specificity level as the
+   .ctx-menu.open .ctx-option rule (3 classes) so this wins over it */
+.ctx-menu.open .ctx-option.ctx-admin-only {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+/* (Keep the non-open base rule too for safety) */
+.ctx-option.ctx-admin-only {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Hide separator in all modes */
+.ctx-admin-sep { display: none; }
+
+/* Lock button — amber tint to distinguish from neutral options */
+[data-action="admin-lock"] .ctx-option__btn { background: var(--brown-mid, #4a2000); }
+[data-action="admin-lock"] .ctx-option__btn:hover { background: var(--brown, #251605); }
 
 .ctx-option__btn {
   width: 46px; height: 46px;
@@ -753,19 +814,28 @@ button { font-family: inherit; cursor: pointer; }
 .ctx-option__btn:hover { background: var(--brown); transform: scale(1.14); }
 .ctx-option__btn.liked { background: var(--burgundy); }
 .ctx-option__btn.copied { background: var(--brown-mid); }
+/* Admin delete button — red tint */
+[data-action="admin-delete"] .ctx-option__btn { background: #8B1A1A; }
+[data-action="admin-delete"] .ctx-option__btn:hover { background: #c0392b; }
 
+/* Label: positioned absolutely below the circle, not in flex flow */
 .ctx-option__label {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text);
   background: var(--white);
-  padding: 0.15rem 0.5rem;
+  padding: 0.12rem 0.45rem;
   border-radius: 999px;
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+  pointer-events: none;
 }
 
 /* Toast notification */

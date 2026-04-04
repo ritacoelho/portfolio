@@ -195,9 +195,14 @@
       var tr = document.createElement('tr');
       tr.dataset.code = entry.code;
 
+      var SVG_COPY       = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="5" y="5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M9 5V3.5A1.5 1.5 0 0 0 7.5 2h-4A1.5 1.5 0 0 0 2 3.5v4A1.5 1.5 0 0 0 3.5 9H5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+      var SVG_ACTIVATE   = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      var SVG_DEACTIVATE = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+      var SVG_DELETE     = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 3.5h11M4.5 3.5V2.5A.5.5 0 0 1 5 2h4a.5.5 0 0 1 .5.5V3.5M5.5 6.5v3M8.5 6.5v3M2.5 3.5l.8 8.1A.5.5 0 0 0 3.8 12h6.4a.5.5 0 0 0 .5-.4l.8-8.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
       tr.innerHTML = [
         '<td>',
-          '<button class="ac-code-pill" data-copy="' + entry.code + '" title="Click to copy">',
+          '<button class="ac-code-pill" data-copy="' + entry.code + '" data-tooltip="Copy code" title="Click to copy">',
             entry.code,
           '</button>',
         '</td>',
@@ -215,10 +220,15 @@
         '<td>' + formatDate(entry.expiryDate) + '</td>',
         '<td>',
           '<div class="ac-table__actions">',
+            '<button class="ac-icon-btn" data-action="copy-code" data-code="' + entry.code + '"',
+              ' data-tooltip="Copy code" aria-label="Copy code">' + SVG_COPY + '</button>',
             entry.isActive
-              ? '<button class="ac-btn ac-btn--ghost" data-action="deactivate" data-code="' + entry.code + '">Deactivate</button>'
-              : '<button class="ac-btn ac-btn--ghost" data-action="activate"   data-code="' + entry.code + '">Activate</button>',
-            '<button class="ac-btn ac-btn--danger" data-action="delete" data-code="' + entry.code + '">Delete</button>',
+              ? '<button class="ac-icon-btn ac-icon-btn--active" data-action="deactivate" data-code="' + entry.code + '"',
+                ' data-tooltip="Deactivate" aria-label="Deactivate">' + SVG_DEACTIVATE + '</button>'
+              : '<button class="ac-icon-btn" data-action="activate" data-code="' + entry.code + '"',
+                ' data-tooltip="Activate" aria-label="Activate">' + SVG_ACTIVATE + '</button>',
+            '<button class="ac-icon-btn ac-icon-btn--danger" data-action="delete" data-code="' + entry.code + '"',
+              ' data-tooltip="Delete" aria-label="Delete">' + SVG_DELETE + '</button>',
           '</div>',
         '</td>'
       ].join('');
@@ -258,6 +268,7 @@
       btn.addEventListener('click', function () {
         var action = btn.dataset.action;
         var code   = btn.dataset.code;
+        if (action === 'copy-code')  { copyText(code); showToast('Copied ' + code); }
         if (action === 'deactivate') { toggleActive(code, false); }
         if (action === 'activate')   { toggleActive(code, true); }
         if (action === 'delete')     { deleteCode(code); }

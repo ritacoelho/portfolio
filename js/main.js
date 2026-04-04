@@ -115,31 +115,30 @@
   // 3. PER-PROJECT RADIAL CONTEXT MENU
   // ==================
 
-  // Likes — in-memory cache, backed by KV API (via admin.js helpers)
+  // Likes — in-memory cache, backed by KV API
   var _likesCache = {};
+  // Track which slugs user has loved this session (for toggle)
+  var _lovedSlugs = {};
 
-  function getLikeCount(slug) {
-    return _likesCache[slug] || 0;
-  }
+  function getLikeCount(slug) { return _likesCache[slug] || 0; }
 
-  // Load like count from API and update context menu label
   function refreshLikeDisplay(slug) {
     var rcGetLikes = window.__rcGetLikes;
     if (!rcGetLikes || !slug) { return; }
     rcGetLikes(slug).then(function (count) {
       _likesCache[slug] = count;
-      var loveOpt   = ctxMenu ? ctxMenu.querySelector('[data-action="show-love"]') : null;
+      var loveOpt    = ctxMenu ? ctxMenu.querySelector('[data-action="show-love"]') : null;
       var activeSlug = ctxMenu && ctxMenu.dataset.activeSlug;
-      if (loveOpt && activeSlug === slug) {
-        var loveLabel = loveOpt.querySelector('.ctx-option__label');
-        var loveBtn   = loveOpt.querySelector('.ctx-option__btn');
-        if (loveLabel) { loveLabel.textContent = count > 0 ? 'Love \u00b7 ' + count : 'Love'; }
-        if (loveBtn) {
-          if (count > 0) { loveBtn.classList.add('liked'); }
-          else           { loveBtn.classList.remove('liked'); }
-        }
-      }
+      if (loveOpt && activeSlug === slug) { _syncLoveOpt(loveOpt, slug, count); }
     });
+  }
+
+  function _syncLoveOpt(loveOpt, slug, count) {
+    var loveLabel = loveOpt.querySelector('.ctx-option__label');
+    var loveBtn   = loveOpt.querySelector('.ctx-option__btn');
+    var isLoved   = !!_lovedSlugs[slug];
+    if (loveLabel) { loveLabel.textContent = count > 0 ? 'Love \u00b7 ' + count : 'Love'; }
+    if (loveBtn)   { loveBtn.classList.toggle('liked', isLoved); }
   }
 
   // SVG icons
@@ -174,19 +173,19 @@
     '</svg>'
   ].join('');
 
-  // Build shared context menu DOM node
+  // Build shared context menu DOM node — always create it (options may be
+  // dynamically injected later by admin.js for admin items).
   var ctxMenu = document.getElementById('ctx-menu');
-  if (!ctxMenu && document.querySelector('.ctx-trigger')) {
-
+  if (!ctxMenu) {
     ctxMenu = document.createElement('div');
     ctxMenu.id        = 'ctx-menu';
     ctxMenu.className = 'ctx-menu';
     ctxMenu.setAttribute('role', 'menu');
-    ctxMenu.setAttribute('aria-label', 'Project actions');
+    ctxMenu.setAttribute('aria-label', 'Actions');
 
     function makeOption(action, icon, label, extraClass) {
       return [
-        '<div class="ctx-option" data-action="', action, '">',
+        '<div class="ctx-option ctx-public-only" data-action="', action, '">',
           '<button class="ctx-option__btn', extraClass ? ' ' + extraClass : '', '"',
             ' aria-label="', label, '">',
             icon,
@@ -198,7 +197,7 @@
 
     ctxMenu.innerHTML = [
       makeOption('inspect',   SVG_EYE,   'Inspect'),
-      makeOption('copy-link', SVG_LINK,  'Copy link'),
+      makeOption('copy-link', SVG_LINK,  'Copy'),
       makeOption('show-love', SVG_HEART, 'Love', 'ctx-option__btn--love'),
       makeOption('enquire',   SVG_MSG,   'Enquire'),
     ].join('');
@@ -206,65 +205,53 @@
     document.body.appendChild(ctxMenu);
   }
 
-  var activeTrigger     = null;
-  var activeCard        = null;
-  var activeCardLocked  = false;
+  var activeTrigger    = null;
+  var activeCard       = null;
+  var activeCardLocked = false;
 
-  function openCtxMenu(trigger, card) {
+  function openCtxMenu(trigger, item) {
     if (!ctxMenu) { return; }
     var rect = trigger.getBoundingClientRect();
     var cx   = rect.left + rect.width  / 2;
     var cy   = rect.top  + rect.height / 2;
 
     activeTrigger    = trigger;
-    activeCard       = card;
-    window.__rcActiveCard = card; // expose for admin.js
-    activeCardLocked = card.classList.contains('project-card--is-locked');
-    card.classList.add('card--menu-open');
+    activeCard       = item;
+    window.__rcActiveCard = item;
 
-    // Update enquire option label for locked vs unlocked cards
+    var isCard = item.classList.contains('project-card');
+    activeCardLocked = isCard && item.classList.contains('project-card--is-locked');
+
+    if (isCard) { item.classList.add('card--menu-open'); }
+
+    // Enquire label
     var enquireOpt = ctxMenu.querySelector('[data-action="enquire"]');
     if (enquireOpt) {
       var enquireLabel = enquireOpt.querySelector('.ctx-option__label');
       var enquireBtn   = enquireOpt.querySelector('button');
-      if (activeCardLocked) {
-        if (enquireLabel) { enquireLabel.textContent = 'Request'; }
-        if (enquireBtn)   { enquireBtn.setAttribute('aria-label', 'Request access'); }
-      } else {
-        if (enquireLabel) { enquireLabel.textContent = 'Enquire'; }
-        if (enquireBtn)   { enquireBtn.setAttribute('aria-label', 'Enquire'); }
-      }
+      var label = activeCardLocked ? 'Request' : 'Enquire';
+      if (enquireLabel) { enquireLabel.textContent = label; }
+      if (enquireBtn)   { enquireBtn.setAttribute('aria-label', label); }
     }
 
-    // Update love label — use cached count, then refresh from API async
-    var slug     = card.dataset.slug || '';
+    // Love label (project cards only)
+    var slug    = item.dataset.slug || item.dataset.id || '';
     ctxMenu.dataset.activeSlug = slug;
-    var count    = getLikeCount(slug);
-    var loveOpt  = ctxMenu.querySelector('[data-action="show-love"]');
-    if (loveOpt) {
-      var loveLabel = loveOpt.querySelector('.ctx-option__label');
-      var loveBtn   = loveOpt.querySelector('.ctx-option__btn');
-      if (loveLabel) { loveLabel.textContent = count > 0 ? 'Love \u00b7 ' + count : 'Love'; }
-      if (loveBtn)   {
-        if (count > 0) { loveBtn.classList.add('liked'); }
-        else           { loveBtn.classList.remove('liked'); }
-      }
+    if (isCard) {
+      var count   = getLikeCount(slug);
+      var loveOpt = ctxMenu.querySelector('[data-action="show-love"]');
+      if (loveOpt) { _syncLoveOpt(loveOpt, slug, count); }
+      refreshLikeDisplay(slug);
     }
-    // Refresh from KV API (will update label if count differs)
-    refreshLikeDisplay(slug);
 
-    // Position ctx-menu at trigger centre in document coordinates
-    // (menu is position:absolute so we add scroll offset)
+    // Position at trigger centre (document coords for position:absolute)
     ctxMenu.style.left = (cx + window.scrollX) + 'px';
     ctxMenu.style.top  = (cy + window.scrollY) + 'px';
 
     trigger.classList.add('active');
     ctxMenu.classList.add('open');
 
-    // Notify admin.js so it can sync admin item labels
-    if (typeof window.__rcOnCtxOpen === 'function') {
-      window.__rcOnCtxOpen(card);
-    }
+    if (typeof window.__rcOnCtxOpen === 'function') { window.__rcOnCtxOpen(item); }
   }
 
   function closeCtxMenu() {
@@ -289,14 +276,12 @@
           'color:#5C0A13;pointer-events:none;z-index:9999;' +
           'transform:translate(-50%,-50%);will-change:transform,opacity;';
         document.body.appendChild(heart);
-
-        var angle   = (-110 + idx * 40 + (Math.random() - 0.5) * 20) * Math.PI / 180;
-        var dist    = 50 + Math.random() * 30;
-        var tx      = Math.cos(angle) * dist;
-        var ty      = Math.sin(angle) * dist;
-        var dur     = 650 + idx * 60;
-        var start   = null;
-
+        var angle = (-110 + idx * 40 + (Math.random() - 0.5) * 20) * Math.PI / 180;
+        var dist  = 50 + Math.random() * 30;
+        var tx    = Math.cos(angle) * dist;
+        var ty    = Math.sin(angle) * dist;
+        var dur   = 650 + idx * 60;
+        var start = null;
         function step(ts) {
           if (!start) { start = ts; }
           var p    = Math.min((ts - start) / dur, 1);
@@ -313,107 +298,116 @@
     }
   }
 
-  // Wire action handlers
+  // Wire action handlers — uses event delegation on ctxMenu
   if (ctxMenu) {
-    ctxMenu.querySelectorAll('.ctx-option').forEach(function (opt) {
-      var btn = opt.querySelector('button');
-      if (!btn) { return; }
-      btn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var action = opt.dataset.action;
-        var card   = activeCard;
-        if (!card) { closeCtxMenu(); return; }
+    ctxMenu.addEventListener('click', function (e) {
+      var btn = e.target.closest('button');
+      var opt = e.target.closest('.ctx-option');
+      if (!btn || !opt) { return; }
+      e.stopPropagation();
 
-        if (action === 'inspect') {
-          var link = card.querySelector('[data-project-link]');
-          if (link) { window.location.href = link.getAttribute('href'); }
+      var action = opt.dataset.action;
+      var item   = activeCard;
+      if (!item) { closeCtxMenu(); return; }
+
+      // ── Admin actions are handled by admin.js via their own listeners ──
+      if (action && action.indexOf('admin-') === 0) { return; }
+
+      if (action === 'inspect') {
+        var link = item.querySelector('[data-project-link]');
+        if (link) { window.location.href = link.getAttribute('href'); }
+        else {
+          // On a project page the item IS the page — scroll to top
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+      }
 
-        if (action === 'copy-link') {
-          var url   = card.dataset.url || window.location.href;
-          var title = card.dataset.title || 'this project';
+      if (action === 'copy-link') {
+        var url   = item.dataset.url || window.location.href;
+        var title = item.dataset.title || 'this project';
+        var doCopy = function () {
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(function () {
-              showToast('Link to \u201c' + title + '\u201d copied');
-            }).catch(function () {
-              showToast('Copy: ' + url);
-            });
+            navigator.clipboard.writeText(url)
+              .then(function () { showToast('Link to \u201c' + title + '\u201d copied'); })
+              .catch(function () { showToast('Copy: ' + url); });
           } else {
-            // Fallback
             var ta = document.createElement('textarea');
-            ta.value = url;
-            ta.style.position = 'fixed';
-            ta.style.opacity  = '0';
-            document.body.appendChild(ta);
-            ta.focus(); ta.select();
+            ta.value = url; ta.style.cssText = 'position:fixed;opacity:0;';
+            document.body.appendChild(ta); ta.focus(); ta.select();
             try { document.execCommand('copy'); showToast('Link to \u201c' + title + '\u201d copied'); }
-            catch (err) { showToast('Copy: ' + url); }
-            document.body.removeChild(ta);
+            catch (err) { showToast(url); }
+            ta.remove();
           }
-          btn.classList.add('copied');
-          setTimeout(function () { btn.classList.remove('copied'); }, 1500);
-        }
+        };
+        doCopy();
+        btn.classList.add('copied');
+        setTimeout(function () { btn.classList.remove('copied'); }, 1500);
+      }
 
-        if (action === 'show-love') {
-          var slug  = card.dataset.slug || '';
-          var title = card.dataset.title || 'this project';
+      if (action === 'show-love') {
+        var slug  = item.dataset.slug || '';
+        var title = item.dataset.title || 'this project';
+        var label = opt.querySelector('.ctx-option__label');
+        var isLoved = !!_lovedSlugs[slug];
 
-          // Optimistic UI update
-          var label = opt.querySelector('.ctx-option__label');
-          btn.classList.add('liked');
+        if (isLoved) {
+          // Unlove — optimistic decrement (client-side only)
+          _lovedSlugs[slug] = false;
+          var newCount = Math.max(0, (_likesCache[slug] || 0) - 1);
+          _likesCache[slug] = newCount;
+          btn.classList.remove('liked');
+          if (label) { label.textContent = newCount > 0 ? 'Love \u00b7 ' + newCount : 'Love'; }
+          showToast('Unloved \u201c' + title + '\u201d');
+        } else {
+          // Love — optimistic increment + API call
+          _lovedSlugs[slug] = true;
           var optimisticCount = (_likesCache[slug] || 0) + 1;
+          _likesCache[slug]   = optimisticCount;
+          btn.classList.add('liked');
           if (label) { label.textContent = 'Love \u00b7 ' + optimisticCount; }
-
-          // Heart burst at trigger position
           if (activeTrigger) {
             var tr = activeTrigger.getBoundingClientRect();
             heartBurst(tr.left + tr.width / 2, tr.top + tr.height / 2);
           }
-
-          // POST to KV API
           var rcLike = window.__rcLike;
           if (rcLike) {
             rcLike(slug).then(function (data) {
               if (data && typeof data.count === 'number') {
                 _likesCache[slug] = data.count;
-                if (label && ctxMenu.dataset.activeSlug === slug) {
+                if (label && ctxMenu && ctxMenu.dataset.activeSlug === slug) {
                   label.textContent = 'Love \u00b7 ' + data.count;
                 }
                 showToast('\u2665 Loved \u201c' + title + '\u201d (' + data.count + ')');
               } else {
-                _likesCache[slug] = optimisticCount;
                 showToast('\u2665 Loved \u201c' + title + '\u201d');
               }
             });
           } else {
-            _likesCache[slug] = optimisticCount;
             showToast('\u2665 Loved \u201c' + title + '\u201d');
           }
-          // Don't close so user can see the update
-          return;
         }
+        return; // keep menu open
+      }
 
-        if (action === 'enquire') {
-          if (activeCardLocked) {
-            // Locked project — request NDA access
-            window.location.href =
-              'mailto:coelho.rita16@gmail.com' +
-              '?subject=Hexagon%20Case%20Study%20Access%20Request' +
-              '&body=Hi%20Rita%2C%0A%0AI%27d%20love%20to%20see%20your%20Hexagon%20case%20study.' +
-              '%20Happy%20to%20share%20context%20about%20who%20I%20am%20and%20why%20I%27m%20asking.';
-          } else {
-            var title = card.dataset.title || 'your project';
-            window.location.href =
-              'mailto:coelho.rita16@gmail.com?subject=Enquiry%3A%20' +
-              encodeURIComponent(title) +
-              '&body=Hi%20Rita%2C%0A%0AI%20saw%20your%20project%20%E2%80%9C' +
-              encodeURIComponent(title) +
-              '%E2%80%9D%20and%20would%20love%20to%20learn%20more.';
-          }
+      if (action === 'enquire') {
+        if (activeCardLocked) {
+          window.location.href =
+            'mailto:coelho.rita16@gmail.com' +
+            '?subject=Hexagon%20Case%20Study%20Access%20Request' +
+            '&body=Hi%20Rita%2C%0A%0AI%27d%20love%20to%20see%20your%20Hexagon%20case%20study.' +
+            '%20Happy%20to%20share%20context%20about%20who%20I%20am%20and%20why%20I%27m%20asking.';
+        } else {
+          var title = item.dataset.title || 'your project';
+          window.location.href =
+            'mailto:coelho.rita16@gmail.com?subject=Enquiry%3A%20' +
+            encodeURIComponent(title) +
+            '&body=Hi%20Rita%2C%0A%0AI%20saw%20your%20project%20%E2%80%9C' +
+            encodeURIComponent(title) +
+            '%E2%80%9D%20and%20would%20love%20to%20learn%20more.';
         }
+      }
 
-        closeCtxMenu();
-      });
+      closeCtxMenu();
     });
   }
 
@@ -421,22 +415,23 @@
   document.addEventListener('click', function (e) {
     if (!ctxMenu || !ctxMenu.classList.contains('open')) { return; }
     if (ctxMenu.contains(e.target)) { return; }
-    var trigger = e.target.closest('.ctx-trigger');
-    if (trigger && trigger === activeTrigger) { return; }
+    var trig = e.target.closest('.ctx-trigger');
+    if (trig && trig === activeTrigger) { return; }
     closeCtxMenu();
   });
 
   // Close on Escape
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && ctxMenu && ctxMenu.classList.contains('open')) {
-      closeCtxMenu();
-    }
+    if (e.key === 'Escape' && ctxMenu && ctxMenu.classList.contains('open')) { closeCtxMenu(); }
   });
 
-  // Wire up all .ctx-trigger buttons on the page
-  document.querySelectorAll('.ctx-trigger').forEach(function (trigger) {
-    var card = trigger.closest('.project-card');
-    if (!card) { return; }
+  // Wire a single trigger button — safe to call multiple times (idempotent)
+  function wireCtxTrigger(trigger) {
+    if (trigger._ctxWired) { return; }
+    trigger._ctxWired = true;
+    // Supports both .project-card and .timeline__item parents
+    var item = trigger.closest('.project-card, .timeline__item, [data-ctx-root]');
+    if (!item) { return; }
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
       e.preventDefault();
@@ -444,10 +439,21 @@
         closeCtxMenu();
       } else {
         closeCtxMenu();
-        openCtxMenu(trigger, card);
+        openCtxMenu(trigger, item);
       }
     });
-  });
+  }
+
+  // Wire any triggers already in DOM, and expose for dynamic use
+  document.querySelectorAll('.ctx-trigger').forEach(wireCtxTrigger);
+
+  window.__rcInitCtx = function () {
+    document.querySelectorAll('.ctx-trigger').forEach(wireCtxTrigger);
+  };
+
+  // Expose close/open for use from other scripts (project pages etc.)
+  window.__rcOpenCtxMenu  = openCtxMenu;
+  window.__rcCloseCtxMenu = closeCtxMenu;
 
 
   // ==================

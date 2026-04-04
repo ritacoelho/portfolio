@@ -81,13 +81,6 @@
           </div>
         </div>
 
-        <!-- Admin: manage button -->
-        <div class="is-admin-only" style="display:none;margin-top:1.5rem;">
-          <a href="admin/journey.html" class="btn btn--light" style="font-size:0.75rem;width:100%;justify-content:center;">
-            Manage all entries →
-          </a>
-        </div>
-
         <div style="margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);">
           <p style="font-size:0.8rem;color:var(--muted);line-height:1.65;margin-bottom:1rem;">See what I built along the way.</p>
           <a href="work.html" class="btn btn--light" style="font-size:0.7rem;padding:0.6rem 1.1rem;gap:0.4rem;">
@@ -168,20 +161,46 @@
             '<input id="ajm-org" class="pm-input" type="text" placeholder="Company or university">',
           '</div>',
           '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
-            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Start year</label>',
-            '<input id="ajm-sy" class="pm-input" type="number" placeholder="2022" min="1990" max="2099">',
-          '</div>',
-          '<div style="display:flex;flex-direction:column;gap:0.25rem;">',
-            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Start month (1–12)</label>',
-            '<input id="ajm-sm" class="pm-input" type="number" placeholder="8" min="1" max="12">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">Start date</label>',
+            '<div class="pm-month-year-pick">',
+              '<select id="ajm-sm" class="pm-select pm-select--month">',
+                '<option value="">Month (optional)</option>',
+                '<option value="1">January</option>',
+                '<option value="2">February</option>',
+                '<option value="3">March</option>',
+                '<option value="4">April</option>',
+                '<option value="5">May</option>',
+                '<option value="6">June</option>',
+                '<option value="7">July</option>',
+                '<option value="8">August</option>',
+                '<option value="9">September</option>',
+                '<option value="10">October</option>',
+                '<option value="11">November</option>',
+                '<option value="12">December</option>',
+              '</select>',
+              '<input id="ajm-sy" class="pm-input pm-year-input" type="number" placeholder="Year" min="1980" max="2099">',
+            '</div>',
           '</div>',
           '<div style="display:flex;flex-direction:column;gap:0.25rem;" id="ajm-ey-wrap">',
-            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">End year</label>',
-            '<input id="ajm-ey" class="pm-input" type="number" placeholder="2024" min="1990" max="2099">',
-          '</div>',
-          '<div style="display:flex;flex-direction:column;gap:0.25rem;" id="ajm-em-wrap">',
-            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">End month (1–12)</label>',
-            '<input id="ajm-em" class="pm-input" type="number" placeholder="1" min="1" max="12">',
+            '<label style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted,#888);">End date</label>',
+            '<div class="pm-month-year-pick">',
+              '<select id="ajm-em" class="pm-select pm-select--month">',
+                '<option value="">Month (optional)</option>',
+                '<option value="1">January</option>',
+                '<option value="2">February</option>',
+                '<option value="3">March</option>',
+                '<option value="4">April</option>',
+                '<option value="5">May</option>',
+                '<option value="6">June</option>',
+                '<option value="7">July</option>',
+                '<option value="8">August</option>',
+                '<option value="9">September</option>',
+                '<option value="10">October</option>',
+                '<option value="11">November</option>',
+                '<option value="12">December</option>',
+              '</select>',
+              '<input id="ajm-ey" class="pm-input pm-year-input" type="number" placeholder="Year" min="1980" max="2099">',
+            '</div>',
           '</div>',
           '<div style="grid-column:1/-1;display:flex;align-items:center;gap:0.5rem;">',
             '<input type="checkbox" id="ajm-current" style="width:16px;height:16px;accent-color:var(--brown,#251605);">',
@@ -241,8 +260,9 @@
 
     document.getElementById('ajm-current').addEventListener('change', function () {
       var on = this.checked;
-      document.getElementById('ajm-ey-wrap').style.opacity = on ? '0.35' : '';
-      document.getElementById('ajm-em-wrap').style.opacity = on ? '0.35' : '';
+      var eyWrap = document.getElementById('ajm-ey-wrap');
+      eyWrap.style.opacity = on ? '0.35' : '';
+      eyWrap.style.pointerEvents = on ? 'none' : '';
       document.getElementById('ajm-ey').disabled = on;
       document.getElementById('ajm-em').disabled = on;
     });
@@ -326,15 +346,16 @@
       document.getElementById('ajm-role').value     = entry.role     || '';
       document.getElementById('ajm-org').value      = entry.org      || '';
       document.getElementById('ajm-location').value = entry.location || '';
-      document.getElementById('ajm-sy').value       = entry.startYear  || '';
-      document.getElementById('ajm-sm').value       = entry.startMonth || '';
-      document.getElementById('ajm-ey').value       = entry.endYear    || '';
-      document.getElementById('ajm-em').value       = entry.endMonth   || '';
-      document.getElementById('ajm-desc').value     = entry.description|| '';
+      document.getElementById('ajm-sy').value        = entry.startYear  || '';
+      document.getElementById('ajm-sm').value        = entry.startMonth ? String(entry.startMonth) : '';
+      document.getElementById('ajm-ey').value        = entry.endYear    || '';
+      document.getElementById('ajm-em').value        = entry.endMonth   ? String(entry.endMonth)   : '';
+      document.getElementById('ajm-desc').value      = entry.description|| '';
       document.getElementById('ajm-current').checked = !!entry.isCurrent;
       if (entry.isCurrent) {
-        document.getElementById('ajm-ey-wrap').style.opacity = '0.35';
-        document.getElementById('ajm-em-wrap').style.opacity = '0.35';
+        var eyWrap = document.getElementById('ajm-ey-wrap');
+        eyWrap.style.opacity      = '0.35';
+        eyWrap.style.pointerEvents = 'none';
         document.getElementById('ajm-ey').disabled = true;
         document.getElementById('ajm-em').disabled = true;
       }

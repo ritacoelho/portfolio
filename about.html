@@ -192,51 +192,295 @@
 <script src="js/main.js" defer></script>
 <script src="js/admin.js" defer></script>
 <script>
-// ── About photo strip: duplicate track for seamless CSS loop ──────
+// ── About page: photo strip, tag editing, link insertion ──────────
 (function () {
-  // The CSS animation scrolls track 1+2 together (each is 50% of total width)
-  // So duplicating gives seamless loop regardless of number of photos.
-  // Admin upload adds a new <img> to both tracks.
-  var uploadBtn  = document.getElementById('about-strip-upload-btn');
-  var fileInput  = document.getElementById('about-strip-file');
-  var track1     = document.getElementById('about-strip-track');
-  var track2     = document.getElementById('about-strip-track2');
+  var uploadBtn = document.getElementById('about-strip-upload-btn');
+  var fileInput = document.getElementById('about-strip-file');
+  var track1    = document.getElementById('about-strip-track');
+  var track2    = document.getElementById('about-strip-track2');
+
+  var ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+  var MAX_MB = 10;
+
+  // ── Upload preview modal ────────────────────────────────────────
+  function showUploadModal(file, onConfirm) {
+    var errors = [];
+    if (ALLOWED_TYPES.indexOf(file.type) === -1) {
+      errors.push('Format not supported: <strong>' + (file.type || 'unknown') + '</strong>. Please use JPEG, PNG, WEBP or GIF.');
+    }
+    if (file.size > MAX_MB * 1024 * 1024) {
+      errors.push('File too large (' + (file.size / 1048576).toFixed(1) + ' MB). Maximum is ' + MAX_MB + ' MB.');
+    }
+
+    var overlay = document.createElement('div');
+    overlay.className = 'rc-modal-overlay';
+    overlay.id = 'rc-photo-preview-modal';
+
+    var body;
+    if (errors.length) {
+      body = '<div style="text-align:center;padding:0.5rem 0 1rem;">' +
+        '<div style="font-size:2.5rem;margin-bottom:0.75rem;">⚠️</div>' +
+        '<p style="font-weight:600;margin:0 0 0.75rem;color:var(--text);">Cannot upload this photo</p>' +
+        errors.map(function (e) { return '<p style="font-size:0.84rem;color:#c0392b;margin:0.2rem 0;line-height:1.5;">' + e + '</p>'; }).join('') +
+        '</div>' +
+        '<div style="display:flex;justify-content:center;margin-top:1.25rem;">' +
+        '<button class="ac-btn ac-btn--ghost" id="pu-cancel">Close</button></div>';
+    } else {
+      var objUrl = URL.createObjectURL(file);
+      body = '<div style="text-align:center;">' +
+        '<img src="' + objUrl + '" alt="Preview" style="max-width:100%;max-height:300px;border-radius:10px;display:block;margin:0 auto 0.75rem;">' +
+        '<p style="font-size:0.78rem;color:var(--muted);margin:0;">' + file.name + ' &ndash; ' + (file.size / 1024).toFixed(0) + ' KB</p>' +
+        '</div>' +
+        '<div style="display:flex;gap:0.6rem;justify-content:center;margin-top:1.25rem;">' +
+        '<button class="ac-btn ac-btn--primary" id="pu-confirm">Upload photo</button>' +
+        '<button class="ac-btn ac-btn--ghost"   id="pu-cancel">Cancel</button></div>';
+    }
+
+    overlay.innerHTML = '<div class="rc-modal-card" style="max-width:460px;">' +
+      '<button class="rc-modal-close" id="pu-close" aria-label="Close">' +
+      '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>' +
+      '<h2 class="rc-modal-title">' + (errors.length ? 'Upload failed' : 'Preview') + '</h2>' +
+      body + '</div>';
+
+    document.body.appendChild(overlay);
+
+    function dismiss() { overlay.remove(); fileInput.value = ''; }
+    document.getElementById('pu-close').onclick = dismiss;
+    document.getElementById('pu-cancel').onclick = dismiss;
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) { dismiss(); } });
+    var confirmBtn = document.getElementById('pu-confirm');
+    if (confirmBtn) { confirmBtn.onclick = function () { overlay.remove(); onConfirm(); }; }
+  }
+
+  // ── Do upload ───────────────────────────────────────────────────
+  function doUpload(file) {
+    var token = sessionStorage.getItem('rc_admin_token');
+    if (uploadBtn) { uploadBtn.textContent = 'Uploading…'; }
+    fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: file,
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.url) {
+        addPhotoToStrip(data.url);
+        if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
+      } else {
+        alert('Upload failed: ' + (data.error || 'Unknown error'));
+        if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
+      }
+    })
+    .catch(function () {
+      alert('Upload error — check connection and try again.');
+      if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
+    });
+    fileInput.value = '';
+  }
 
   if (uploadBtn && fileInput) {
     uploadBtn.addEventListener('click', function () { fileInput.click(); });
-    fileInput.addEventListener('change', async function () {
-      var file  = fileInput.files[0]; if (!file) { return; }
-      var token = sessionStorage.getItem('rc_admin_token');
-      uploadBtn.textContent = 'Uploading…';
-      try {
-        var r    = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token },
-          body: file,
+    fileInput.addEventListener('change', function () {
+      var file = fileInput.files[0];
+      if (!file) { return; }
+      showUploadModal(file, function () { doUpload(file); });
+    });
+  }
+
+  // ── Add photo to both strip tracks ─────────────────────────────
+  function addPhotoToStrip(url) {
+    [track1, track2].forEach(function (t, idx) {
+      if (!t) { return; }
+      var img = document.createElement('img');
+      img.className = 'about-strip__img'; img.src = url;
+      img.alt = ''; img.loading = 'lazy';
+      t.appendChild(img);
+      if (idx === 0) { wrapPhotoDelete(img); }
+    });
+  }
+
+  // ── Photo delete X button ───────────────────────────────────────
+  function wrapPhotoDelete(img) {
+    if (img.closest('.about-strip__img-wrap')) { return; }
+    var wrap = document.createElement('div');
+    wrap.className = 'about-strip__img-wrap';
+    var xBtn = document.createElement('button');
+    xBtn.className = 'about-strip__img-delete';
+    xBtn.setAttribute('aria-label', 'Remove photo');
+    xBtn.textContent = '×';
+    img.parentNode.insertBefore(wrap, img);
+    wrap.appendChild(img);
+    wrap.appendChild(xBtn);
+    xBtn.addEventListener('click', function () {
+      var src = img.src;
+      wrap.remove();
+      if (track2) {
+        track2.querySelectorAll('img').forEach(function (t2) {
+          if (t2.src === src) { t2.remove(); }
         });
-        var data = await r.json();
-        if (data.url) {
-          [track1, track2].forEach(function (t) {
-            if (!t) { return; }
-            var img = document.createElement('img');
-            img.className = 'about-strip__img';
-            img.src = data.url; img.alt = ''; img.loading = 'lazy';
-            t.appendChild(img);
-          });
-          uploadBtn.textContent = '+ Add photo';
-        } else {
-          uploadBtn.textContent = 'Upload failed';
-          setTimeout(function(){ uploadBtn.textContent = '+ Add photo'; }, 2000);
-        }
-      } catch (e) {
-        uploadBtn.textContent = 'Error';
-        setTimeout(function(){ uploadBtn.textContent = '+ Add photo'; }, 2000);
       }
     });
   }
 
+  function initPhotoDeletion() {
+    if (!track1) { return; }
+    track1.querySelectorAll('.about-strip__img').forEach(wrapPhotoDelete);
+  }
+
+  // ── Tag management ──────────────────────────────────────────────
+  function initTagEditing() {
+    document.querySelectorAll('.skills-list').forEach(function (list) {
+      if (list.dataset.tagEditDone) { return; }
+      list.dataset.tagEditDone = '1';
+
+      // Add X to each existing tag
+      list.querySelectorAll('.skill-tag:not(.skill-tag--add)').forEach(addTagX);
+
+      // + button
+      var addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'skill-tag skill-tag--add';
+      addBtn.setAttribute('aria-label', 'Add tag');
+      addBtn.textContent = '+';
+      list.appendChild(addBtn);
+
+      addBtn.addEventListener('click', function () {
+        var input = document.createElement('input');
+        input.type = 'text'; input.placeholder = 'New tag…';
+        input.className = 'skill-tag skill-tag--input';
+        list.insertBefore(input, addBtn);
+        input.focus();
+
+        function commit() {
+          var val = input.value.trim();
+          input.remove();
+          if (!val) { return; }
+          var span = document.createElement('span');
+          span.className = 'skill-tag'; span.textContent = val;
+          addTagX(span);
+          list.insertBefore(span, addBtn);
+        }
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter')  { e.preventDefault(); commit(); }
+          if (e.key === 'Escape') { input.remove(); }
+        });
+        input.addEventListener('blur', commit);
+      });
+    });
+  }
+
+  function addTagX(tag) {
+    if (tag.querySelector('.skill-tag__remove')) { return; }
+    var x = document.createElement('button');
+    x.type = 'button'; x.className = 'skill-tag__remove';
+    x.setAttribute('aria-label', 'Remove tag'); x.textContent = '×';
+    x.addEventListener('click', function (e) { e.stopPropagation(); tag.remove(); });
+    tag.appendChild(x);
+  }
+
+  // ── Cmd/Ctrl + Shift + U — link insertion ──────────────────────
+  var _lDialog = null;
+
+  function closeLinkDialog() {
+    if (_lDialog) { _lDialog.remove(); _lDialog = null; }
+  }
+
+  function showLinkDialog(range, existingLink) {
+    closeLinkDialog();
+    var rect = range.getBoundingClientRect();
+    _lDialog = document.createElement('div');
+    _lDialog.className = 'rc-link-dialog';
+    _lDialog.style.cssText = 'position:fixed;left:' + Math.max(8, rect.left + rect.width / 2) + 'px;top:' + (rect.top - 8) + 'px;transform:translate(-50%,-100%);';
+
+    _lDialog.innerHTML =
+      '<input type="url" placeholder="https://…" value="' + (existingLink ? existingLink.getAttribute('href') || '' : '') + '">' +
+      '<button class="rc-link-apply">Apply</button>' +
+      (existingLink ? '<button class="rc-link-remove">Remove link</button>' : '');
+
+    document.body.appendChild(_lDialog);
+    var urlIn  = _lDialog.querySelector('input');
+    var applyB = _lDialog.querySelector('.rc-link-apply');
+    var removeB = _lDialog.querySelector('.rc-link-remove');
+    urlIn.focus(); urlIn.select();
+
+    function apply() {
+      var url = urlIn.value.trim();
+      if (!url) { return; }
+      if (!/^https?:\/\//i.test(url)) { url = 'https://' + url; }
+      if (existingLink) {
+        existingLink.href = url;
+      } else {
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        var a = document.createElement('a');
+        a.href = url; a.className = 'rc-inline-link';
+        a.target = '_blank'; a.rel = 'noopener noreferrer';
+        try { range.surroundContents(a); } catch (e) {
+          var frag = range.extractContents(); a.appendChild(frag); range.insertNode(a);
+        }
+      }
+      closeLinkDialog();
+    }
+
+    applyB.addEventListener('click', apply);
+    urlIn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter')  { e.preventDefault(); apply(); }
+      if (e.key === 'Escape') { closeLinkDialog(); }
+    });
+    if (removeB) {
+      removeB.addEventListener('click', function () {
+        var p = existingLink.parentNode;
+        while (existingLink.firstChild) { p.insertBefore(existingLink.firstChild, existingLink); }
+        existingLink.remove();
+        closeLinkDialog();
+      });
+    }
+
+    setTimeout(function () {
+      document.addEventListener('mousedown', function onOut(e) {
+        if (_lDialog && !_lDialog.contains(e.target)) { closeLinkDialog(); document.removeEventListener('mousedown', onOut); }
+      });
+    }, 60);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (!document.body.classList.contains('about-edit-mode')) { return; }
+    var isMac  = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    var isCombo = (isMac ? e.metaKey : e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'u';
+    if (!isCombo) { return; }
+    var target = document.activeElement;
+    if (!target || target.contentEditable !== 'true') { return; }
+    e.preventDefault();
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) { return; }
+    var range = sel.getRangeAt(0);
+    var node = sel.anchorNode; var existingLink = null;
+    while (node && node !== target) { if (node.nodeName === 'A') { existingLink = node; break; } node = node.parentNode; }
+    if (existingLink || !range.collapsed) { showLinkDialog(range, existingLink); }
+  });
+
+  // Show link dialog on hover over existing links in edit mode
+  document.addEventListener('mouseover', function (e) {
+    if (!document.body.classList.contains('about-edit-mode') || _lDialog) { return; }
+    var link = e.target.closest('[data-about-field] a, .rc-inline-link');
+    if (!link) { return; }
+    var range = document.createRange(); range.selectNode(link);
+    showLinkDialog(range, link);
+  });
+
+  // ── Watch for edit mode toggling ────────────────────────────────
+  new MutationObserver(function (muts) {
+    muts.forEach(function (m) {
+      if (m.attributeName === 'class') {
+        var editMode = document.body.classList.contains('about-edit-mode');
+        if (editMode) { initPhotoDeletion(); initTagEditing(); }
+        // upload btn visibility is CSS-driven (body.about-edit-mode)
+      }
+    });
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+  // Never show upload btn just from being admin — only in edit mode (CSS handles it)
   window.addEventListener('rc-admin-enabled', function () {
-    if (uploadBtn) { uploadBtn.style.display = ''; }
+    if (uploadBtn) { uploadBtn.style.display = ''; } // let CSS body.about-edit-mode control it
   });
 })();
 </script>
