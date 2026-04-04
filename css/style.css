@@ -1480,16 +1480,21 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   margin-left: calc(50% - 50vw);
   height: 340px;
   overflow: hidden;
-  display: flex;
   position: relative;
 }
+/* Inner scroll wrapper — both tracks animate together as one unit */
+.about-strip__scroll {
+  display: flex;
+  height: 100%;
+  animation: strip-scroll 60s linear infinite;
+  will-change: transform;
+}
+.about-strip__scroll:hover { animation-play-state: paused; }
 .about-strip__track {
   display: flex;
   height: 100%;
-  animation: strip-scroll 40s linear infinite;
-  will-change: transform;
+  flex-shrink: 0;
 }
-.about-strip__track:hover { animation-play-state: paused; }
 .about-strip__img {
   height: 100%;
   width: auto;
@@ -1501,7 +1506,6 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-/* When only 1-2 photos exist, duplicate track handles seamless loop */
 
 /* ==================
    ANIMATIONS

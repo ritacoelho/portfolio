@@ -54,9 +54,11 @@
     <!-- Photo strip — full-width horizontal scroll -->
     <div style="position:relative;">
       <div class="about-strip" id="about-strip">
-        <!-- Photos loaded dynamically from API -->
-        <div class="about-strip__track" id="about-strip-track"></div>
-        <div class="about-strip__track" aria-hidden="true" id="about-strip-track2"></div>
+        <!-- Both tracks animate together via the scroll wrapper -->
+        <div class="about-strip__scroll" id="about-strip-scroll">
+          <div class="about-strip__track" id="about-strip-track"></div>
+          <div class="about-strip__track" aria-hidden="true" id="about-strip-track2"></div>
+        </div>
       </div>
       <input type="file" id="about-strip-file" accept="image/*" style="display:none">
       <button class="about-strip__add-btn is-admin-only" id="about-strip-upload-btn" style="display:none">+ Add photo</button>
@@ -189,54 +191,92 @@
 <script>
 // ── About page: photo strip, tag editing, link insertion ──────────
 (function () {
-  var uploadBtn = document.getElementById('about-strip-upload-btn');
-  var fileInput = document.getElementById('about-strip-file');
-  var track1    = document.getElementById('about-strip-track');
-  var track2    = document.getElementById('about-strip-track2');
+  var uploadBtn  = document.getElementById('about-strip-upload-btn');
+  var fileInput  = document.getElementById('about-strip-file');
+  var track1     = document.getElementById('about-strip-track');
+  var track2     = document.getElementById('about-strip-track2');
+  var scrollEl   = document.getElementById('about-strip-scroll');
 
   var ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
   var MAX_MB = 20;
+
+  // Source-of-truth for the real (non-cloned) photos
+  var _photos = [];
+
+  // ── Build DOM for both tracks from _photos ──────────────────────
+  // Clones each photo enough times so the content far exceeds the
+  // viewport width — this keeps the seamless-loop illusion intact
+  // even with only 1–2 photos.
+  function renderStrip() {
+    if (!track1 || !track2) { return; }
+    track1.innerHTML = '';
+    track2.innerHTML = '';
+    if (_photos.length === 0) { return; }
+
+    // Aim for each track to be at least 3× the viewport wide.
+    // Assume ~280 px average photo width (conservative for portrait shots).
+    var minWidth   = window.innerWidth * 3;
+    var repeatCount = Math.max(3, Math.ceil(minWidth / (_photos.length * 280)));
+
+    for (var r = 0; r < repeatCount; r++) {
+      _photos.forEach(function (url) {
+        track1.appendChild(makeImg(url, r === 0));
+        track2.appendChild(makeImg(url, false));
+      });
+    }
+
+    // Adjust animation duration so scroll speed stays ~80 px / s
+    // regardless of how many photos / clones are in the strip.
+    requestAnimationFrame(function () {
+      var trackWidth = track1.scrollWidth;
+      if (trackWidth > 0 && scrollEl) {
+        var duration = Math.round(trackWidth / 80);
+        scrollEl.style.animationDuration = duration + 's';
+      }
+    });
+  }
+
+  function makeImg(url, eager) {
+    var img = document.createElement('img');
+    img.className  = 'about-strip__img';
+    img.src        = url;
+    img.alt        = '';
+    img.loading    = eager ? 'eager' : 'lazy';
+    return img;
+  }
 
   // ── Load photos from API on page init (public + admin) ─────────
   function loadPhotosFromAPI() {
     fetch('/api/about')
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        var photos = data.photos;
-        if (!Array.isArray(photos) || photos.length === 0) { return; }
-        photos.forEach(function (url) { addPhotoToStrip(url); });
+        _photos = Array.isArray(data.photos) ? data.photos : [];
+        if (_photos.length > 0) { renderStrip(); }
       })
       .catch(function () { /* silent fail */ });
   }
 
-  // ── Save current photos array back to API ───────────────────────
+  // ── Save _photos back to API ────────────────────────────────────
   function savePhotosToAPI() {
     var token = sessionStorage.getItem('rc_admin_token');
     if (!token) { return; }
-    var photos = [];
-    if (track1) {
-      track1.querySelectorAll('.about-strip__img').forEach(function (img) {
-        photos.push(img.src);
-      });
-    }
     fetch('/api/about', {
-      method: 'PATCH',
+      method:  'PATCH',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ photos: photos }),
+      body:    JSON.stringify({ photos: _photos }),
     }).catch(function () {});
   }
 
   // ── Compress image client-side before storing ───────────────────
-  // Targets ~800 px tall JPEG at 0.82 quality — keeps each photo
-  // well under 200 KB base64 so the KV store stays happy.
+  // Max 1600×900 JPEG at 0.82 quality → well under 200 KB base64.
   function compressImage(file, callback) {
     var objUrl = URL.createObjectURL(file);
     var img = new Image();
     img.onerror = function () { URL.revokeObjectURL(objUrl); callback(null); };
-    img.onload = function () {
+    img.onload  = function () {
       var maxW = 1600, maxH = 900;
       var w = img.width, h = img.height;
-      var scale = Math.min(1, maxW / w, maxH / h);
+      var scale  = Math.min(1, maxW / w, maxH / h);
       var canvas = document.createElement('canvas');
       canvas.width  = Math.round(w * scale);
       canvas.height = Math.round(h * scale);
@@ -297,7 +337,7 @@
     if (confirmBtn) { confirmBtn.onclick = function () { overlay.remove(); onConfirm(); }; }
   }
 
-  // ── Do upload: compress client-side → strip → save to API ───────
+  // ── Do upload: compress client-side → _photos → render → save ──
   function doUpload(file) {
     if (uploadBtn) { uploadBtn.textContent = 'Processing…'; }
     compressImage(file, function (dataUrl) {
@@ -306,8 +346,10 @@
         if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
         return;
       }
-      addPhotoToStrip(dataUrl);
+      _photos.push(dataUrl);
+      renderStrip();
       savePhotosToAPI();
+      if (document.body.classList.contains('about-edit-mode')) { initPhotoDeletion(); }
       if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
     });
     fileInput.value = '';
@@ -322,20 +364,17 @@
     });
   }
 
-  // ── Add photo to both strip tracks ─────────────────────────────
-  function addPhotoToStrip(url) {
-    [track1, track2].forEach(function (t, idx) {
-      if (!t) { return; }
-      var img = document.createElement('img');
-      img.className = 'about-strip__img'; img.src = url;
-      img.alt = ''; img.loading = idx === 0 ? 'eager' : 'lazy';
-      t.appendChild(img);
-      if (idx === 0) { wrapPhotoDelete(img); }
-    });
+  // ── Photo delete X buttons (wraps first N images = real photos) ─
+  function initPhotoDeletion() {
+    if (!track1) { return; }
+    // Wrap only the first _photos.length images (the rest are clones)
+    var imgs = track1.querySelectorAll('.about-strip__img');
+    for (var i = 0; i < _photos.length; i++) {
+      if (imgs[i]) { wrapPhotoDelete(imgs[i], i); }
+    }
   }
 
-  // ── Photo delete X button ───────────────────────────────────────
-  function wrapPhotoDelete(img) {
+  function wrapPhotoDelete(img, photoIdx) {
     if (img.closest('.about-strip__img-wrap')) { return; }
     var wrap = document.createElement('div');
     wrap.className = 'about-strip__img-wrap';
@@ -346,21 +385,15 @@
     img.parentNode.insertBefore(wrap, img);
     wrap.appendChild(img);
     wrap.appendChild(xBtn);
-    xBtn.addEventListener('click', function () {
-      var src = img.src;
-      wrap.remove();
-      if (track2) {
-        track2.querySelectorAll('img').forEach(function (t2) {
-          if (t2.src === src) { t2.remove(); }
-        });
-      }
-      savePhotosToAPI();
-    });
-  }
-
-  function initPhotoDeletion() {
-    if (!track1) { return; }
-    track1.querySelectorAll('.about-strip__img').forEach(wrapPhotoDelete);
+    // Capture index at wrap time
+    (function (idx) {
+      xBtn.addEventListener('click', function () {
+        _photos.splice(idx, 1);
+        renderStrip();
+        savePhotosToAPI();
+        if (document.body.classList.contains('about-edit-mode')) { initPhotoDeletion(); }
+      });
+    })(photoIdx);
   }
 
   // ── Kick off photo load for all visitors ───────────────────────
