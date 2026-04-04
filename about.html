@@ -238,11 +238,52 @@
 
   function makeImg(url, eager) {
     var img = document.createElement('img');
-    img.className  = 'about-strip__img';
-    img.src        = url;
-    img.alt        = '';
-    img.loading    = eager ? 'eager' : 'lazy';
+    img.className        = 'about-strip__img';
+    img.src              = url;
+    img.alt              = '';
+    img.loading          = eager ? 'eager' : 'lazy';
+    img.draggable        = false;   // block browser default image drag
+    img.setAttribute('draggable', 'false');
     return img;
+  }
+
+  // ── Smooth hover: ease playback rate via requestAnimationFrame ──
+  // Uses the Web Animations API playbackRate — no position jump.
+  function easePlaybackRate(targetRate, ms) {
+    var anim = scrollEl && scrollEl.getAnimations ? scrollEl.getAnimations()[0] : null;
+    if (!anim) { return; }
+    if (scrollEl._rateRaf) { cancelAnimationFrame(scrollEl._rateRaf); }
+    var startRate = anim.playbackRate;
+    var startTime = performance.now();
+    function step(now) {
+      var t = Math.min(1, (now - startTime) / ms);
+      // Ease-in-out cubic
+      var eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      anim.playbackRate = startRate + (targetRate - startRate) * eased;
+      scrollEl._rateRaf = t < 1 ? requestAnimationFrame(step) : null;
+    }
+    scrollEl._rateRaf = requestAnimationFrame(step);
+  }
+
+  if (scrollEl) {
+    scrollEl.addEventListener('mouseenter', function () { easePlaybackRate(0, 600); });
+    scrollEl.addEventListener('mouseleave', function () { easePlaybackRate(1, 600); });
+  }
+
+  // ── Protect images: block context menu + drag ───────────────────
+  var stripEl = document.getElementById('about-strip');
+  if (stripEl) {
+    stripEl.addEventListener('contextmenu', function (e) {
+      // In edit mode keep context menu on wraps for usability, block elsewhere
+      if (!e.target.closest('.about-strip__img-wrap')) { e.preventDefault(); }
+      else if (!document.body.classList.contains('about-edit-mode'))  { e.preventDefault(); }
+    });
+    // Block native image drag (drag-to-reorder in edit mode uses its own handler)
+    stripEl.addEventListener('dragstart', function (e) {
+      if (!e.target.closest('.about-strip__img-wrap[draggable="true"]')) {
+        e.preventDefault();
+      }
+    });
   }
 
   // ── Load photos from API on page init (public + admin) ─────────
@@ -287,84 +328,211 @@
     img.src = objUrl;
   }
 
-  // ── Upload preview modal ────────────────────────────────────────
-  function showUploadModal(file, onConfirm) {
-    var errors = [];
-    if (ALLOWED_TYPES.indexOf(file.type) === -1) {
-      errors.push('Format not supported: <strong>' + (file.type || 'unknown') + '</strong>. Please use JPEG, PNG, WEBP or GIF.');
-    }
-    if (file.size > MAX_MB * 1024 * 1024) {
-      errors.push('File too large (' + (file.size / 1048576).toFixed(1) + ' MB). Maximum is ' + MAX_MB + ' MB.');
-    }
-
+  // ── Crop modal ──────────────────────────────────────────────────
+  // srcUrl: data URL of the (pre-compressed) image to crop.
+  // onConfirm(croppedDataUrl): called with the 600×600 JPEG result.
+  function showCropModal(srcUrl, onConfirm) {
+    var SVG_CLOSE = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
     var overlay = document.createElement('div');
-    overlay.className = 'rc-modal-overlay';
-    overlay.id = 'rc-photo-preview-modal';
-
-    var body;
-    if (errors.length) {
-      body = '<div style="text-align:center;padding:0.5rem 0 1rem;">' +
-        '<div style="font-size:2.5rem;margin-bottom:0.75rem;">⚠️</div>' +
-        '<p style="font-weight:600;margin:0 0 0.75rem;color:var(--text);">Cannot upload this photo</p>' +
-        errors.map(function (e) { return '<p style="font-size:0.84rem;color:#c0392b;margin:0.2rem 0;line-height:1.5;">' + e + '</p>'; }).join('') +
-        '</div>' +
-        '<div style="display:flex;justify-content:center;margin-top:1.25rem;">' +
-        '<button class="ac-btn ac-btn--ghost" id="pu-cancel">Close</button></div>';
-    } else {
-      var objUrl = URL.createObjectURL(file);
-      body = '<div style="text-align:center;">' +
-        '<img src="' + objUrl + '" alt="Preview" style="max-width:100%;max-height:300px;border-radius:10px;display:block;margin:0 auto 0.75rem;">' +
-        '<p style="font-size:0.78rem;color:var(--muted);margin:0;">' + file.name + ' &ndash; ' + (file.size / 1024).toFixed(0) + ' KB</p>' +
-        '</div>' +
-        '<div style="display:flex;gap:0.6rem;justify-content:center;margin-top:1.25rem;">' +
-        '<button class="ac-btn ac-btn--primary" id="pu-confirm">Add to strip</button>' +
-        '<button class="ac-btn ac-btn--ghost"   id="pu-cancel">Cancel</button></div>';
-    }
-
-    overlay.innerHTML = '<div class="rc-modal-card" style="max-width:460px;">' +
-      '<button class="rc-modal-close" id="pu-close" aria-label="Close">' +
-      '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>' +
-      '<h2 class="rc-modal-title">' + (errors.length ? 'Upload failed' : 'Preview') + '</h2>' +
-      body + '</div>';
-
+    overlay.className = 'rc-crop-overlay';
+    overlay.innerHTML = [
+      '<div class="rc-crop-card">',
+        '<button class="rc-modal-close" id="rcc-close" aria-label="Close">' + SVG_CLOSE + '</button>',
+        '<h2 class="rc-modal-title" style="margin-bottom:0.25rem;">Crop photo</h2>',
+        '<p class="rc-crop-hint">Drag to reposition · scroll or pinch to zoom</p>',
+        '<div class="rc-crop-viewport" id="rcc-vp">',
+          '<img class="rc-crop-img" id="rcc-img" src="' + srcUrl + '" draggable="false" alt="">',
+          '<div class="rc-crop-grid"></div>',
+        '</div>',
+        '<div class="rc-crop-controls">',
+          '<button class="rc-crop-zoom-btn" id="rcc-zout" aria-label="Zoom out">−</button>',
+          '<span class="rc-crop-zoom-label">Zoom</span>',
+          '<button class="rc-crop-zoom-btn" id="rcc-zin"  aria-label="Zoom in">+</button>',
+        '</div>',
+        '<div class="rc-crop-actions">',
+          '<button class="ac-btn ac-btn--primary" id="rcc-confirm">Apply crop</button>',
+          '<button class="ac-btn ac-btn--ghost"   id="rcc-cancel">Cancel</button>',
+        '</div>',
+      '</div>'
+    ].join('');
     document.body.appendChild(overlay);
 
-    function dismiss() { overlay.remove(); fileInput.value = ''; }
-    document.getElementById('pu-close').onclick = dismiss;
-    document.getElementById('pu-cancel').onclick = dismiss;
+    var vp  = document.getElementById('rcc-vp');
+    var img = document.getElementById('rcc-img');
+
+    // State: scale + offset of img inside vp (offset = top-left corner of img in vp px)
+    var s = { scale: 1, minScale: 1, maxScale: 5, ox: 0, oy: 0, nw: 0, nh: 0 };
+
+    function clamp() {
+      var iw = s.nw * s.scale, ih = s.nh * s.scale;
+      var vw = vp.offsetWidth,  vh = vp.offsetHeight;
+      s.ox = Math.min(0, Math.max(s.ox, vw - iw));
+      s.oy = Math.min(0, Math.max(s.oy, vh - ih));
+    }
+    function draw() {
+      clamp();
+      img.style.transform = 'translate(' + s.ox + 'px,' + s.oy + 'px) scale(' + s.scale + ')';
+    }
+    function zoomToward(factor, pivotX, pivotY) {
+      var ns = Math.max(s.minScale, Math.min(s.maxScale, s.scale * factor));
+      s.ox = pivotX - (pivotX - s.ox) * (ns / s.scale);
+      s.oy = pivotY - (pivotY - s.oy) * (ns / s.scale);
+      s.scale = ns;
+      draw();
+    }
+
+    function init() {
+      s.nw = img.naturalWidth; s.nh = img.naturalHeight;
+      var vw = vp.offsetWidth, vh = vp.offsetHeight;
+      // Cover fit (never smaller than viewport)
+      s.minScale = Math.max(vw / s.nw, vh / s.nh);
+      s.maxScale = s.minScale * 6;
+      s.scale = s.minScale;
+      s.ox = (vw - s.nw * s.scale) / 2;
+      s.oy = (vh - s.nh * s.scale) / 2;
+      draw();
+    }
+    if (img.complete && img.naturalWidth) { init(); }
+    else { img.addEventListener('load', init); }
+
+    // ── Mouse drag ────────────────────────────────────────────────
+    var drag = null;
+    vp.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      drag = { x: e.clientX, y: e.clientY, ox: s.ox, oy: s.oy };
+      vp.classList.add('is-dragging');
+    });
+    document.addEventListener('mousemove', function (e) {
+      if (!drag) { return; }
+      s.ox = drag.ox + (e.clientX - drag.x);
+      s.oy = drag.oy + (e.clientY - drag.y);
+      draw();
+    });
+    document.addEventListener('mouseup', function () {
+      drag = null; vp.classList.remove('is-dragging');
+    });
+
+    // ── Scroll zoom ───────────────────────────────────────────────
+    vp.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      var rect = vp.getBoundingClientRect();
+      zoomToward(e.deltaY < 0 ? 1.1 : 0.9, e.clientX - rect.left, e.clientY - rect.top);
+    }, { passive: false });
+
+    // ── Touch: single-finger pan + two-finger pinch zoom ─────────
+    var prevDist = null, prevMid = null, tDrag = null;
+    vp.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        tDrag = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: s.ox, oy: s.oy };
+        prevDist = null;
+      } else {
+        var t1 = e.touches[0], t2 = e.touches[1];
+        prevDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        prevMid  = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+      }
+    }, { passive: false });
+    vp.addEventListener('touchmove', function (e) {
+      e.preventDefault();
+      var rect = vp.getBoundingClientRect();
+      if (e.touches.length === 1 && prevDist === null && tDrag) {
+        s.ox = tDrag.ox + (e.touches[0].clientX - tDrag.x);
+        s.oy = tDrag.oy + (e.touches[0].clientY - tDrag.y);
+        draw();
+      } else if (e.touches.length >= 2) {
+        var t1 = e.touches[0], t2 = e.touches[1];
+        var dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        var mid  = { x: (t1.clientX + t2.clientX) / 2 - rect.left,
+                     y: (t1.clientY + t2.clientY) / 2 - rect.top };
+        if (prevDist) { zoomToward(dist / prevDist, mid.x, mid.y); }
+        prevDist = dist; prevMid = mid;
+      }
+    }, { passive: false });
+    vp.addEventListener('touchend', function (e) {
+      if (e.touches.length < 2) { prevDist = null; }
+      if (e.touches.length === 1) {
+        tDrag = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: s.ox, oy: s.oy };
+      }
+    }, { passive: false });
+
+    // ── Zoom buttons ──────────────────────────────────────────────
+    document.getElementById('rcc-zin').addEventListener('click', function () {
+      zoomToward(1.25, vp.offsetWidth / 2, vp.offsetHeight / 2);
+    });
+    document.getElementById('rcc-zout').addEventListener('click', function () {
+      zoomToward(1 / 1.25, vp.offsetWidth / 2, vp.offsetHeight / 2);
+    });
+
+    // ── Dismiss / confirm ─────────────────────────────────────────
+    function dismiss() { overlay.remove(); }
+    document.getElementById('rcc-close').addEventListener('click', dismiss);
+    document.getElementById('rcc-cancel').addEventListener('click', dismiss);
     overlay.addEventListener('click', function (e) { if (e.target === overlay) { dismiss(); } });
-    var confirmBtn = document.getElementById('pu-confirm');
-    if (confirmBtn) { confirmBtn.onclick = function () { overlay.remove(); onConfirm(); }; }
+
+    document.getElementById('rcc-confirm').addEventListener('click', function () {
+      var OUT = 600;
+      var canvas = document.createElement('canvas');
+      canvas.width = canvas.height = OUT;
+      var ctx = canvas.getContext('2d');
+      var vw = vp.offsetWidth, vh = vp.offsetHeight;
+      // Map viewport → image coordinates
+      var srcX = -s.ox / s.scale, srcY = -s.oy / s.scale;
+      var srcW =  vw   / s.scale, srcH =  vh   / s.scale;
+      ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, OUT, OUT);
+      overlay.remove();
+      onConfirm(canvas.toDataURL('image/jpeg', 0.9));
+    });
   }
 
-  // ── Do upload: compress client-side → _photos → render → save ──
-  function doUpload(file) {
-    if (uploadBtn) { uploadBtn.textContent = 'Processing…'; }
-    compressImage(file, function (dataUrl) {
-      if (!dataUrl) {
-        alert('Could not process this image — please try another file.');
-        if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
-        return;
-      }
-      _photos.push(dataUrl);
-      renderStrip();
-      savePhotosToAPI();
-      if (document.body.classList.contains('about-edit-mode')) { initPhotoDeletion(); }
-      if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
-    });
+  // ── Upload flow: validate → compress → crop modal → save ────────
+  function handleFileSelected(file) {
+    if (!file) { return; }
     fileInput.value = '';
+
+    // Validate
+    var errors = [];
+    if (ALLOWED_TYPES.indexOf(file.type) === -1) {
+      errors.push('Format not supported (' + (file.type || 'unknown') + '). Use JPEG, PNG, WEBP or GIF.');
+    }
+    if (file.size > MAX_MB * 1024 * 1024) {
+      errors.push('File too large (' + (file.size / 1048576).toFixed(1) + ' MB). Max is ' + MAX_MB + ' MB.');
+    }
+    if (errors.length) {
+      var eOverlay = document.createElement('div');
+      eOverlay.className = 'rc-modal-overlay';
+      eOverlay.innerHTML = '<div class="rc-modal-card" style="max-width:400px;text-align:center;">' +
+        '<div style="font-size:2rem;margin-bottom:0.75rem;">⚠️</div>' +
+        '<p style="font-weight:600;margin:0 0 0.5rem;">Cannot use this file</p>' +
+        errors.map(function (e) { return '<p style="font-size:0.84rem;color:#c0392b;margin:0.25rem 0;">' + e + '</p>'; }).join('') +
+        '<div style="margin-top:1.25rem;"><button class="ac-btn ac-btn--ghost" id="eu-close">Close</button></div></div>';
+      document.body.appendChild(eOverlay);
+      document.getElementById('eu-close').onclick = function () { eOverlay.remove(); };
+      eOverlay.addEventListener('click', function (e) { if (e.target === eOverlay) { eOverlay.remove(); } });
+      return;
+    }
+
+    // Compress (preserves full aspect ratio for the crop UI)
+    if (uploadBtn) { uploadBtn.textContent = 'Loading…'; }
+    compressImage(file, function (dataUrl) {
+      if (uploadBtn) { uploadBtn.textContent = '+ Add photo'; }
+      if (!dataUrl) { alert('Could not process this image — please try another file.'); return; }
+      showCropModal(dataUrl, function (croppedUrl) {
+        _photos.push(croppedUrl);
+        renderStrip();
+        savePhotosToAPI();
+        if (document.body.classList.contains('about-edit-mode')) { initPhotoDeletion(); }
+      });
+    });
   }
 
   if (uploadBtn && fileInput) {
     uploadBtn.addEventListener('click', function () { fileInput.click(); });
-    fileInput.addEventListener('change', function () {
-      var file = fileInput.files[0];
-      if (!file) { return; }
-      showUploadModal(file, function () { doUpload(file); });
-    });
+    fileInput.addEventListener('change', function () { handleFileSelected(fileInput.files[0]); });
   }
 
-  // ── Photo delete X buttons (wraps first N images = real photos) ─
+  // ── Photo delete + drag-to-reorder (admin edit mode only) ────────
+  var _dragSrcIdx = null;
+
   function initPhotoDeletion() {
     if (!track1) { return; }
     // Wrap only the first _photos.length images (the rest are clones)
@@ -372,20 +540,32 @@
     for (var i = 0; i < _photos.length; i++) {
       if (imgs[i]) { wrapPhotoDelete(imgs[i], i); }
     }
+    initDragDrop();
   }
+
+  var SVG_PENCIL = '<svg width="10" height="10" viewBox="0 0 14 14" fill="none">' +
+    '<path d="M9.5 1.5l3 3-7 7H2.5v-3l7-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
 
   function wrapPhotoDelete(img, photoIdx) {
     if (img.closest('.about-strip__img-wrap')) { return; }
-    var wrap = document.createElement('div');
+    var wrap  = document.createElement('div');
     wrap.className = 'about-strip__img-wrap';
+
     var xBtn = document.createElement('button');
     xBtn.className = 'about-strip__img-delete';
     xBtn.setAttribute('aria-label', 'Remove photo');
     xBtn.textContent = '×';
+
+    var editBtn = document.createElement('button');
+    editBtn.className = 'about-strip__img-edit';
+    editBtn.setAttribute('aria-label', 'Edit crop');
+    editBtn.innerHTML = SVG_PENCIL;
+
     img.parentNode.insertBefore(wrap, img);
     wrap.appendChild(img);
+    wrap.appendChild(editBtn);
     wrap.appendChild(xBtn);
-    // Capture index at wrap time
+
     (function (idx) {
       xBtn.addEventListener('click', function () {
         _photos.splice(idx, 1);
@@ -393,7 +573,72 @@
         savePhotosToAPI();
         if (document.body.classList.contains('about-edit-mode')) { initPhotoDeletion(); }
       });
+      editBtn.addEventListener('click', function () {
+        // Re-open crop modal with the existing cropped photo.
+        // The user can zoom in further; to start fresh, they re-upload.
+        showCropModal(_photos[idx], function (croppedUrl) {
+          _photos[idx] = croppedUrl;
+          renderStrip();
+          savePhotosToAPI();
+          if (document.body.classList.contains('about-edit-mode')) { initPhotoDeletion(); }
+        });
+      });
     })(photoIdx);
+  }
+
+  // ── Drag-to-reorder: only active in admin edit mode ─────────────
+  function initDragDrop() {
+    if (!track1) { return; }
+    var wraps = Array.from(track1.querySelectorAll('.about-strip__img-wrap'));
+    wraps.forEach(function (wrap, i) {
+      wrap.setAttribute('draggable', 'true');
+
+      wrap.addEventListener('dragstart', function (e) {
+        _dragSrcIdx = i;
+        e.dataTransfer.effectAllowed = 'move';
+        // Pause the scroll while dragging
+        easePlaybackRate(0, 300);
+        setTimeout(function () { wrap.style.opacity = '0.4'; }, 0);
+      });
+
+      wrap.addEventListener('dragend', function () {
+        wrap.style.opacity = '';
+        // Remove all drag-over indicators
+        track1.querySelectorAll('.about-strip__img-wrap').forEach(function (w) {
+          w.classList.remove('drag-over');
+        });
+        // Resume scroll only if mouse left the strip
+        easePlaybackRate(1, 600);
+        _dragSrcIdx = null;
+      });
+
+      wrap.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        // Highlight drop target
+        track1.querySelectorAll('.about-strip__img-wrap').forEach(function (w) {
+          w.classList.toggle('drag-over', w === wrap && w !== wraps[_dragSrcIdx]);
+        });
+      });
+
+      wrap.addEventListener('dragleave', function () {
+        wrap.classList.remove('drag-over');
+      });
+
+      wrap.addEventListener('drop', function (e) {
+        e.preventDefault();
+        wrap.classList.remove('drag-over');
+        if (_dragSrcIdx === null || _dragSrcIdx === i) { return; }
+        // Remove from source, insert before drop target.
+        // If dragging forward (src < target), removal shifts target down by 1.
+        var moved     = _photos.splice(_dragSrcIdx, 1)[0];
+        var insertIdx = _dragSrcIdx < i ? i - 1 : i;
+        _photos.splice(insertIdx, 0, moved);
+        renderStrip();
+        savePhotosToAPI();
+        initPhotoDeletion();
+      });
+    });
   }
 
   // ── Kick off photo load for all visitors ───────────────────────

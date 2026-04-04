@@ -1478,9 +1478,11 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 .about-strip {
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  height: 340px;
+  height: 260px;
   overflow: hidden;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
 }
 /* Inner scroll wrapper — both tracks animate together as one unit */
 .about-strip__scroll {
@@ -1489,18 +1491,22 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   animation: strip-scroll 60s linear infinite;
   will-change: transform;
 }
-.about-strip__scroll:hover { animation-play-state: paused; }
+/* Hover ease is handled entirely in JS (easePlaybackRate) */
 .about-strip__track {
   display: flex;
   height: 100%;
   flex-shrink: 0;
+  gap: 4px;
 }
 .about-strip__img {
   height: 100%;
   width: auto;
+  aspect-ratio: 1;
   object-fit: cover;
   display: block;
   flex-shrink: 0;
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 @keyframes strip-scroll {
   0%   { transform: translateX(0); }

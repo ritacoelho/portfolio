@@ -701,21 +701,126 @@ body.about-edit-mode .about-strip__add-btn { display: block; }
 /* Photo strip image wrapper with delete X */
 .about-strip__img-wrap { position: relative; display: inline-block; }
 
-.about-strip__img-delete {
+/* Drag-to-reorder in edit mode */
+body.about-edit-mode .about-strip__img-wrap[draggable="true"] {
+  cursor: grab;
+}
+body.about-edit-mode .about-strip__img-wrap[draggable="true"]:active {
+  cursor: grabbing;
+}
+body.about-edit-mode .about-strip__img-wrap.drag-over {
+  outline: 2.5px solid var(--burgundy, #7c1e2e);
+  outline-offset: -2px;
+  opacity: 0.8;
+}
+
+.about-strip__img-delete,
+.about-strip__img-edit {
   position: absolute;
-  top: 6px; right: 6px;
   width: 24px; height: 24px;
   background: rgba(0,0,0,0.65);
   color: #fff;
   border: none; border-radius: 50%;
-  font-size: 1rem; line-height: 1;
   cursor: pointer; z-index: 10;
   display: none;
   align-items: center; justify-content: center;
   transition: background 140ms;
 }
+.about-strip__img-delete { top: 6px; right: 6px; font-size: 1rem; line-height: 1; }
+.about-strip__img-edit   { top: 6px; left:  6px; }
 .about-strip__img-delete:hover { background: rgba(192,57,43,0.9); }
-body.about-edit-mode .about-strip__img-delete { display: flex; }
+.about-strip__img-edit:hover   { background: rgba(30,100,220,0.9); }
+body.about-edit-mode .about-strip__img-delete,
+body.about-edit-mode .about-strip__img-edit { display: flex; }
+
+/* ── Crop modal ──────────────────────────────────────────────────── */
+.rc-crop-overlay {
+  position: fixed; inset: 0; z-index: 9100;
+  background: rgba(0,0,0,0.78);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.rc-crop-card {
+  background: var(--bg, #fff);
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: min(500px, calc(100vw - 2rem));
+  box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+  position: relative;
+}
+/* Square viewport — overflow clips the image to the crop area */
+.rc-crop-viewport {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  position: relative;
+  border-radius: 10px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  background: #111;
+}
+.rc-crop-viewport.is-dragging { cursor: grabbing; }
+.rc-crop-img {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: 0 0;
+  max-width: none !important;
+  user-select: none;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+/* Rule-of-thirds grid — fades in while dragging */
+.rc-crop-grid {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.22) 1px, transparent 1px);
+  background-size: 33.333% 33.333%;
+}
+.rc-crop-viewport.is-dragging .rc-crop-grid { opacity: 1; }
+.rc-crop-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0.85rem 0 1.1rem;
+}
+.rc-crop-zoom-btn {
+  width: 30px; height: 30px;
+  border: 1.5px solid var(--border, #ddd);
+  border-radius: 7px;
+  background: none;
+  font-size: 1.1rem; line-height: 1;
+  cursor: pointer;
+  color: var(--text, #333);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 140ms;
+}
+.rc-crop-zoom-btn:hover { background: var(--bg-alt, #f5f5f5); }
+.rc-crop-zoom-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted, #888);
+  padding: 0 0.25rem;
+}
+.rc-crop-hint {
+  font-size: 0.72rem;
+  color: var(--muted, #888);
+  text-align: center;
+  margin: 0 0 0.5rem;
+}
+.rc-crop-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
 
 /* ── Tag editing (X to remove, + to add) ─────────────────────── */
 .skill-tag__remove {
