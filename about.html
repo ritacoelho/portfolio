@@ -51,16 +51,14 @@
       <h1 class="page-title fade-up fade-up--d1">Who I am</h1>
     </header>
 
-    <!-- Photo strip — full-width horizontal scroll -->
+    <!-- Photo strip — full-width horizontal scroll (photos loaded from API) -->
     <div style="position:relative;margin:0 calc(-1 * var(--gutter));overflow:hidden;">
       <div class="about-strip" id="about-strip">
-        <!-- Track is duplicated in JS for seamless looping; images added here or via admin upload -->
         <div class="about-strip__track" id="about-strip-track">
-          <img class="about-strip__img" src="images/rita.jpg" alt="Rita Coelho" loading="eager">
-          <!-- Additional photos load from API or can be left as single image; strip loops via CSS -->
+          <!-- Photos populated from /api/about → fields.photos -->
         </div>
         <div class="about-strip__track" aria-hidden="true" id="about-strip-track2">
-          <img class="about-strip__img" src="images/rita.jpg" alt="" loading="lazy">
+          <!-- Mirror track for seamless loop -->
         </div>
       </div>
       <input type="file" id="about-strip-file" accept="image/*" style="display:none">
@@ -192,6 +190,39 @@
 <script src="js/main.js" defer></script>
 <script src="js/admin.js" defer></script>
 <script>
+// ── Load about page data from API (photos + field overrides) ──────
+(function () {
+  fetch('/api/about')
+    .then(function (r) { return r.json(); })
+    .then(function (fields) {
+      // Restore text fields
+      if (fields && typeof fields === 'object') {
+        Object.keys(fields).forEach(function (key) {
+          var el = document.querySelector('[data-about-field="' + key + '"]');
+          if (el && key !== 'photos' && key !== 'updatedAt') {
+            el.innerHTML = fields[key];
+          }
+        });
+        // Populate photo strip
+        var photos = Array.isArray(fields.photos) ? fields.photos : [];
+        var track1 = document.getElementById('about-strip-track');
+        var track2 = document.getElementById('about-strip-track2');
+        photos.forEach(function (url, i) {
+          [track1, track2].forEach(function (t, ti) {
+            if (!t) { return; }
+            var img = document.createElement('img');
+            img.className = 'about-strip__img';
+            img.src = url;
+            img.alt = i === 0 && ti === 0 ? 'Rita Coelho' : '';
+            img.loading = i === 0 ? 'eager' : 'lazy';
+            t.appendChild(img);
+          });
+        });
+      }
+    })
+    .catch(function () { /* silently skip if API not available */ });
+})();
+
 // ── About page: photo strip, tag editing, link insertion ──────────
 (function () {
   var uploadBtn = document.getElementById('about-strip-upload-btn');
@@ -482,6 +513,14 @@
   window.addEventListener('rc-admin-enabled', function () {
     if (uploadBtn) { uploadBtn.style.display = ''; } // let CSS body.about-edit-mode control it
   });
+
+  // ── Expose photo URLs for admin.js save ──────────────────────────
+  window.__rcGetAboutPhotos = function () {
+    if (!track1) { return []; }
+    return Array.from(track1.querySelectorAll('.about-strip__img')).map(function (img) {
+      return img.src;
+    });
+  };
 })();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
