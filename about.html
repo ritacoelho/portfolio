@@ -265,25 +265,42 @@
     scrollEl._rateRaf = requestAnimationFrame(step);
   }
 
+  // Edit mode check used throughout
+  function isEditMode() { return document.body.classList.contains('about-edit-mode'); }
+
   if (scrollEl) {
-    scrollEl.addEventListener('mouseenter', function () { easePlaybackRate(0, 600); });
-    scrollEl.addEventListener('mouseleave', function () { easePlaybackRate(1, 600); });
+    scrollEl.addEventListener('mouseenter', function () {
+      if (!isEditMode()) { easePlaybackRate(0, 600); }
+    });
+    scrollEl.addEventListener('mouseleave', function () {
+      if (!isEditMode()) { easePlaybackRate(1, 600); }
+    });
   }
 
   // ── Protect images: block context menu + drag ───────────────────
   var stripEl = document.getElementById('about-strip');
   if (stripEl) {
     stripEl.addEventListener('contextmenu', function (e) {
-      // In edit mode keep context menu on wraps for usability, block elsewhere
-      if (!e.target.closest('.about-strip__img-wrap')) { e.preventDefault(); }
-      else if (!document.body.classList.contains('about-edit-mode'))  { e.preventDefault(); }
-    });
-    // Block native image drag (drag-to-reorder in edit mode uses its own handler)
-    stripEl.addEventListener('dragstart', function (e) {
-      if (!e.target.closest('.about-strip__img-wrap[draggable="true"]')) {
+      if (!isEditMode() || !e.target.closest('.about-strip__img-wrap')) {
         e.preventDefault();
       }
     });
+    // Only allow drag from the dedicated grip handle
+    stripEl.addEventListener('dragstart', function (e) {
+      if (!e.target.closest('.about-strip__img-drag')) {
+        e.preventDefault();
+      }
+    });
+  }
+
+  // ── Edit-mode render: one occurrence each, no animation (CSS handles it) ──
+  function renderEditStrip() {
+    if (!track1 || !track2) { return; }
+    track1.innerHTML = '';
+    track2.innerHTML = ''; // CSS hides track2; clear it too for cleanliness
+    _photos.forEach(function (url) { track1.appendChild(makeImg(url, true)); });
+    // No animation-duration tweak needed — CSS freezes the animation in edit mode
+    initPhotoDeletion();
   }
 
   // ── Load photos from API on page init (public + admin) ─────────
@@ -518,9 +535,8 @@
       if (!dataUrl) { alert('Could not process this image — please try another file.'); return; }
       showCropModal(dataUrl, function (croppedUrl) {
         _photos.push(croppedUrl);
-        renderStrip();
+        if (isEditMode()) { renderEditStrip(); } else { renderStrip(); }
         savePhotosToAPI();
-        if (document.body.classList.contains('about-edit-mode')) { initPhotoDeletion(); }
       });
     });
   }
@@ -545,6 +561,10 @@
 
   var SVG_PENCIL = '<svg width="10" height="10" viewBox="0 0 14 14" fill="none">' +
     '<path d="M9.5 1.5l3 3-7 7H2.5v-3l7-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+  // Six-dot grip icon
+  var SVG_GRIP = '<svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor" aria-hidden="true">' +
+    '<circle cx="2" cy="2" r="1.3"/><circle cx="6" cy="2" r="1.3"/><circle cx="10" cy="2" r="1.3"/>' +
+    '<circle cx="2" cy="8" r="1.3"/><circle cx="6" cy="8" r="1.3"/><circle cx="10" cy="8" r="1.3"/></svg>';
 
   function wrapPhotoDelete(img, photoIdx) {
     if (img.closest('.about-strip__img-wrap')) { return; }
@@ -561,61 +581,63 @@
     editBtn.setAttribute('aria-label', 'Edit crop');
     editBtn.innerHTML = SVG_PENCIL;
 
+    // Grip handle — the ONLY element with draggable="true"
+    var gripBtn = document.createElement('button');
+    gripBtn.className = 'about-strip__img-drag';
+    gripBtn.setAttribute('aria-label', 'Drag to reorder');
+    gripBtn.setAttribute('draggable', 'true');
+    gripBtn.innerHTML = SVG_GRIP;
+
     img.parentNode.insertBefore(wrap, img);
     wrap.appendChild(img);
     wrap.appendChild(editBtn);
     wrap.appendChild(xBtn);
+    wrap.appendChild(gripBtn);
 
     (function (idx) {
       xBtn.addEventListener('click', function () {
         _photos.splice(idx, 1);
-        renderStrip();
+        if (isEditMode()) { renderEditStrip(); } else { renderStrip(); }
         savePhotosToAPI();
-        if (document.body.classList.contains('about-edit-mode')) { initPhotoDeletion(); }
       });
       editBtn.addEventListener('click', function () {
-        // Re-open crop modal with the existing cropped photo.
-        // The user can zoom in further; to start fresh, they re-upload.
         showCropModal(_photos[idx], function (croppedUrl) {
           _photos[idx] = croppedUrl;
-          renderStrip();
+          if (isEditMode()) { renderEditStrip(); } else { renderStrip(); }
           savePhotosToAPI();
-          if (document.body.classList.contains('about-edit-mode')) { initPhotoDeletion(); }
         });
       });
     })(photoIdx);
   }
 
-  // ── Drag-to-reorder: only active in admin edit mode ─────────────
+  // ── Drag-to-reorder via grip handle ─────────────────────────────
+  // draggable="true" lives only on the grip button (set in wrapPhotoDelete).
+  // dragstart fires on the handle; dragover/drop fire on the wrap.
   function initDragDrop() {
     if (!track1) { return; }
     var wraps = Array.from(track1.querySelectorAll('.about-strip__img-wrap'));
     wraps.forEach(function (wrap, i) {
-      wrap.setAttribute('draggable', 'true');
 
-      wrap.addEventListener('dragstart', function (e) {
+      var handle = wrap.querySelector('.about-strip__img-drag');
+      if (!handle) { return; }
+
+      handle.addEventListener('dragstart', function (e) {
         _dragSrcIdx = i;
         e.dataTransfer.effectAllowed = 'move';
-        // Pause the scroll while dragging
-        easePlaybackRate(0, 300);
         setTimeout(function () { wrap.style.opacity = '0.4'; }, 0);
       });
 
-      wrap.addEventListener('dragend', function () {
+      handle.addEventListener('dragend', function () {
         wrap.style.opacity = '';
-        // Remove all drag-over indicators
         track1.querySelectorAll('.about-strip__img-wrap').forEach(function (w) {
           w.classList.remove('drag-over');
         });
-        // Resume scroll only if mouse left the strip
-        easePlaybackRate(1, 600);
         _dragSrcIdx = null;
       });
 
       wrap.addEventListener('dragover', function (e) {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        // Highlight drop target
         track1.querySelectorAll('.about-strip__img-wrap').forEach(function (w) {
           w.classList.toggle('drag-over', w === wrap && w !== wraps[_dragSrcIdx]);
         });
@@ -629,14 +651,11 @@
         e.preventDefault();
         wrap.classList.remove('drag-over');
         if (_dragSrcIdx === null || _dragSrcIdx === i) { return; }
-        // Remove from source, insert before drop target.
-        // If dragging forward (src < target), removal shifts target down by 1.
         var moved     = _photos.splice(_dragSrcIdx, 1)[0];
         var insertIdx = _dragSrcIdx < i ? i - 1 : i;
         _photos.splice(insertIdx, 0, moved);
-        renderStrip();
+        renderEditStrip(); // always in edit mode when this fires
         savePhotosToAPI();
-        initPhotoDeletion();
       });
     });
   }
@@ -788,9 +807,12 @@
   new MutationObserver(function (muts) {
     muts.forEach(function (m) {
       if (m.attributeName === 'class') {
-        var editMode = document.body.classList.contains('about-edit-mode');
-        if (editMode) { initPhotoDeletion(); initTagEditing(); }
-        // upload btn visibility is CSS-driven (body.about-edit-mode)
+        if (isEditMode()) {
+          renderEditStrip();  // single occurrence, frozen, manually scrollable
+          initTagEditing();
+        } else {
+          renderStrip();      // restore infinite loop + animation
+        }
       }
     });
   }).observe(document.body, { attributes: true, attributeFilter: ['class'] });

@@ -698,22 +698,35 @@ body.about-edit-mode [data-about-field]:focus {
 /* Only show upload btn when in about-edit-mode (controlled by JS) */
 body.about-edit-mode .about-strip__add-btn { display: block; }
 
-/* Photo strip image wrapper with delete X */
+/* ── Edit-mode strip: single occurrence, manually scrollable ─────── */
+body.about-edit-mode .about-strip {
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: default;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border, #ddd) transparent;
+}
+body.about-edit-mode .about-strip__scroll {
+  animation: none !important;  /* freeze the loop */
+  transform: none !important;
+  align-items: flex-start;
+}
+/* Hide the duplicate track — each photo appears exactly once */
+body.about-edit-mode .about-strip__track + .about-strip__track {
+  display: none;
+}
+
+/* Photo strip image wrapper */
 .about-strip__img-wrap { position: relative; display: inline-block; }
 
-/* Drag-to-reorder in edit mode */
-body.about-edit-mode .about-strip__img-wrap[draggable="true"] {
-  cursor: grab;
-}
-body.about-edit-mode .about-strip__img-wrap[draggable="true"]:active {
-  cursor: grabbing;
-}
+/* Drop-target highlight when reordering */
 body.about-edit-mode .about-strip__img-wrap.drag-over {
   outline: 2.5px solid var(--burgundy, #7c1e2e);
   outline-offset: -2px;
   opacity: 0.8;
 }
 
+/* Delete (×) and crop-edit (pencil) buttons */
 .about-strip__img-delete,
 .about-strip__img-edit {
   position: absolute;
@@ -732,6 +745,26 @@ body.about-edit-mode .about-strip__img-wrap.drag-over {
 .about-strip__img-edit:hover   { background: rgba(30,100,220,0.9); }
 body.about-edit-mode .about-strip__img-delete,
 body.about-edit-mode .about-strip__img-edit { display: flex; }
+
+/* Grip handle — dedicated drag-to-reorder affordance */
+.about-strip__img-drag {
+  position: absolute;
+  bottom: 7px; left: 50%;
+  transform: translateX(-50%);
+  width: 32px; height: 20px;
+  padding: 0;
+  background: rgba(0,0,0,0.55);
+  color: rgba(255,255,255,0.9);
+  border: none; border-radius: 5px;
+  cursor: grab;
+  z-index: 10;
+  display: none;
+  align-items: center; justify-content: center;
+  transition: background 140ms;
+}
+.about-strip__img-drag:hover  { background: rgba(0,0,0,0.8); }
+.about-strip__img-drag:active { cursor: grabbing; }
+body.about-edit-mode .about-strip__img-drag { display: flex; }
 
 /* ── Crop modal ──────────────────────────────────────────────────── */
 .rc-crop-overlay {
