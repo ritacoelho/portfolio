@@ -244,9 +244,9 @@
       refreshLikeDisplay(slug);
     }
 
-    // Position at trigger centre (document coords for position:absolute)
-    ctxMenu.style.left = (cx + window.scrollX) + 'px';
-    ctxMenu.style.top  = (cy + window.scrollY) + 'px';
+    // Position at trigger centre (viewport coords for position:fixed)
+    ctxMenu.style.left = cx + 'px';
+    ctxMenu.style.top  = cy + 'px';
 
     trigger.classList.add('active');
     ctxMenu.classList.add('open');

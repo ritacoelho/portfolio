@@ -694,10 +694,10 @@ button { font-family: inherit; cursor: pointer; }
    Labels positioned absolutely below each circle button.
    ── */
 .ctx-menu {
-  position: absolute;          /* scrolls with the page, not the viewport */
-  top: 0; left: 0;             /* JS overrides left & top with document coords */
+  position: fixed;             /* stays in viewport regardless of scroll */
+  top: 0; left: 0;             /* JS overrides left & top with viewport coords */
   width: 0; height: 0;
-  z-index: 200;
+  z-index: 1100;               /* above admin bar (1000) */
   pointer-events: none;
 }
 

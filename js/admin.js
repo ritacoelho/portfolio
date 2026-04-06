@@ -271,6 +271,33 @@
     if (document.querySelector('.about-bio')) {
       injectAboutEditButton();
     }
+
+    // Static project pages (not view.html): inject "Edit page" FAB at bottom-right
+    // view.html already has its own FAB via injectFABs(); this handles hexagon, atlassian, etc.
+    if (document.querySelector('.project-page') && !window.location.pathname.includes('/view')) {
+      injectStaticProjectEditFab();
+    }
+  }
+
+  // ── Static project page edit FAB ───────────────────────────────
+  function injectStaticProjectEditFab() {
+    if (document.getElementById('rc-static-edit-fab')) { return; }
+
+    // Derive slug from the page filename (e.g. /projects/hexagon.html → 'hexagon')
+    var slug = window.location.pathname.split('/').pop().replace('.html', '');
+    if (!slug) { return; }
+
+    var SVG_EDIT = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7 7H2.5v-3l7-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+
+    var btn = document.createElement('button');
+    btn.id        = 'rc-static-edit-fab';
+    btn.className = 'rc-about-edit-btn';   /* reuses the same fixed-bottom-right pill style */
+    btn.innerHTML = SVG_EDIT + ' Edit page';
+    document.body.appendChild(btn);
+
+    btn.addEventListener('click', function () {
+      window.location.href = 'view.html?slug=' + encodeURIComponent(slug) + '&edit=1';
+    });
   }
 
   function saveEdit(key, value) {

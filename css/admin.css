@@ -1672,6 +1672,21 @@ body.is-admin:not(.admin-preview) .rc-page-ctx-trigger.is-visible {
   right: 0 !important;
 }
 
+/* ── Static project pages: trigger is a direct child of body (no positioned
+   ancestor), so override to fixed at bottom-right so it stays accessible
+   when scrolled. Selector only matches static pages, not view.html (where
+   the trigger lives inside .project-hero). ── */
+body > .rc-page-ctx-trigger {
+  position: fixed;
+  top: auto;
+  bottom: 4.5rem;  /* sits above the Edit page FAB */
+  right: 1.5rem;
+  z-index: 1100;
+}
+body > .rc-page-ctx-trigger.active {
+  right: 1.5rem !important;  /* override the generic rule's right: 0 */
+}
+
 body.is-admin { padding-top: 34px; }
 
 /* ── Icon-only action buttons (access codes table) ───────────── */
