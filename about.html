@@ -285,9 +285,11 @@
         e.preventDefault();
       }
     });
-    // Only allow drag from the dedicated grip handle
+    // Allow drag from photo wraps (reorder); block everything else incl. delete/edit buttons
     stripEl.addEventListener('dragstart', function (e) {
-      if (!e.target.closest('.about-strip__img-drag')) {
+      if (!e.target.closest('.about-strip__img-wrap') ||
+          e.target.closest('.about-strip__img-delete') ||
+          e.target.closest('.about-strip__img-edit')) {
         e.preventDefault();
       }
     });
@@ -561,15 +563,12 @@
 
   var SVG_PENCIL = '<svg width="10" height="10" viewBox="0 0 14 14" fill="none">' +
     '<path d="M9.5 1.5l3 3-7 7H2.5v-3l7-7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
-  // Six-dot grip icon
-  var SVG_GRIP = '<svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor" aria-hidden="true">' +
-    '<circle cx="2" cy="2" r="1.3"/><circle cx="6" cy="2" r="1.3"/><circle cx="10" cy="2" r="1.3"/>' +
-    '<circle cx="2" cy="8" r="1.3"/><circle cx="6" cy="8" r="1.3"/><circle cx="10" cy="8" r="1.3"/></svg>';
 
   function wrapPhotoDelete(img, photoIdx) {
     if (img.closest('.about-strip__img-wrap')) { return; }
     var wrap  = document.createElement('div');
     wrap.className = 'about-strip__img-wrap';
+    wrap.setAttribute('draggable', 'true'); // whole photo is the drag handle
 
     var xBtn = document.createElement('button');
     xBtn.className = 'about-strip__img-delete';
@@ -581,18 +580,10 @@
     editBtn.setAttribute('aria-label', 'Edit crop');
     editBtn.innerHTML = SVG_PENCIL;
 
-    // Grip handle — the ONLY element with draggable="true"
-    var gripBtn = document.createElement('button');
-    gripBtn.className = 'about-strip__img-drag';
-    gripBtn.setAttribute('aria-label', 'Drag to reorder');
-    gripBtn.setAttribute('draggable', 'true');
-    gripBtn.innerHTML = SVG_GRIP;
-
     img.parentNode.insertBefore(wrap, img);
     wrap.appendChild(img);
     wrap.appendChild(editBtn);
     wrap.appendChild(xBtn);
-    wrap.appendChild(gripBtn);
 
     (function (idx) {
       xBtn.addEventListener('click', function () {
@@ -610,51 +601,68 @@
     })(photoIdx);
   }
 
-  // ── Drag-to-reorder via grip handle ─────────────────────────────
-  // draggable="true" lives only on the grip button (set in wrapPhotoDelete).
-  // dragstart fires on the handle; dragover/drop fire on the wrap.
+  // ── Drag-to-reorder: whole photo is draggable, line indicator shows drop position ──
+  var _dropTargetIdx = null;
+
   function initDragDrop() {
     if (!track1) { return; }
     var wraps = Array.from(track1.querySelectorAll('.about-strip__img-wrap'));
+
+    function clearIndicators() {
+      wraps.forEach(function (w) { w.classList.remove('drop-before', 'drop-after'); });
+    }
+
     wraps.forEach(function (wrap, i) {
 
-      var handle = wrap.querySelector('.about-strip__img-drag');
-      if (!handle) { return; }
-
-      handle.addEventListener('dragstart', function (e) {
+      wrap.addEventListener('dragstart', function (e) {
         _dragSrcIdx = i;
+        _dropTargetIdx = null;
         e.dataTransfer.effectAllowed = 'move';
-        setTimeout(function () { wrap.style.opacity = '0.4'; }, 0);
+        setTimeout(function () { wrap.classList.add('is-dragging'); }, 0);
       });
 
-      handle.addEventListener('dragend', function () {
-        wrap.style.opacity = '';
-        track1.querySelectorAll('.about-strip__img-wrap').forEach(function (w) {
-          w.classList.remove('drag-over');
-        });
+      wrap.addEventListener('dragend', function () {
+        wrap.classList.remove('is-dragging');
+        clearIndicators();
         _dragSrcIdx = null;
+        _dropTargetIdx = null;
       });
 
       wrap.addEventListener('dragover', function (e) {
         e.preventDefault();
+        if (_dragSrcIdx === null) { return; }
         e.dataTransfer.dropEffect = 'move';
-        track1.querySelectorAll('.about-strip__img-wrap').forEach(function (w) {
-          w.classList.toggle('drag-over', w === wrap && w !== wraps[_dragSrcIdx]);
-        });
+        clearIndicators();
+        if (wrap === wraps[_dragSrcIdx]) { return; }
+        // Determine left or right half to decide insert position
+        var rect = wrap.getBoundingClientRect();
+        if (e.clientX < rect.left + rect.width / 2) {
+          wrap.classList.add('drop-before');
+          _dropTargetIdx = i;
+        } else {
+          wrap.classList.add('drop-after');
+          _dropTargetIdx = i + 1;
+        }
       });
 
-      wrap.addEventListener('dragleave', function () {
-        wrap.classList.remove('drag-over');
+      wrap.addEventListener('dragleave', function (e) {
+        if (!wrap.contains(e.relatedTarget)) {
+          wrap.classList.remove('drop-before', 'drop-after');
+        }
       });
 
       wrap.addEventListener('drop', function (e) {
         e.preventDefault();
-        wrap.classList.remove('drag-over');
-        if (_dragSrcIdx === null || _dragSrcIdx === i) { return; }
-        var moved     = _photos.splice(_dragSrcIdx, 1)[0];
-        var insertIdx = _dragSrcIdx < i ? i - 1 : i;
+        clearIndicators();
+        if (_dragSrcIdx === null || _dropTargetIdx === null) { return; }
+        var src = _dragSrcIdx;
+        var dst = _dropTargetIdx;
+        // No-op: dropping in its own slot or the adjacent gap
+        if (dst === src || dst === src + 1) { return; }
+        var moved = _photos.splice(src, 1)[0];
+        var insertIdx = src < dst ? dst - 1 : dst;
         _photos.splice(insertIdx, 0, moved);
-        renderEditStrip(); // always in edit mode when this fires
+        renderEditStrip();
         savePhotosToAPI();
       });
     });

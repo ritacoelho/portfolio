@@ -286,27 +286,57 @@
   // ── About page inline edit ─────────────────────────────────────
   function injectAboutEditButton() {
     if (document.getElementById('rc-about-edit-btn')) { return; }
+
+    var SVG_EDIT = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7 7H2.5v-3l7-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+    var SVG_SAVE = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    // Edit FAB (shown when not editing)
     var btn = document.createElement('button');
     btn.id        = 'rc-about-edit-btn';
     btn.className = 'rc-about-edit-btn is-admin-only';
-    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7 7H2.5v-3l7-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg> Edit page';
+    btn.innerHTML = SVG_EDIT + ' Edit page';
     document.body.appendChild(btn);
 
-    var editing = false;
-    btn.addEventListener('click', function () {
-      editing = !editing;
-      document.body.classList.toggle('about-edit-mode', editing);
-      btn.innerHTML = editing
-        ? '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Save changes'
-        : '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7 7H2.5v-3l7-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg> Edit page';
+    // Save bar: Cancel + Save changes (shown when editing)
+    var saveBar = document.createElement('div');
+    saveBar.id        = 'rc-about-save-bar';
+    saveBar.className = 'rc-about-save-bar';
+    saveBar.innerHTML =
+      '<button class="rc-edit-cancel-btn" id="rc-about-cancel-btn">Cancel</button>' +
+      '<button class="rc-edit-save-btn"   id="rc-about-save-btn">' + SVG_SAVE + ' Save changes</button>';
+    document.body.appendChild(saveBar);
 
+    var _snapshot = {};
+
+    function enterEdit() {
+      _snapshot = {};
       document.querySelectorAll('[data-about-field]').forEach(function (el) {
-        el.contentEditable = editing ? 'true' : 'false';
+        _snapshot[el.dataset.aboutField] = el.innerHTML;
+        el.contentEditable = 'true';
       });
+      document.body.classList.add('about-edit-mode');
+    }
 
-      if (!editing) {
-        saveAboutContent();
-      }
+    function exitEdit() {
+      document.querySelectorAll('[data-about-field]').forEach(function (el) {
+        el.contentEditable = 'false';
+      });
+      document.body.classList.remove('about-edit-mode');
+    }
+
+    btn.addEventListener('click', enterEdit);
+
+    document.getElementById('rc-about-cancel-btn').addEventListener('click', function () {
+      document.querySelectorAll('[data-about-field]').forEach(function (el) {
+        var key = el.dataset.aboutField;
+        if (_snapshot[key] !== undefined) { el.innerHTML = _snapshot[key]; }
+      });
+      exitEdit();
+    });
+
+    document.getElementById('rc-about-save-btn').addEventListener('click', function () {
+      exitEdit();
+      saveAboutContent();
     });
   }
 

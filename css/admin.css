@@ -634,6 +634,39 @@ body.admin-preview .is-admin-only {
   color: var(--brown, #251605);
 }
 
+/* ── Shared pill-style edit save / cancel buttons ────────────── */
+.rc-edit-save-btn,
+.rc-edit-cancel-btn {
+  border-radius: 999px;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.78rem;
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 150ms, border-color 150ms, transform 150ms;
+  white-space: nowrap;
+}
+
+.rc-edit-save-btn {
+  background: var(--brown, #251605);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.rc-edit-save-btn:hover    { background: var(--brown-dark, #160C02); transform: translateY(-1px); }
+.rc-edit-save-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.rc-edit-cancel-btn {
+  background: #fff;
+  color: var(--text, #0F0A06);
+  border: 1.5px solid var(--border, #D0D7DD);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.rc-edit-cancel-btn:hover { border-color: #aaa; transform: translateY(-1px); }
+
 /* ── About page admin edit button ────────────────────────────── */
 .rc-about-edit-btn {
   position: fixed;
@@ -659,8 +692,21 @@ body.admin-preview .is-admin-only {
 body.is-admin:not(.admin-preview) .rc-about-edit-btn {
   display: flex;
 }
+body.about-edit-mode .rc-about-edit-btn { display: none !important; }
 
 .rc-about-edit-btn:hover { background: var(--brown-dark, #160C02); transform: translateY(-1px); }
+
+/* ── About page save bar (cancel + save, shown in edit mode) ─── */
+.rc-about-save-bar {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 900;
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+body.about-edit-mode .rc-about-save-bar { display: flex; }
 
 /* Editable about fields */
 body.about-edit-mode [data-about-field] {
@@ -681,19 +727,22 @@ body.about-edit-mode [data-about-field]:focus {
 .about-strip__add-btn {
   display: none;
   position: absolute;
-  bottom: 0.75rem;
-  right: 0.75rem;
-  background: rgba(255,255,255,0.9);
-  border: 1.5px solid var(--border, #ddd);
-  border-radius: 8px;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.72rem;
+  bottom: 0.85rem;
+  right: 0.85rem;
+  background: var(--brown, #251605);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
   font-family: var(--font-sans, 'DM Sans', sans-serif);
   font-weight: 600;
-  color: var(--text, #333);
   cursor: pointer;
-  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+  transition: background 150ms, transform 150ms;
+  white-space: nowrap;
 }
+.about-strip__add-btn:hover { background: var(--brown-dark, #160C02); transform: translateY(-1px); }
 
 /* Only show upload btn when in about-edit-mode (controlled by JS) */
 body.about-edit-mode .about-strip__add-btn { display: block; }
@@ -719,12 +768,25 @@ body.about-edit-mode .about-strip__track + .about-strip__track {
 /* Photo strip image wrapper */
 .about-strip__img-wrap { position: relative; display: inline-block; }
 
-/* Drop-target highlight when reordering */
-body.about-edit-mode .about-strip__img-wrap.drag-over {
-  outline: 2.5px solid var(--burgundy, #7c1e2e);
-  outline-offset: -2px;
-  opacity: 0.8;
+/* Grab cursor in edit mode */
+body.about-edit-mode .about-strip__img-wrap { cursor: grab; }
+body.about-edit-mode .about-strip__img-wrap.is-dragging { opacity: 0.35; cursor: grabbing; }
+
+/* Drop line indicator — vertical line before/after target photo */
+body.about-edit-mode .about-strip__img-wrap.drop-before::before,
+body.about-edit-mode .about-strip__img-wrap.drop-after::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--brown, #251605);
+  border-radius: 2px;
+  z-index: 20;
+  pointer-events: none;
 }
+body.about-edit-mode .about-strip__img-wrap.drop-before::before { left: -3px; }
+body.about-edit-mode .about-strip__img-wrap.drop-after::after  { right: -3px; }
 
 /* Delete (×) and crop-edit (pencil) buttons */
 .about-strip__img-delete,
@@ -746,25 +808,9 @@ body.about-edit-mode .about-strip__img-wrap.drag-over {
 body.about-edit-mode .about-strip__img-delete,
 body.about-edit-mode .about-strip__img-edit { display: flex; }
 
-/* Grip handle — dedicated drag-to-reorder affordance */
-.about-strip__img-drag {
-  position: absolute;
-  bottom: 7px; left: 50%;
-  transform: translateX(-50%);
-  width: 32px; height: 20px;
-  padding: 0;
-  background: rgba(0,0,0,0.55);
-  color: rgba(255,255,255,0.9);
-  border: none; border-radius: 5px;
-  cursor: grab;
-  z-index: 10;
-  display: none;
-  align-items: center; justify-content: center;
-  transition: background 140ms;
-}
-.about-strip__img-drag:hover  { background: rgba(0,0,0,0.8); }
-.about-strip__img-drag:active { cursor: grabbing; }
-body.about-edit-mode .about-strip__img-drag { display: flex; }
+/* delete/edit buttons revert to pointer in edit mode (grab is set on wrap) */
+body.about-edit-mode .about-strip__img-delete,
+body.about-edit-mode .about-strip__img-edit { cursor: pointer; }
 
 /* ── Crop modal ──────────────────────────────────────────────────── */
 .rc-crop-overlay {
