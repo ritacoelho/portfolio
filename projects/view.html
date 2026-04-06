@@ -172,12 +172,23 @@
              '<p class="project-meta__value"' + editAttr + '>' + esc(m.value) + '</p></div>';
     }).join('');
 
+    var SVG_IMG = '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="1" y="2" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/><circle cx="4.5" cy="5.5" r="1" fill="currentColor"/><path d="M1 10l3-3 2 2 3-4 4 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     var coverHtml = p.coverImage
-      ? '<div class="project-hero__cover" style="margin:2rem 0 0;position:relative;">' +
+      ? '<div class="project-hero__cover" style="margin:2rem 0 0;">' +
           '<img src="' + esc(p.coverImage) + '" alt="" id="pv-cover-img" style="width:100%;border-radius:16px;display:block;" loading="lazy">' +
-          (editMode ? '<button class="pv-cover-upload-btn" id="pv-cover-btn">Change cover</button><input type="file" id="pv-cover-file" accept="image/*" style="display:none">' : '') +
+          (editMode
+            ? '<div class="pv-cover-btn-row">' +
+                '<button class="pv-cover-upload-btn" id="pv-cover-btn">' + SVG_IMG + ' Change cover</button>' +
+                '<input type="file" id="pv-cover-file" accept="image/*" style="display:none">' +
+              '</div>'
+            : '') +
         '</div>'
-      : (editMode ? '<div style="margin:1rem 0;"><button class="pv-cover-upload-btn" id="pv-cover-btn">+ Add cover image</button><input type="file" id="pv-cover-file" accept="image/*" style="display:none"></div>' : '');
+      : (editMode
+          ? '<div class="pv-cover-btn-row" style="margin:1.5rem 0;">' +
+              '<button class="pv-cover-upload-btn" id="pv-cover-btn">' + SVG_IMG + ' Add cover photo</button>' +
+              '<input type="file" id="pv-cover-file" accept="image/*" style="display:none">' +
+            '</div>'
+          : '');
 
     var blocksHtml = (p.content || []).map(function (b, i) { return renderBlockView(b, i); }).join('');
 
@@ -505,38 +516,241 @@
     // Drag-to-reorder
     wireDragReorder();
 
-    // Cover image upload
+    // ── Cover image: crop modal flow ──────────────────────────────
     var coverBtn  = document.getElementById('pv-cover-btn');
     var coverFile = document.getElementById('pv-cover-file');
-    if (coverBtn && coverFile) {
-      coverBtn.addEventListener('click', function () { coverFile.click(); });
-      coverFile.addEventListener('change', async function () {
-        var file = coverFile.files[0]; if (!file) { return; }
-        coverBtn.textContent = 'Uploading…';
-        try {
-          var r    = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
-            method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: file,
-          });
-          var data = await r.json();
-          if (data.url) {
-            currentProject.coverImage = data.url;
-            var img = document.getElementById('pv-cover-img');
-            if (img) {
-              img.src = data.url;
-              coverBtn.textContent = 'Change cover';
-            } else {
-              renderProject(currentProject);
-              return;
-            }
-            showToast('Cover updated');
-          } else {
-            coverBtn.textContent = 'Upload failed';
-            showToast(data.error || 'Upload failed');
-          }
-        } catch (e) {
-          coverBtn.textContent = 'Error';
-          showToast('Upload error — check console');
+
+    // Convert a data-URL to a Blob for uploading
+    function dataUrlToBlob(dataUrl) {
+      var parts = dataUrl.split(',');
+      var mime  = (parts[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
+      var bytes = atob(parts[1]);
+      var arr   = new Uint8Array(bytes.length);
+      for (var i = 0; i < bytes.length; i++) { arr[i] = bytes.charCodeAt(i); }
+      return new Blob([arr], { type: mime });
+    }
+
+    // Upload a cropped data-URL blob and update the cover
+    async function uploadCroppedCover(dataUrl, label) {
+      if (coverBtn) { coverBtn.disabled = true; }
+      showToast('Uploading cover…');
+      try {
+        var blob = dataUrlToBlob(dataUrl);
+        var r    = await fetch('/api/upload?filename=cover.jpg', {
+          method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: blob,
+        });
+        var data = await r.json();
+        if (data.url) {
+          currentProject.coverImage = data.url;
+          var img = document.getElementById('pv-cover-img');
+          if (img) { img.src = data.url; } else { renderProject(currentProject); return; }
+          if (coverBtn) { coverBtn.disabled = false; }
+          showToast('Cover updated');
+        } else {
+          if (coverBtn) { coverBtn.disabled = false; }
+          showToast(data.error || 'Upload failed');
         }
+      } catch (e) {
+        if (coverBtn) { coverBtn.disabled = false; }
+        showToast('Upload error');
+      }
+    }
+
+    // Show landscape crop modal (16:9).
+    // onConfirm(dataUrl) — user applied crop.
+    // onUploadNew() — user clicked "Upload different image".
+    function showCoverCropModal(srcUrl, onConfirm, onUploadNew) {
+      var SVG_CLOSE = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+      var overlay = document.createElement('div');
+      overlay.className = 'rc-crop-overlay';
+      overlay.innerHTML = [
+        '<div class="rc-crop-card">',
+          '<button class="rc-modal-close" id="rcc-close" aria-label="Close">' + SVG_CLOSE + '</button>',
+          '<h2 class="rc-modal-title" style="margin-bottom:0.25rem;">Crop cover image</h2>',
+          '<p class="rc-crop-hint">Drag to reposition · scroll or pinch to zoom</p>',
+          '<div class="rc-crop-viewport rc-crop-viewport--landscape" id="rcc-vp">',
+            '<img class="rc-crop-img" id="rcc-img" src="' + srcUrl + '" crossorigin="anonymous" draggable="false" alt="">',
+            '<div class="rc-crop-grid"></div>',
+          '</div>',
+          '<div class="rc-crop-controls">',
+            '<button class="rc-crop-zoom-btn" id="rcc-zout" aria-label="Zoom out">−</button>',
+            '<span class="rc-crop-zoom-label">Zoom</span>',
+            '<button class="rc-crop-zoom-btn" id="rcc-zin"  aria-label="Zoom in">+</button>',
+          '</div>',
+          '<div class="rc-crop-actions">',
+            '<button class="ac-btn ac-btn--primary" id="rcc-confirm">Apply crop</button>',
+            '<button class="ac-btn ac-btn--ghost"   id="rcc-upload-new">Upload different image</button>',
+            '<button class="ac-btn ac-btn--ghost"   id="rcc-cancel">Cancel</button>',
+          '</div>',
+        '</div>'
+      ].join('');
+      document.body.appendChild(overlay);
+
+      var vp  = document.getElementById('rcc-vp');
+      var img = document.getElementById('rcc-img');
+      var s   = { scale: 1, minScale: 1, maxScale: 8, ox: 0, oy: 0, nw: 0, nh: 0 };
+
+      function clamp() {
+        var iw = s.nw * s.scale, ih = s.nh * s.scale;
+        var vw = vp.offsetWidth,  vh = vp.offsetHeight;
+        s.ox = Math.min(0, Math.max(s.ox, vw - iw));
+        s.oy = Math.min(0, Math.max(s.oy, vh - ih));
+      }
+      function draw() {
+        clamp();
+        img.style.transform = 'translate(' + s.ox + 'px,' + s.oy + 'px) scale(' + s.scale + ')';
+      }
+      function zoomToward(factor, px, py) {
+        var ns = Math.max(s.minScale, Math.min(s.maxScale, s.scale * factor));
+        s.ox = px - (px - s.ox) * (ns / s.scale);
+        s.oy = py - (py - s.oy) * (ns / s.scale);
+        s.scale = ns; draw();
+      }
+      function init() {
+        s.nw = img.naturalWidth; s.nh = img.naturalHeight;
+        var vw = vp.offsetWidth, vh = vp.offsetHeight;
+        s.minScale = Math.max(vw / s.nw, vh / s.nh);
+        s.maxScale = s.minScale * 8;
+        s.scale    = s.minScale;
+        s.ox = (vw - s.nw * s.scale) / 2;
+        s.oy = (vh - s.nh * s.scale) / 2;
+        draw();
+      }
+      if (img.complete && img.naturalWidth) { init(); }
+      else { img.addEventListener('load', init); }
+
+      var drag = null;
+      vp.addEventListener('mousedown', function (e) {
+        e.preventDefault(); drag = { x: e.clientX, y: e.clientY, ox: s.ox, oy: s.oy };
+        vp.classList.add('is-dragging');
+      });
+      document.addEventListener('mousemove', function mv(e) {
+        if (!drag) { return; }
+        s.ox = drag.ox + (e.clientX - drag.x); s.oy = drag.oy + (e.clientY - drag.y); draw();
+      });
+      document.addEventListener('mouseup', function () { drag = null; vp.classList.remove('is-dragging'); });
+
+      vp.addEventListener('wheel', function (e) {
+        e.preventDefault();
+        var r = vp.getBoundingClientRect();
+        zoomToward(e.deltaY < 0 ? 1.1 : 0.9, e.clientX - r.left, e.clientY - r.top);
+      }, { passive: false });
+
+      var prevDist = null, tDrag = null;
+      vp.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+          tDrag = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: s.ox, oy: s.oy }; prevDist = null;
+        } else {
+          var t1 = e.touches[0], t2 = e.touches[1];
+          prevDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        }
+      }, { passive: false });
+      vp.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+        var r = vp.getBoundingClientRect();
+        if (e.touches.length === 1 && prevDist === null && tDrag) {
+          s.ox = tDrag.ox + (e.touches[0].clientX - tDrag.x);
+          s.oy = tDrag.oy + (e.touches[0].clientY - tDrag.y); draw();
+        } else if (e.touches.length >= 2) {
+          var t1 = e.touches[0], t2 = e.touches[1];
+          var dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+          var mid  = { x: (t1.clientX + t2.clientX) / 2 - r.left, y: (t1.clientY + t2.clientY) / 2 - r.top };
+          if (prevDist) { zoomToward(dist / prevDist, mid.x, mid.y); }
+          prevDist = dist;
+        }
+      }, { passive: false });
+      vp.addEventListener('touchend', function (e) {
+        if (e.touches.length < 2) { prevDist = null; }
+        if (e.touches.length === 1) { tDrag = { x: e.touches[0].clientX, y: e.touches[0].clientY, ox: s.ox, oy: s.oy }; }
+      }, { passive: false });
+
+      document.getElementById('rcc-zin').addEventListener('click', function () { zoomToward(1.25, vp.offsetWidth / 2, vp.offsetHeight / 2); });
+      document.getElementById('rcc-zout').addEventListener('click', function () { zoomToward(1 / 1.25, vp.offsetWidth / 2, vp.offsetHeight / 2); });
+
+      function dismiss() { overlay.remove(); }
+      document.getElementById('rcc-close').addEventListener('click', dismiss);
+      document.getElementById('rcc-cancel').addEventListener('click', dismiss);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) { dismiss(); } });
+
+      document.getElementById('rcc-upload-new').addEventListener('click', function () {
+        dismiss();
+        if (typeof onUploadNew === 'function') { onUploadNew(); }
+      });
+
+      document.getElementById('rcc-confirm').addEventListener('click', function () {
+        var OUT_W = 1200, OUT_H = 675;  // 16:9
+        var canvas = document.createElement('canvas');
+        canvas.width = OUT_W; canvas.height = OUT_H;
+        var ctx = canvas.getContext('2d');
+        var vw = vp.offsetWidth, vh = vp.offsetHeight;
+        var srcX = -s.ox / s.scale, srcY = -s.oy / s.scale;
+        var srcW =  vw   / s.scale, srcH =  vh   / s.scale;
+        try {
+          ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, OUT_W, OUT_H);
+          dismiss();
+          onConfirm(canvas.toDataURL('image/jpeg', 0.9));
+        } catch (e) {
+          // Canvas tainted (CORS) — fall back to uploading a new file
+          dismiss();
+          showToast('Re-crop unavailable for this image — please upload a new version.');
+          if (typeof onUploadNew === 'function') { onUploadNew(); }
+        }
+      });
+    }
+
+    // Open file picker → compress → crop modal → upload
+    function openFilePicker() {
+      if (coverFile) { coverFile.value = ''; coverFile.click(); }
+    }
+
+    // Compress image client-side (max 1920×1080, 85% JPEG)
+    function compressCoverImage(file, callback) {
+      var objUrl = URL.createObjectURL(file);
+      var im = new Image();
+      im.onerror = function () { URL.revokeObjectURL(objUrl); callback(null); };
+      im.onload  = function () {
+        var maxW = 1920, maxH = 1080;
+        var w = im.width, h = im.height;
+        var scale  = Math.min(1, maxW / w, maxH / h);
+        var canvas = document.createElement('canvas');
+        canvas.width  = Math.round(w * scale);
+        canvas.height = Math.round(h * scale);
+        canvas.getContext('2d').drawImage(im, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(objUrl);
+        callback(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      im.src = objUrl;
+    }
+
+    if (coverBtn) {
+      // "Change cover" — open crop modal on existing image, or file picker if no cover
+      coverBtn.addEventListener('click', function () {
+        var existing = currentProject.coverImage;
+        if (existing) {
+          // Open crop modal with current image; user can re-crop or upload new
+          showCoverCropModal(
+            existing,
+            function (croppedDataUrl) { uploadCroppedCover(croppedDataUrl); },
+            openFilePicker
+          );
+        } else {
+          openFilePicker();
+        }
+      });
+    }
+
+    if (coverFile) {
+      coverFile.addEventListener('change', function () {
+        var file = coverFile.files[0]; if (!file) { return; }
+        compressCoverImage(file, function (dataUrl) {
+          if (!dataUrl) { showToast('Could not read image'); return; }
+          showCoverCropModal(
+            dataUrl,
+            function (croppedDataUrl) { uploadCroppedCover(croppedDataUrl); },
+            openFilePicker
+          );
+        });
       });
     }
   }

@@ -1202,6 +1202,7 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
    PROJECT PAGES
    ================== */
 .project-hero {
+  position: relative;  /* containing block for the absolute ctx-trigger */
   padding-top: 9rem;
   padding-bottom: clamp(3rem, 5vw, 5rem);
 }

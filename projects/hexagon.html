@@ -462,7 +462,17 @@
   btn.className = 'rc-page-ctx-trigger ctx-trigger';
   btn.setAttribute('aria-label', 'Project actions');
   btn._ctxWired = true; // prevent double-wiring
-  document.body.appendChild(btn);
+
+  // Place inside .project-hero (position:relative) so the trigger sits
+  // at the tags row and scrolls behind the fixed nav like all page content.
+  var hero    = document.querySelector('.project-hero');
+  var tagsEl  = document.querySelector('.project-hero__tags');
+  if (hero) {
+    hero.appendChild(btn);
+    if (tagsEl) { btn.style.top = tagsEl.offsetTop + 'px'; }
+  } else {
+    document.body.appendChild(btn);
+  }
 
   setTimeout(function () { btn.classList.add('is-visible'); }, 400);
 
