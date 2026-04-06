@@ -1049,7 +1049,7 @@ body.is-admin:not(.admin-preview) .rc-admin-fab { display: flex; }
   gap: 0.45rem;
   transition: background 180ms, transform 150ms;
 }
-body.is-admin:not(.admin-preview) .project-page .rc-project-edit-fab { display: flex; }
+body.project-page.is-admin:not(.admin-preview) .rc-project-edit-fab { display: flex; }
 .rc-project-edit-fab:hover { background: var(--brown-dark, #160C02); transform: translateY(-1px); }
 
 /* Save+Cancel row shown in edit mode */
@@ -1588,31 +1588,36 @@ body.project-edit-mode .rc-block-add-fab-wrap { display: block; }
 .pv-block-btn:hover { background: #fff; color: #111; }
 .pv-block-del:hover { color: #c0392b; }
 
-/* ── Cover image pill buttons (below the image, like about page edit FAB) ── */
-.pv-cover-btn-row {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  flex-wrap: wrap;
+/* ── Cover image overlay button (bottom-right inside the image) ── */
+.pv-cover-wrap {
+  position: relative;
+  display: block;
 }
 .pv-cover-upload-btn {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: transparent;
-  border: 1.5px solid var(--border, #D0D7DD);
+  background: rgba(255,255,255,0.92);
+  border: 1.5px solid rgba(0,0,0,0.12);
   border-radius: 999px;
   padding: 0.45rem 1rem;
   font-size: 0.78rem;
   font-family: var(--font-sans, 'DM Sans', sans-serif);
   font-weight: 600;
   cursor: pointer;
-  color: var(--text, #333);
-  transition: background 150ms, border-color 150ms;
+  color: var(--brown, #251605);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: background 150ms, box-shadow 150ms;
+  z-index: 5;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 .pv-cover-upload-btn:hover {
-  background: var(--bg-alt, #f5f5f5);
-  border-color: var(--muted, #888);
+  background: rgba(255,255,255,1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 }
 
 /* ── Landscape crop viewport (for cover images, 16:9) ── */
