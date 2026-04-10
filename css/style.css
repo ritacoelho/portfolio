@@ -42,7 +42,7 @@
   --white:        #FFFFFF;
 
   --text:         #0F0A06;   /* near-black with warm cast */
-  --muted:        #5A4E46;   /* warm brown-grey */
+  --muted:        #4A3E38;   /* warm brown-grey — darkened for WCAG AA on white */
   --light:        #9A8E88;   /* light warm grey */
   --border:       #D0D7DD;                 /* mist-grey border — cool and neutral */
   --border-faint: rgba(208, 215, 221, 0.55); /* faint version for layered surfaces */
@@ -59,6 +59,27 @@
   /* Easing */
   --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ==================
+   DARK MODE TOKENS
+   ================== */
+[data-theme="dark"] {
+  --bg:           #0F0A06;
+  --bg-alt:       #19110A;
+  --card:         #1D1409;
+  --text:         #EDE4D9;
+  --muted:        #A89286;
+  --light:        #6B5C54;
+  --border:       rgba(237, 228, 217, 0.10);
+  --border-faint: rgba(237, 228, 217, 0.06);
+  --brown:        #C4A9A4;   /* remapped: warm rose-parchment (mauve family), readable on dark bg */
+  --brown-dark:   #D4B9B4;
+  --brown-mid:    #A08880;
+  --brown-faint:  #251608;
+  --mauve-faint:  #1E1311;
+  --burgundy-faint: rgba(92, 10, 19, 0.20);
+  --off-white:    #EDE4D9;
 }
 
 /* ==================
@@ -95,7 +116,8 @@ button { font-family: inherit; cursor: pointer; }
   padding: 0 var(--gutter);
 }
 .section {
-  padding: clamp(4rem, 8vw, 7rem) 0;
+  padding-top: clamp(2.5rem, 4vw, 4.5rem);
+  padding-bottom: clamp(2.5rem, 4vw, 4.5rem);
 }
 
 /* ==================
@@ -114,7 +136,7 @@ button { font-family: inherit; cursor: pointer; }
   transition: background 300ms ease, box-shadow 300ms ease;
 }
 .nav.scrolled {
-  background: rgba(255, 255, 255, 0.92); /* white semi-transparent on scroll */
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 1px 0 var(--border);
@@ -123,6 +145,28 @@ button { font-family: inherit; cursor: pointer; }
   background: rgba(19, 23, 23, 0.93);
   box-shadow: 0 1px 0 var(--border-dark);
 }
+[data-theme="dark"] .nav.scrolled {
+  background: rgba(15, 10, 6, 0.92);
+  box-shadow: 0 1px 0 rgba(237, 228, 217, 0.08);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: color 200ms ease, background 200ms ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+.theme-toggle:hover { color: var(--brown); background: var(--brown-faint); }
+.theme-toggle svg { width: 17px; height: 17px; display: block; }
 
 /* Contact page: nav always has a solid background (map fills viewport behind it) */
 .contact-page .nav {
@@ -445,8 +489,6 @@ button { font-family: inherit; cursor: pointer; }
   letter-spacing: -0.03em;
   line-height: 1.0;
   color: var(--text);
-  padding-left: 1rem;
-  border-left: 3px solid var(--burgundy);  /* burgundy structural accent */
 }
 .page-title em { font-style: normal; color: var(--brown); }
 
@@ -687,6 +729,19 @@ button { font-family: inherit; cursor: pointer; }
 .project-card.card--menu-open .project-card__link { color: var(--brown); gap: 0.875rem; }
 .project-card.card--menu-open .project-card__link svg { transform: translateX(3px); }
 .project-card.card--menu-open .ctx-trigger { opacity: 1; transform: scale(1); }
+
+/* Dark mode card hover — warm dark lift instead of light blue */
+[data-theme="dark"] .project-card:hover,
+[data-theme="dark"] .project-card.card--menu-open {
+  background: #261C12;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+[data-theme="dark"] .project-card:hover .project-card__tag,
+[data-theme="dark"] .project-card.card--menu-open .project-card__tag {
+  background: var(--brown-faint);
+  color: var(--brown);
+  border-color: rgba(196, 169, 164, 0.25);
+}
 
 /* ── ctx-menu container
    Positioned by JS at trigger centre (left/top = cx, cy).
@@ -1203,12 +1258,13 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
    ================== */
 .project-hero {
   position: relative;  /* containing block for the absolute ctx-trigger */
-  padding-top: 9rem;
-  padding-bottom: clamp(3rem, 5vw, 5rem);
+  padding-top: 7rem;
+  padding-bottom: clamp(1.5rem, 3vw, 2.5rem);
 }
 .project-hero__back {
   display: inline-flex;
   align-items: center;
+  padding: 0.5rem 0;
   gap: 0.5rem;
   font-family: var(--font-display);
   font-size: 0.72rem;
@@ -1226,7 +1282,7 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 .project-hero__tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
 .project-hero__tag {
   font-family: var(--font-display);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1280,7 +1336,7 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   aspect-ratio: 21/8;
   overflow: hidden;
   border-radius: 16px;
-  margin: 3rem 0 4rem;
+  margin: 1.5rem 0 1.5rem;
   background: var(--bg-alt);
 }
 .project-cover img {
@@ -1345,9 +1401,9 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 
 .callout {
   background: var(--brown-faint);
-  border-left: 3px solid var(--brown);
+  border: 1.5px solid var(--border);
   padding: 1.25rem 1.5rem;
-  border-radius: 0 12px 12px 0;
+  border-radius: 12px;
   margin: 2rem 0;
 }
 .callout p { color: var(--text); margin: 0; font-size: 0.95rem; }
@@ -1377,12 +1433,11 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 .process-steps {
   display: flex;
   gap: 0;
+  flex-wrap: wrap;
   margin: 2rem 0;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
 }
 .process-step {
-  flex: 1; min-width: 80px;
+  flex: 1; min-width: 72px;
   text-align: center;
   position: relative;
   padding: 0 0.5rem;
@@ -1418,15 +1473,24 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   color: var(--muted);
 }
 
+/* Dark mode: light parchment diamond needs dark text to stay readable */
+[data-theme="dark"] .process-step__num { color: var(--bg); }
+
+/* Mobile: hide the orphaned connector arrow when steps wrap */
+@media (max-width: 480px) {
+  .process-step::after { display: none; }
+}
+
 .project-nav {
-  padding: 3rem 0;
+  padding-top: clamp(3rem, 6vw, 5rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
   border-top: 1px solid var(--border);
-  margin-top: 5rem;
+  margin-top: clamp(4rem, 8vw, 7rem);
   display: flex;
   justify-content: space-between;
   gap: 2rem;
 }
-.project-nav__link { display: flex; flex-direction: column; gap: 0.2rem; }
+.project-nav__link { display: flex; flex-direction: column; gap: 0.35rem; padding: 2rem 0; }
 .project-nav__label {
   font-family: var(--font-display);
   font-size: 0.7rem;
@@ -1569,7 +1633,7 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 }
 .work-filter-btn {
   font-family: var(--font-display);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;

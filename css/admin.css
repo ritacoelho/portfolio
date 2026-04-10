@@ -1673,7 +1673,7 @@ body.admin-preview .timeline__item.rc-hidden-entry { display: none; }
 .rc-page-ctx-trigger {
   position: absolute;
   top: 0;       /* JS overrides to align with tags row */
-  right: 0;
+  right: var(--gutter);
   z-index: 2;   /* below nav (100) — scrolls behind it naturally */
   width: 44px; height: 44px;
   background: transparent;
@@ -1695,7 +1695,7 @@ body.admin-preview .timeline__item.rc-hidden-entry { display: none; }
 .rc-page-ctx-trigger.active {
   width: 44px !important;
   height: 44px !important;
-  right: 0 !important;
+  right: var(--gutter) !important;
 }
 
 body.is-admin { padding-top: 34px; }
