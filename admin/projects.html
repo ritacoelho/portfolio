@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Projects — Admin | Rita Coelho</title>
+  <title>Projects — Admin | Rita Coelho</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,38 +12,135 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
   <style>
-    .pm-section { background:#fff;border:1.5px solid var(--border,#eee);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem; }
-    .pm-section__title { font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted,#888);margin:0 0 1.25rem; }
-    .pm-grid { display:grid;grid-template-columns:1fr 1fr;gap:0.75rem; }
-    .pm-field { display:flex;flex-direction:column;gap:0.3rem; }
-    .pm-field--full { grid-column:1/-1; }
-    .pm-label { font-size:0.72rem;font-weight:600;color:var(--muted,#666);letter-spacing:0.04em;text-transform:uppercase; }
-    .pm-input { padding:0.55rem 0.8rem;border:1.5px solid var(--border,#ddd);border-radius:9px;font-size:0.88rem;font-family:var(--font-sans,'DM Sans',sans-serif);color:var(--text,#2c2c2c);background:var(--bg-alt,#fafafa);outline:none;transition:border-color 150ms,box-shadow 150ms;width:100%;box-sizing:border-box; }
-    .pm-input:focus { border-color:var(--mist-blue,#8ABDD8);box-shadow:0 0 0 3px rgba(138,189,216,0.18); }
-    .pm-textarea { min-height:100px;resize:vertical; }
-    .pm-block-list { display:flex;flex-direction:column;gap:0.6rem; }
-    .pm-block { background:var(--bg-alt,#f8f8f8);border:1.5px solid var(--border,#eee);border-radius:10px;padding:0.75rem 1rem;display:flex;align-items:flex-start;gap:0.75rem; }
-    .pm-block__handle { cursor:grab;color:var(--muted,#aaa);padding-top:2px;flex-shrink:0; }
-    .pm-block__content { flex:1;min-width:0; }
-    .pm-block__type { font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted,#aaa);margin-bottom:0.35rem; }
-    .pm-block__remove { background:none;border:none;color:var(--muted,#bbb);cursor:pointer;padding:0.2rem;border-radius:4px;flex-shrink:0;font-size:1.1rem;line-height:1;transition:color 150ms; }
-    .pm-block__remove:hover { color:#c0392b; }
-    .pm-add-block { display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem; }
-    .pm-add-block-btn { font-size:0.72rem;padding:0.35rem 0.8rem;border:1.5px dashed var(--border,#ddd);border-radius:7px;background:transparent;color:var(--muted,#888);cursor:pointer;font-family:inherit;transition:border-color 150ms,color 150ms; }
-    .pm-add-block-btn:hover { border-color:var(--mist-blue,#8ABDD8);color:var(--text,#333); }
-    .pm-upload-row { display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap; }
-    .pm-upload-btn { font-size:0.8rem;padding:0.45rem 1rem;border:1.5px solid var(--border,#ddd);border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;color:var(--text,#333);transition:border-color 150ms; }
-    .pm-upload-btn:hover { border-color:var(--mist-blue,#8ABDD8); }
-    .pm-preview-img { max-height:60px;border-radius:6px;display:none; }
-    .pm-card-list { display:flex;flex-direction:column;gap:0.75rem; }
-    .pm-card { background:#fff;border:1.5px solid var(--border,#eee);border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem; }
-    .pm-card.is-hidden { opacity:0.5;filter:grayscale(0.5); }
-    .pm-card__thumb { width:56px;height:40px;border-radius:6px;object-fit:cover;background:var(--bg-alt,#f0f0f0);flex-shrink:0; }
-    .pm-card__info { flex:1;min-width:0; }
-    .pm-card__title { font-size:0.9rem;font-weight:600;color:var(--text,#222);margin:0 0 0.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-    .pm-card__meta { font-size:0.75rem;color:var(--muted,#888); }
-    .pm-card__actions { display:flex;gap:0.4rem;flex-shrink:0; }
-    @media (max-width:640px) { .pm-grid { grid-template-columns:1fr; } .pm-field--full { grid-column:1; } }
+    /* ── Project visibility cards ── */
+    .pv-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+    }
+
+    .pv-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      transition: border-color 200ms ease;
+    }
+    .pv-card:hover { border-color: var(--mist-blue, #8ABDD8); }
+    .pv-card.is-hidden { opacity: 0.5; }
+
+    .pv-card__thumb {
+      width: 64px;
+      height: 46px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: var(--bg-alt);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .pv-card__thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .pv-card__thumb--empty {
+      color: var(--light);
+      font-size: 1.25rem;
+    }
+
+    .pv-card__info {
+      flex: 1;
+      min-width: 0;
+    }
+    .pv-card__title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0 0 0.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pv-card__meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .pv-card__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      color: var(--muted);
+    }
+    .pv-card__badge--hidden {
+      background: #fff3cd;
+      border-color: #f0c040;
+      color: #8a6800;
+    }
+    .pv-card__badge--locked {
+      background: var(--burgundy-faint, #fdf0f0);
+      border-color: var(--burgundy, #b73c3c);
+      color: var(--burgundy, #b73c3c);
+    }
+
+    .pv-card__controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    /* Toggle rows */
+    .pv-toggle-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .pv-toggle-label {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--light);
+    }
+
+    /* View link */
+    .pv-view-link {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.78rem;
+      color: var(--brown);
+      font-weight: 500;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 150ms;
+      white-space: nowrap;
+    }
+    .pv-view-link:hover { border-color: currentColor; }
+
+    @media (max-width: 600px) {
+      .pv-card { flex-wrap: wrap; }
+      .pv-card__controls { width: 100%; justify-content: flex-end; }
+    }
   </style>
 </head>
 <body>
@@ -60,98 +157,15 @@
 </header>
 
 <main>
-<div class="ac-page" id="pm-page" style="display:none">
+<div class="ac-page" id="pv-page" style="display:none">
 
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem;">
-    <h1 class="ac-page__title" id="pm-heading">Projects</h1>
-    <button class="ac-btn ac-btn--primary" id="pm-add-btn" style="font-size:0.82rem;">+ New project</button>
-  </div>
-  <p class="ac-page__subtitle" id="pm-subheading">Add, edit, hide or delete projects.</p>
-
-  <!-- ── Project list ── -->
-  <div id="pm-list-view">
-    <div id="pm-card-list" class="pm-card-list">
-      <div class="ac-loading">Loading…</div>
-    </div>
+  <div style="margin-bottom:2rem;">
+    <h1 class="ac-page__title">Projects</h1>
+    <p class="ac-page__subtitle">Control visibility and access for each case study. To add a new project, ask Claude.</p>
   </div>
 
-  <!-- ── Project form (hidden by default) ── -->
-  <div id="pm-form-view" style="display:none">
-    <button class="ac-btn ac-btn--ghost" id="pm-back-btn" style="margin-bottom:1.5rem;">← Back to list</button>
-
-    <div class="pm-section">
-      <p class="pm-section__title">Basic info</p>
-      <div class="pm-grid">
-        <div class="pm-field pm-field--full">
-          <label class="pm-label" for="pm-title">Title *</label>
-          <input class="pm-input" id="pm-title" type="text" placeholder="Project title" required>
-        </div>
-        <div class="pm-field pm-field--full">
-          <label class="pm-label" for="pm-summary">Summary (card description)</label>
-          <textarea class="pm-input pm-textarea" id="pm-summary" placeholder="One or two sentences shown on the work page card…" rows="3"></textarea>
-        </div>
-        <div class="pm-field">
-          <label class="pm-label" for="pm-tags">Tags (comma separated)</label>
-          <input class="pm-input" id="pm-tags" type="text" placeholder="UX Design, Product Strategy">
-        </div>
-        <div class="pm-field">
-          <label class="pm-label" for="pm-year">Year</label>
-          <input class="pm-input" id="pm-year" type="number" placeholder="2024" min="2000" max="2099">
-        </div>
-        <div class="pm-field">
-          <label class="pm-label" for="pm-role">My role</label>
-          <input class="pm-input" id="pm-role" type="text" placeholder="UX Designer">
-        </div>
-        <div class="pm-field">
-          <label class="pm-label" for="pm-company">Company / Client</label>
-          <input class="pm-input" id="pm-company" type="text" placeholder="Company name">
-        </div>
-        <div class="pm-field">
-          <label class="pm-label" for="pm-period">Period (display text)</label>
-          <input class="pm-input" id="pm-period" type="text" placeholder="Jan 2023 to Dec 2023">
-        </div>
-        <div class="pm-field">
-          <label class="pm-label" for="pm-location">Location</label>
-          <input class="pm-input" id="pm-location" type="text" placeholder="Zurich, Switzerland">
-        </div>
-        <div class="pm-field">
-          <label class="pm-label" for="pm-order">Display order</label>
-          <input class="pm-input" id="pm-order" type="number" placeholder="1" min="1" max="99">
-        </div>
-      </div>
-    </div>
-
-    <div class="pm-section">
-      <p class="pm-section__title">Cover image</p>
-      <div class="pm-upload-row">
-        <input type="file" id="pm-cover-file" accept="image/*" style="display:none">
-        <button class="pm-upload-btn" id="pm-cover-pick">Upload image</button>
-        <span id="pm-cover-status" style="font-size:0.8rem;color:var(--muted)">No image uploaded</span>
-        <img id="pm-cover-preview" class="pm-preview-img" alt="Cover preview">
-      </div>
-      <div style="margin-top:0.75rem;">
-        <label class="pm-label" for="pm-cover-url" style="margin-bottom:0.3rem;display:block;">Or paste URL</label>
-        <input class="pm-input" id="pm-cover-url" type="url" placeholder="https://…">
-      </div>
-    </div>
-
-    <div class="pm-section">
-      <p class="pm-section__title">Case study content</p>
-      <div class="pm-block-list" id="pm-blocks"></div>
-      <div class="pm-add-block">
-        <button class="pm-add-block-btn" data-btype="heading">+ Heading</button>
-        <button class="pm-add-block-btn" data-btype="paragraph">+ Paragraph</button>
-        <button class="pm-add-block-btn" data-btype="image">+ Image</button>
-        <button class="pm-add-block-btn" data-btype="callout">+ Callout</button>
-        <button class="pm-add-block-btn" data-btype="metrics">+ Metrics</button>
-        <button class="pm-add-block-btn" data-btype="divider">+ Divider</button>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:0.75rem;align-items:center;padding-top:0.5rem;">
-      <button class="ac-btn ac-btn--primary" id="pm-save-btn">Save project</button>
-      <span id="pm-save-status" style="font-size:0.82rem;color:var(--muted)"></span>
-    </div>
+  <div id="pv-list" class="pv-list">
+    <div class="ac-loading">Loading…</div>
   </div>
 
 </div>
@@ -164,354 +178,179 @@
   'use strict';
 
   var SESSION_KEY = 'rc_admin_token';
-  function getToken() { return sessionStorage.getItem(SESSION_KEY); }
-  function authHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }; }
+  function getToken()      { return sessionStorage.getItem(SESSION_KEY); }
+  function authHeaders()   { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }; }
 
-  function showToast(msg) {
-    var t = document.createElement('div'); t.className = 'rc-toast'; t.textContent = msg;
-    document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2200);
+  function showToast(msg, type) {
+    var t = document.createElement('div');
+    t.className = 'rc-toast' + (type === 'error' ? ' rc-toast--error' : '');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 2400);
   }
+
   function esc(str) {
-    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   // ── Auth guard ─────────────────────────────────────────────────
   setTimeout(function () {
     if (!getToken()) { window.location.href = '../index.html'; return; }
-    document.getElementById('pm-page').style.display = '';
+    document.getElementById('pv-page').style.display = '';
     loadProjects();
-    checkEditParam();
   }, 60);
 
   window.addEventListener('rc-admin-enabled', function () {
-    var p = document.getElementById('pm-page');
+    var p = document.getElementById('pv-page');
     if (p) { p.style.display = ''; }
   });
 
-  // ── Check for ?edit= param ─────────────────────────────────────
-  function checkEditParam() {
-    var params = new URLSearchParams(window.location.search);
-    var slug   = params.get('edit');
-    if (slug) { loadProjectForEdit(slug); }
-  }
-
-  // ── LIST VIEW ──────────────────────────────────────────────────
+  // ── Load projects ──────────────────────────────────────────────
   var projects = [];
 
   async function loadProjects() {
-    var r    = await fetch('/api/projects', { headers: authHeaders() });
-    projects = await r.json();
-    renderList();
+    try {
+      var r = await fetch('/api/projects', { headers: authHeaders() });
+      projects = await r.json();
+      renderList();
+    } catch (e) {
+      document.getElementById('pv-list').innerHTML =
+        '<p style="color:var(--muted);font-size:0.88rem;">Could not load projects. Check your connection.</p>';
+    }
   }
 
+  // ── Render ─────────────────────────────────────────────────────
   function renderList() {
-    var list = document.getElementById('pm-card-list');
-    if (!projects.length) { list.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;">No projects yet. Add one above.</p>'; return; }
+    var list = document.getElementById('pv-list');
+    if (!projects.length) {
+      list.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;">No projects found. Run /api/seed to initialise.</p>';
+      return;
+    }
+
     list.innerHTML = '';
+
     projects.forEach(function (p) {
       var card = document.createElement('div');
-      card.className = 'pm-card' + (p.isHidden ? ' is-hidden' : '');
+      card.className = 'pv-card' + (p.isHidden ? ' is-hidden' : '');
+      card.dataset.slug = p.slug;
+
+      // Status badges
+      var badges = '';
+      if (p.isHidden) {
+        badges += '<span class="pv-card__badge pv-card__badge--hidden">Hidden</span>';
+      }
+      if (p.isLocked) {
+        badges += '<span class="pv-card__badge pv-card__badge--locked">NDA</span>';
+      }
+
+      // Cover thumb
+      var thumbHtml = '';
+      if (p.coverImage) {
+        thumbHtml = '<div class="pv-card__thumb"><img src="' + esc(p.coverImage) + '" alt="" loading="lazy"></div>';
+      } else {
+        thumbHtml = '<div class="pv-card__thumb pv-card__thumb--empty">◆</div>';
+      }
+
+      // Page URL for view link
+      var pageUrl = 'projects/' + p.slug + '.html';
+
       card.innerHTML = [
-        p.coverImage
-          ? '<img class="pm-card__thumb" src="' + esc(p.coverImage) + '" alt="">'
-          : '<div class="pm-card__thumb"></div>',
-        '<div class="pm-card__info">',
-          '<p class="pm-card__title">' + esc(p.title) + '</p>',
-          '<p class="pm-card__meta">' + esc((p.tags||[]).join(', ')) + ' · ' + (p.year||'') + (p.isHidden?' · Hidden':'') + (p.isStatic?' · Static':' · Dynamic') + '</p>',
+        thumbHtml,
+        '<div class="pv-card__info">',
+          '<p class="pv-card__title">' + esc(p.title) + '</p>',
+          '<div class="pv-card__meta">',
+            '<span>' + esc((p.tags || []).join(' · ')) + '</span>',
+            badges ? '<span>·</span>' + badges : '',
+          '</div>',
         '</div>',
-        '<div class="pm-card__actions">',
-          '<button class="ac-btn ac-btn--ghost" data-action="edit" data-slug="' + esc(p.slug) + '" style="font-size:0.75rem">Edit</button>',
-          '<button class="ac-btn ac-btn--ghost" data-action="toggle-hide" data-slug="' + esc(p.slug) + '" style="font-size:0.75rem">' + (p.isHidden?'Show':'Hide') + '</button>',
-          !p.isStatic ? '<button class="ac-btn ac-btn--danger" data-action="delete" data-slug="' + esc(p.slug) + '" style="font-size:0.75rem">Delete</button>' : '',
+        '<div class="pv-card__controls">',
+          /* View link */
+          '<a href="../' + esc(pageUrl) + '" class="pv-view-link" target="_blank" rel="noopener" title="Open case study">',
+            '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">',
+              '<path d="M5 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8M8 1h4m0 0v4m0-4L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+            '</svg>',
+            'View',
+          '</a>',
+          /* Hide / Show toggle */
+          '<div class="pv-toggle-row">',
+            '<label class="rc-toggle-switch" for="hide-' + esc(p.slug) + '" title="' + (p.isHidden ? 'Show to public' : 'Hide from public') + '">',
+              '<input type="checkbox" id="hide-' + esc(p.slug) + '" data-action="toggle-hide" data-slug="' + esc(p.slug) + '"' + (p.isHidden ? ' checked' : '') + '>',
+              '<span class="rc-toggle-track"></span>',
+            '</label>',
+            '<span class="pv-toggle-label">Hidden</span>',
+          '</div>',
+          /* Lock / Unlock toggle */
+          '<div class="pv-toggle-row">',
+            '<label class="rc-toggle-switch" for="lock-' + esc(p.slug) + '" title="' + (p.isLocked ? 'Remove access code gate' : 'Require access code') + '">',
+              '<input type="checkbox" id="lock-' + esc(p.slug) + '" data-action="toggle-lock" data-slug="' + esc(p.slug) + '"' + (p.isLocked ? ' checked' : '') + '>',
+              '<span class="rc-toggle-track"></span>',
+            '</label>',
+            '<span class="pv-toggle-label">NDA gate</span>',
+          '</div>',
         '</div>',
       ].join('');
+
       list.appendChild(card);
     });
 
-    list.querySelectorAll('[data-action]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var action = btn.dataset.action, slug = btn.dataset.slug;
-        if (action === 'edit')        { loadProjectForEdit(slug); }
-        if (action === 'toggle-hide') { toggleHide(slug); }
-        if (action === 'delete')      { deleteProject(slug); }
+    // Attach toggle listeners
+    list.querySelectorAll('[data-action]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var action = input.dataset.action;
+        var slug   = input.dataset.slug;
+        if (action === 'toggle-hide') { patchProject(slug, { isHidden: input.checked }); }
+        if (action === 'toggle-lock') { patchProject(slug, { isLocked: input.checked }); }
       });
     });
   }
 
-  async function toggleHide(slug) {
-    var p = projects.find(function (x) { return x.slug === slug; });
-    if (!p) { return; }
-    await fetch('/api/projects', { method:'PATCH', headers:authHeaders(), body: JSON.stringify({ slug, isHidden: !p.isHidden }) });
-    showToast(p.isHidden ? 'Project shown' : 'Project hidden');
-    loadProjects();
-  }
-
-  async function deleteProject(slug) {
-    if (!confirm('Delete "' + slug + '"? This cannot be undone.')) { return; }
-    await fetch('/api/projects', { method:'DELETE', headers:authHeaders(), body: JSON.stringify({ slug }) });
-    showToast('Project deleted');
-    loadProjects();
-  }
-
-  // ── FORM VIEW ──────────────────────────────────────────────────
-  var editingSlug  = null;
-  var contentBlocks = [];
-
-  function showForm() {
-    document.getElementById('pm-list-view').style.display = 'none';
-    document.getElementById('pm-form-view').style.display = '';
-    document.getElementById('pm-add-btn').style.display   = 'none';
-  }
-  function showList() {
-    document.getElementById('pm-form-view').style.display = 'none';
-    document.getElementById('pm-list-view').style.display = '';
-    document.getElementById('pm-add-btn').style.display   = '';
-    editingSlug   = null;
-    contentBlocks = [];
-    renderBlocks();
-    clearForm();
-    history.replaceState(null,'',window.location.pathname);
-  }
-
-  document.getElementById('pm-add-btn').addEventListener('click', function () {
-    editingSlug = null;
-    clearForm();
-    showForm();
-  });
-  document.getElementById('pm-back-btn').addEventListener('click', function () {
-    showList(); loadProjects();
-  });
-
-  function clearForm() {
-    ['pm-title','pm-summary','pm-tags','pm-year','pm-role','pm-company',
-     'pm-period','pm-location','pm-order','pm-cover-url'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) { el.value = ''; }
-    });
-    document.getElementById('pm-cover-preview').style.display = 'none';
-    document.getElementById('pm-cover-status').textContent = 'No image uploaded';
-    document.getElementById('pm-save-status').textContent  = '';
-    contentBlocks = [];
-    renderBlocks();
-  }
-
-  async function loadProjectForEdit(slug) {
-    var r = await fetch('/api/projects?slug=' + encodeURIComponent(slug), { headers: authHeaders() });
-    if (!r.ok) { showToast('Could not load project'); return; }
-    var p = await r.json();
-    editingSlug = slug;
-
-    document.getElementById('pm-title').value   = p.title    || '';
-    document.getElementById('pm-summary').value = p.summary  || '';
-    document.getElementById('pm-tags').value    = (p.tags||[]).join(', ');
-    document.getElementById('pm-year').value    = p.year     || '';
-    document.getElementById('pm-role').value    = p.role     || '';
-    document.getElementById('pm-company').value = p.company  || '';
-    document.getElementById('pm-period').value  = p.period   || '';
-    document.getElementById('pm-location').value= p.location || '';
-    document.getElementById('pm-order').value   = p.order    || '';
-    document.getElementById('pm-cover-url').value = p.coverImage || '';
-    if (p.coverImage) {
-      var prev = document.getElementById('pm-cover-preview');
-      prev.src = p.coverImage; prev.style.display = 'block';
-      document.getElementById('pm-cover-status').textContent = 'Image set';
-    }
-    contentBlocks = Array.isArray(p.content) ? JSON.parse(JSON.stringify(p.content)) : [];
-    renderBlocks();
-    showForm();
-  }
-
-  // ── Content blocks ─────────────────────────────────────────────
-  function renderBlocks() {
-    var container = document.getElementById('pm-blocks');
-    container.innerHTML = '';
-    contentBlocks.forEach(function (block, idx) {
-      container.appendChild(buildBlockEl(block, idx));
-    });
-  }
-
-  function buildBlockEl(block, idx) {
-    var el = document.createElement('div');
-    el.className = 'pm-block';
-    el.dataset.idx = idx;
-
-    var inner = '';
-    switch (block.type) {
-      case 'heading':
-        inner = '<div class="pm-block__type">Heading H' + (block.level||2) + '</div>' +
-          '<input class="pm-input" data-field="text" value="' + esc(block.text||'') + '" placeholder="Heading text" style="margin-bottom:0.4rem">' +
-          '<select class="pm-input" data-field="level" style="width:auto;">' +
-            [2,3,4].map(function(l){return '<option value="'+l+'"'+(block.level==l?' selected':'')+'>H'+l+'</option>';}).join('') +
-          '</select>';
-        break;
-      case 'paragraph':
-        inner = '<div class="pm-block__type">Paragraph</div>' +
-          '<textarea class="pm-input pm-textarea" data-field="text" rows="4" placeholder="Paragraph text…">' + esc(block.text||'') + '</textarea>';
-        break;
-      case 'image':
-        inner = '<div class="pm-block__type">Image</div>' +
-          '<div class="pm-upload-row" style="margin-bottom:0.4rem;">' +
-            '<input type="file" accept="image/*" style="display:none" class="block-img-file">' +
-            '<button class="pm-upload-btn block-img-pick" type="button">Upload image</button>' +
-            '<span class="block-img-status" style="font-size:0.78rem;color:var(--muted)">' + (block.url ? 'Image set' : 'No image') + '</span>' +
-          '</div>' +
-          '<input class="pm-input" data-field="url" value="' + esc(block.url||'') + '" placeholder="Or paste image URL" style="margin-bottom:0.4rem">' +
-          '<input class="pm-input" data-field="alt" value="' + esc(block.alt||'') + '" placeholder="Alt text">' +
-          '<input class="pm-input" data-field="caption" value="' + esc(block.caption||'') + '" placeholder="Caption (optional)" style="margin-top:0.4rem">';
-        break;
-      case 'callout':
-        inner = '<div class="pm-block__type">Callout</div>' +
-          '<textarea class="pm-input pm-textarea" data-field="text" rows="3" placeholder="Callout text…">' + esc(block.text||'') + '</textarea>';
-        break;
-      case 'metrics':
-        inner = '<div class="pm-block__type">Metrics</div>' +
-          '<textarea class="pm-input pm-textarea" data-field="items-json" rows="4" placeholder=\'[{"label":"Metric","value":"Value"}]\'>' +
-          esc(JSON.stringify(block.items||[],null,2)) + '</textarea>';
-        break;
-      case 'divider':
-        inner = '<div class="pm-block__type">Divider</div><hr style="border-top:1px solid var(--border);margin:0.5rem 0;">';
-        break;
-    }
-
-    el.innerHTML = [
-      '<span class="pm-block__handle">⠿</span>',
-      '<div class="pm-block__content">' + inner + '</div>',
-      '<button class="pm-block__remove" data-remove="' + idx + '" title="Remove block" type="button">×</button>',
-    ].join('');
-
-    // Listeners
-    el.querySelector('[data-remove]').addEventListener('click', function () {
-      contentBlocks.splice(idx, 1);
-      renderBlocks();
-    });
-    el.querySelectorAll('[data-field]').forEach(function (input) {
-      input.addEventListener('input', function () {
-        var field = input.dataset.field;
-        if (field === 'level') { contentBlocks[idx][field] = parseInt(input.value,10); }
-        else if (field === 'items-json') {
-          try { contentBlocks[idx].items = JSON.parse(input.value); } catch {}
-        } else { contentBlocks[idx][field] = input.value; }
-      });
-    });
-
-    // Block image upload
-    var fileInput  = el.querySelector('.block-img-file');
-    var pickBtn    = el.querySelector('.block-img-pick');
-    var statusSpan = el.querySelector('.block-img-status');
-    if (fileInput && pickBtn) {
-      pickBtn.addEventListener('click', function () { fileInput.click(); });
-      fileInput.addEventListener('change', async function () {
-        var file = fileInput.files[0];
-        if (!file) { return; }
-        statusSpan.textContent = 'Uploading…';
-        var url = await uploadFile(file);
-        if (url) {
-          contentBlocks[idx].url = url;
-          var urlInput = el.querySelector('[data-field="url"]');
-          if (urlInput) { urlInput.value = url; }
-          statusSpan.textContent = 'Uploaded';
-        } else {
-          statusSpan.textContent = 'Upload failed';
-        }
-      });
-    }
-
-    return el;
-  }
-
-  // ── Add block buttons ──────────────────────────────────────────
-  document.querySelectorAll('.pm-add-block-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var type = btn.dataset.btype;
-      var newBlock = { type: type };
-      if (type === 'heading')  { newBlock.level = 2; newBlock.text = ''; }
-      if (type === 'paragraph'){ newBlock.text = ''; }
-      if (type === 'image')    { newBlock.url = ''; newBlock.alt = ''; newBlock.caption = ''; }
-      if (type === 'callout')  { newBlock.text = ''; }
-      if (type === 'metrics')  { newBlock.items = []; }
-      contentBlocks.push(newBlock);
-      renderBlocks();
-      // Scroll to new block
-      var blocks = document.getElementById('pm-blocks');
-      if (blocks.lastChild) { blocks.lastChild.scrollIntoView({ behavior:'smooth' }); }
-    });
-  });
-
-  // ── Image upload helper ────────────────────────────────────────
-  async function uploadFile(file) {
+  // ── PATCH helper ───────────────────────────────────────────────
+  async function patchProject(slug, updates) {
+    var card = document.querySelector('[data-slug="' + slug + '"]');
     try {
-      var r = await fetch('/api/upload?filename=' + encodeURIComponent(file.name), {
-        method:  'POST',
-        headers: { 'Authorization': 'Bearer ' + getToken() },
-        body:    file,
+      var r    = await fetch('/api/projects', {
+        method:  'PATCH',
+        headers: authHeaders(),
+        body:    JSON.stringify({ slug, ...updates }),
       });
       var data = await r.json();
-      return data.url || null;
-    } catch { return null; }
-  }
+      if (!r.ok) { throw new Error(data.error || 'Error'); }
 
-  // ── Cover image ────────────────────────────────────────────────
-  document.getElementById('pm-cover-pick').addEventListener('click', function () {
-    document.getElementById('pm-cover-file').click();
-  });
-  document.getElementById('pm-cover-file').addEventListener('change', async function () {
-    var file = this.files[0];
-    if (!file) { return; }
-    document.getElementById('pm-cover-status').textContent = 'Uploading…';
-    var url = await uploadFile(file);
-    if (url) {
-      document.getElementById('pm-cover-url').value = url;
-      var prev = document.getElementById('pm-cover-preview');
-      prev.src = url; prev.style.display = 'block';
-      document.getElementById('pm-cover-status').textContent = 'Uploaded';
-    } else {
-      document.getElementById('pm-cover-status').textContent = 'Upload failed';
-    }
-  });
-
-  // ── Save ───────────────────────────────────────────────────────
-  document.getElementById('pm-save-btn').addEventListener('click', async function () {
-    var title = document.getElementById('pm-title').value.trim();
-    if (!title) { showToast('Title is required'); return; }
-
-    var statusEl = document.getElementById('pm-save-status');
-    this.disabled = true; statusEl.textContent = 'Saving…';
-
-    var tagsRaw   = document.getElementById('pm-tags').value;
-    var tags      = tagsRaw ? tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean) : [];
-    var coverUrl  = document.getElementById('pm-cover-url').value.trim() || null;
-
-    var payload = {
-      title,
-      summary:    document.getElementById('pm-summary').value.trim(),
-      tags,
-      year:       parseInt(document.getElementById('pm-year').value,10)||null,
-      role:       document.getElementById('pm-role').value.trim(),
-      company:    document.getElementById('pm-company').value.trim(),
-      period:     document.getElementById('pm-period').value.trim(),
-      location:   document.getElementById('pm-location').value.trim(),
-      order:      parseInt(document.getElementById('pm-order').value,10)||99,
-      coverImage: coverUrl,
-      content:    contentBlocks,
-    };
-
-    try {
-      var method = editingSlug ? 'PATCH' : 'POST';
-      var body   = editingSlug ? { ...payload, slug: editingSlug } : payload;
-      var r      = await fetch('/api/projects', { method, headers: authHeaders(), body: JSON.stringify(body) });
-      var data   = await r.json();
-      if (r.ok) {
-        statusEl.textContent = 'Saved!';
-        showToast('Project saved');
-        setTimeout(function() { showList(); loadProjects(); }, 800);
-      } else {
-        statusEl.textContent = data.error || 'Error saving';
+      // Update card state
+      if (typeof updates.isHidden !== 'undefined') {
+        card.classList.toggle('is-hidden', data.isHidden);
+        var badge = card.querySelector('.pv-card__badge--hidden');
+        if (data.isHidden && !badge) {
+          var metaEl = card.querySelector('.pv-card__meta');
+          var b = document.createElement('span');
+          b.className = 'pv-card__badge pv-card__badge--hidden';
+          b.textContent = 'Hidden';
+          metaEl.appendChild(b);
+        } else if (!data.isHidden && badge) {
+          badge.remove();
+        }
+        showToast(data.isHidden ? '"' + data.title + '" hidden from public.' : '"' + data.title + '" visible to public.');
       }
-    } catch (e) {
-      statusEl.textContent = 'Error — check connection';
+      if (typeof updates.isLocked !== 'undefined') {
+        var lockBadge = card.querySelector('.pv-card__badge--locked');
+        if (data.isLocked && !lockBadge) {
+          var metaEl = card.querySelector('.pv-card__meta');
+          var b = document.createElement('span');
+          b.className = 'pv-card__badge pv-card__badge--locked';
+          b.textContent = 'NDA';
+          metaEl.appendChild(b);
+        } else if (!data.isLocked && lockBadge) {
+          lockBadge.remove();
+        }
+        showToast(data.isLocked ? 'Access code gate enabled.' : 'Access code gate removed.');
+      }
+
+    } catch (err) {
+      showToast('Could not save — ' + err.message, 'error');
+      // Revert the toggle
+      loadProjects();
     }
-    this.disabled = false;
-  });
+  }
 
 })();
 </script>

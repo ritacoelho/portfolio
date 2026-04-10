@@ -461,12 +461,10 @@
   btn.id        = 'rc-page-ctx-trigger';
   btn.className = 'rc-page-ctx-trigger ctx-trigger';
   btn.setAttribute('aria-label', 'Project actions');
-  btn._ctxWired = true; // prevent double-wiring
+  btn._ctxWired = true;
 
-  // Place inside .project-hero (position:relative) so the trigger sits
-  // at the tags row and scrolls behind the fixed nav like all page content.
-  var hero    = document.querySelector('.project-hero');
-  var tagsEl  = document.querySelector('.project-hero__tags');
+  var hero   = document.querySelector('.project-hero');
+  var tagsEl = document.querySelector('.project-hero__tags');
   if (hero) {
     hero.appendChild(btn);
     if (tagsEl) { btn.style.top = tagsEl.offsetTop + 'px'; }
@@ -475,6 +473,15 @@
   }
 
   setTimeout(function () { btn.classList.add('is-visible'); }, 400);
+
+  // Fetch live visibility so Hide/Show label is accurate for admin
+  var token = sessionStorage.getItem('rc_admin_token');
+  if (token) {
+    fetch('/api/projects?slug=' + SLUG, { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (p) { if (p && typeof p.isHidden !== 'undefined') { proxy.dataset.adminHidden = p.isHidden ? '1' : '0'; } })
+      .catch(function () {});
+  }
 
   btn.addEventListener('click', function (e) {
     e.stopPropagation();

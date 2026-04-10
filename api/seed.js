@@ -184,13 +184,36 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const results = { projects: [], journey: [], skipped: [] };
+  const results = { projects: [], journey: [], skipped: [], purged: [] };
+
+  // ── Purge non-static (dynamic/test) project entries ───────────
+  // Projects are now static HTML files. Any KV entry without isStatic:true
+  // is a leftover test/dynamic entry and should be removed.
+  const staticSlugs = PROJECTS.map(p => p.slug);
+  const existingList = (await kv.get('project:list')) || [];
+  const slugsToPurge = existingList.filter(s => !staticSlugs.includes(s));
+
+  for (const slug of slugsToPurge) {
+    await kv.del(`project:${slug}`);
+    results.purged.push(slug);
+  }
 
   // ── Seed projects ─────────────────────────────────────────────
-  const projectList = (await kv.get('project:list')) || [];
+  // Start fresh from the canonical static list only
+  const projectList = existingList.filter(s => staticSlugs.includes(s));
 
   for (const p of PROJECTS) {
     if (projectList.includes(p.slug)) {
+      // Re-apply seed data but preserve isHidden / isLocked if already set
+      const existing = await kv.get(`project:${p.slug}`);
+      const entry = {
+        ...p,
+        isHidden: existing ? existing.isHidden : (p.isHidden || false),
+        isLocked: existing ? existing.isLocked : (p.isLocked || false),
+        createdAt: existing ? existing.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      await kv.set(`project:${p.slug}`, entry);
       results.skipped.push('project:' + p.slug);
       continue;
     }
@@ -226,7 +249,8 @@ module.exports = async function handler(req, res) {
 
   return res.status(200).json({
     message: 'Seed complete',
-    seeded: { projects: results.projects, journey: results.journey },
+    seeded:  { projects: results.projects, journey: results.journey },
     skipped: results.skipped,
+    purged:  results.purged,
   });
 };

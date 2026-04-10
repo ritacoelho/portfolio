@@ -245,6 +245,15 @@
 
   setTimeout(function () { btn.classList.add('is-visible'); }, 400);
 
+  // Fetch live visibility so Hide/Show label is accurate for admin
+  var token = sessionStorage.getItem('rc_admin_token');
+  if (token) {
+    fetch('/api/projects?slug=' + SLUG, { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (p) { if (p && typeof p.isHidden !== 'undefined') { proxy.dataset.adminHidden = p.isHidden ? '1' : '0'; } })
+      .catch(function () {});
+  }
+
   btn.addEventListener('click', function (e) {
     e.stopPropagation();
     e.preventDefault();
