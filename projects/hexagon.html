@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <script>(function(){var t=localStorage.getItem("rc_theme")||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.setAttribute("data-theme",t);}());</script>
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
   <style>
@@ -121,7 +122,7 @@
       margin-bottom: 1.5rem;
     }
     .pw-gate__submit:hover { background: var(--brown-dark); transform: translateY(-2px); }
-    .pw-gate__divider { font-size: 0.72rem; color: var(--light); margin-bottom: 1rem; }
+    .pw-gate__divider { font-size: 0.72rem; color: var(--muted); margin-bottom: 1rem; }
     .pw-gate__request { font-size: 0.8rem; color: var(--muted); }
     .pw-gate__request a {
       color: var(--brown);
@@ -134,7 +135,7 @@
       padding-top: 1.5rem;
       border-top: 1px solid var(--border);
       font-size: 0.72rem;
-      color: var(--light);
+      color: var(--muted);
       line-height: 1.55;
     }
 
@@ -153,6 +154,7 @@
       <li><a href="../contact.html" class="nav__link">Contact</a></li>
     </ul>
   </nav>
+  <button class="theme-toggle" aria-label="Switch to dark mode"></button>
   <button class="nav__menu-btn" id="menu-btn" aria-label="Open navigation" aria-expanded="false">
     <span></span><span></span><span></span>
   </button>

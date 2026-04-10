@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <script>(function(){var t=localStorage.getItem("rc_theme")||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.setAttribute("data-theme",t);}());</script>
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
 </head>
@@ -26,6 +27,7 @@
       <li><a href="../contact.html" class="nav__link">Contact</a></li>
     </ul>
   </nav>
+  <button class="theme-toggle" aria-label="Switch to dark mode"></button>
   <button class="nav__menu-btn" id="menu-btn" aria-label="Open navigation" aria-expanded="false">
     <span></span><span></span><span></span>
   </button>
@@ -76,9 +78,8 @@
   <!-- Cover image -->
   <div class="container">
     <div class="project-cover fade-up">
-      <img src="../images/projects/atlassian/mockup.png"
-           onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/mockup.fc6c4674de725084f512.png'"
-           alt="Pilot app mockup across devices"
+      <img src="../images/projects/atlassian/cover.png"
+           alt="Pilot app — new project creation and analytics across devices"
            loading="lazy">
     </div>
   </div>
@@ -130,15 +131,13 @@
 
       <div class="project-img-grid">
         <div class="project-img">
-          <img src="../images/projects/atlassian/analytics1.png"
-               onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/analytics1.ea32ce8b1f64b6effb0d.png'"
-               alt="Research and analytics screens"
+          <img src="../images/projects/atlassian/new-project-mobile.png"
+               alt="Pilot — new project creation on mobile"
                loading="lazy">
         </div>
         <div class="project-img">
-          <img src="../images/projects/atlassian/new-project1.png"
-               onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/new-project1.c89fae7fa84154c83feb.png'"
-               alt="New project creation flow"
+          <img src="../images/projects/atlassian/new-project-mobile2.png"
+               alt="Pilot — new project creation, AI task suggestion"
                loading="lazy">
         </div>
       </div>
@@ -157,10 +156,22 @@
       </p>
 
       <div class="project-img">
-        <img src="../images/projects/atlassian/mockup.png"
-             onerror="this.onerror=null;this.src='https://rita-coelho.com/static/media/mockup.fc6c4674de725084f512.png'"
-             alt="Final Pilot prototype, skills mapping view"
+        <img src="../images/projects/atlassian/analytics-desktop.png"
+             alt="Pilot analytics dashboard — milestones, tasks, workload and effort"
              loading="lazy">
+      </div>
+
+      <div class="project-img-grid">
+        <div class="project-img">
+          <img src="../images/projects/atlassian/analytics-mobile.png"
+               alt="Pilot analytics on mobile — overall view"
+               loading="lazy">
+        </div>
+        <div class="project-img">
+          <img src="../images/projects/atlassian/analytics-mobile-peruser.png"
+               alt="Pilot analytics on mobile — per user view"
+               loading="lazy">
+        </div>
       </div>
 
       <h2>Impact</h2>
