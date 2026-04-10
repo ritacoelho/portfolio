@@ -272,32 +272,6 @@
       injectAboutEditButton();
     }
 
-    // Static project pages (not view.html): inject "Edit page" FAB at bottom-right
-    // view.html already has its own FAB via injectFABs(); this handles hexagon, atlassian, etc.
-    if (document.querySelector('.project-page') && !window.location.pathname.includes('/view')) {
-      injectStaticProjectEditFab();
-    }
-  }
-
-  // ── Static project page edit FAB ───────────────────────────────
-  function injectStaticProjectEditFab() {
-    if (document.getElementById('rc-static-edit-fab')) { return; }
-
-    // Derive slug from the page filename (e.g. /projects/hexagon.html → 'hexagon')
-    var slug = window.location.pathname.split('/').pop().replace('.html', '');
-    if (!slug) { return; }
-
-    var SVG_EDIT = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7 7H2.5v-3l7-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
-
-    var btn = document.createElement('button');
-    btn.id        = 'rc-static-edit-fab';
-    btn.className = 'rc-about-edit-btn';   /* reuses the same fixed-bottom-right pill style */
-    btn.innerHTML = SVG_EDIT + ' Edit page';
-    document.body.appendChild(btn);
-
-    btn.addEventListener('click', function () {
-      window.location.href = 'view.html?slug=' + encodeURIComponent(slug) + '&edit=1';
-    });
   }
 
   function saveEdit(key, value) {
@@ -390,12 +364,10 @@
     var menu = document.getElementById('ctx-menu');
     if (!menu || menu.querySelector('.ctx-admin-only')) { return; }
 
-    var SVG_EDIT    = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3-8 8H3v-3l8-8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
     var SVG_EYE_OFF = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2l12 12M6.5 6.7A2.5 2.5 0 0 0 9.3 9.5M4.2 4.4C3 5.3 2 6.6 1.5 8c1 2.8 3.8 5 6.5 5 1.1 0 2.2-.3 3.1-.8M6 3.2A6.7 6.7 0 0 1 8 3c2.7 0 5.5 2.2 6.5 5-.4 1.1-1 2-1.8 2.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
     var SVG_EYE_ON  = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1.5 8C2.5 5.2 5.3 3 8 3s5.5 2.2 6.5 5c-1 2.8-3.8 5-6.5 5S2.5 10.8 1.5 8Z" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/></svg>';
     var SVG_LOCK    = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
     var SVG_UNLOCK  = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
-    var SVG_TRASH   = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5L13 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
     function makeAdminOpt(action, icon, label) {
       var div = document.createElement('div');
@@ -407,15 +379,11 @@
       return div;
     }
 
-    var editOpt   = makeAdminOpt('admin-edit',   SVG_EDIT,   'Edit');
-    var hideOpt   = makeAdminOpt('admin-hide',   SVG_EYE_OFF,'Hide');
-    var lockOpt   = makeAdminOpt('admin-lock',   SVG_LOCK,   'Lock');
-    var deleteOpt = makeAdminOpt('admin-delete', SVG_TRASH,  'Delete');
+    var hideOpt = makeAdminOpt('admin-hide', SVG_EYE_OFF, 'Hide');
+    var lockOpt = makeAdminOpt('admin-lock', SVG_LOCK,    'Lock');
 
-    menu.appendChild(editOpt);
     menu.appendChild(hideOpt);
     menu.appendChild(lockOpt);
-    menu.appendChild(deleteOpt);
 
     // Sync hide + lock labels/icons when menu opens
     window.__rcOnCtxOpen = function (item) {
@@ -436,27 +404,6 @@
     };
 
     function getActiveItem() { return window.__rcActiveCard || null; }
-
-    // ── Edit ──
-    editOpt.querySelector('button').addEventListener('click', function () {
-      var item = getActiveItem(); if (!item) { return; }
-      var type = item.dataset.ctxType || 'project';
-      if (type === 'journey') {
-        var id = item.dataset.id;
-        if (id) { window.dispatchEvent(new CustomEvent('rc-journey-edit', { detail: { id: id } })); }
-      } else {
-        var slug = item.dataset.slug;
-        var isOnProjectPage = window.location.pathname.includes('projects/view');
-        if (isOnProjectPage) {
-          // Already on project page — toggle edit mode in-place
-          window.dispatchEvent(new CustomEvent('rc-project-edit-start'));
-        } else if (slug) {
-          // Navigate to project page with edit flag so it auto-enters edit mode
-          window.location.href = 'projects/view.html?slug=' + encodeURIComponent(slug) + '&edit=1';
-        }
-      }
-      if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
-    });
 
     // ── Hide / Show ──
     hideOpt.querySelector('button').addEventListener('click', async function () {
@@ -515,42 +462,6 @@
       if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
     });
 
-    // ── Delete ──
-    deleteOpt.querySelector('button').addEventListener('click', function () {
-      var item  = getActiveItem(); if (!item) { return; }
-      var type  = item.dataset.ctxType || 'project';
-      var label = (item.querySelector('.timeline__title, .project-card__title a') || {}).textContent
-                  || item.dataset.title || item.dataset.slug || item.dataset.id || 'this item';
-      showConfirm('Deleting <strong>"' + label.trim() + '"</strong> is permanent and cannot be undone.',
-        async function () {
-          var token = getToken();
-          var r;
-          if (type === 'journey') {
-            r = await fetch('/api/journey', {
-              method: 'DELETE',
-              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-              body:   JSON.stringify({ id: item.dataset.id }),
-            });
-          } else {
-            r = await fetch('/api/projects', {
-              method: 'DELETE',
-              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-              body:   JSON.stringify({ slug: item.dataset.slug }),
-            });
-          }
-          if (r && r.ok) {
-            item.remove();
-            showToast('Deleted');
-            if (type === 'project' && window.location.pathname.includes('projects/view')) {
-              window.location.href = '../work.html';
-            }
-          } else {
-            showToast('Could not delete');
-          }
-        }
-      );
-      if (typeof window.__rcCloseCtxMenu === 'function') { window.__rcCloseCtxMenu(); }
-    });
   }
 
   function showToast(msg) {
