@@ -744,6 +744,11 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 /* Dark mode hub tiles — lighten/darken to contrast against dark bg */
+[data-theme="dark"] .hub__tile--work {
+  background: var(--brown-faint);
+  color: var(--brown);
+}
+[data-theme="dark"] .hub__tile--work::before { background: #1A0E06; }
 [data-theme="dark"] .hub__tile--journey {
   background: #1E170E;
   color: var(--off-white);
@@ -974,6 +979,12 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   background: var(--brown);
   color: var(--white);
   border-color: var(--brown);
+}
+[data-theme="dark"] .journey-filter.active,
+[data-theme="dark"] .journey-filter:hover {
+  background: var(--brown-faint);
+  color: var(--brown);
+  border-color: var(--brown-mid);
 }
 
 .timeline {
@@ -1261,6 +1272,12 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
 .btn--primary { background: var(--brown); color: var(--white); border-color: var(--brown); }
 .btn--primary:hover { background: var(--brown-dark); border-color: var(--brown-dark); }
+[data-theme="dark"] .btn--primary {
+  background: var(--brown-faint);
+  color: var(--brown);
+  border-color: var(--brown-mid);
+}
+[data-theme="dark"] .btn--primary:hover { background: #1A0E06; border-color: var(--brown-mid); }
 .btn--ghost { background: transparent; color: var(--off-white); border-color: #2E3636; }
 .btn--ghost:hover { border-color: var(--brown-mid); color: var(--brown-mid); }
 .btn--light { background: transparent; color: var(--text); border-color: var(--border); }
@@ -1562,6 +1579,7 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   user-select: none;
   -webkit-user-select: none;
 }
+.about-strip:not(:has(.about-strip__img)) { height: 0; }
 /* Inner scroll wrapper — both tracks animate together as one unit */
 .about-strip__scroll {
   display: flex;
@@ -1663,6 +1681,12 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   background: var(--brown);
   color: var(--white);
   border-color: var(--brown);
+}
+[data-theme="dark"] .work-filter-btn:hover,
+[data-theme="dark"] .work-filter-btn.active {
+  background: var(--brown-faint);
+  color: var(--brown);
+  border-color: var(--brown-mid);
 }
 .work-sort {
   display: flex;
@@ -1783,6 +1807,7 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   .hub__nav { grid-template-rows: auto; grid-template-columns: 1fr; }
   .hub__tile { padding: 1.5rem var(--gutter); }
   .nav__links { display: none; }
+  .nav > nav { display: none; }
   .nav__menu-btn { display: flex; }
   .work-grid { grid-template-columns: 1fr; }
   .about-grid { grid-template-columns: 1fr; gap: 3rem; }
