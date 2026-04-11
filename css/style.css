@@ -891,18 +891,25 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 [data-action="admin-delete"] .ctx-option__btn { background: #8B1A1A; }
 [data-action="admin-delete"] .ctx-option__btn:hover { background: #c0392b; }
 
-/* Dark mode: --text resolves to a light cream in dark theme, making white icons
-   invisible. Override to fixed dark backgrounds so the currentColor white
-   strokes remain legible. --brown and --brown-mid also remap to light values
-   in dark mode, so override hover/copied too. */
+/* Dark mode: button circles need a light background to be visible against the
+   dark card surface (#0F0A06). Flip to warm cream + dark icon strokes.
+   --burgundy (liked) and --brown-mid (copied) also disappear in dark mode —
+   override with values that clear WCAG 1.4.11 (3:1 UI component contrast). */
 [data-theme="dark"] .ctx-option__btn {
-  background: #1A0E06;
+  background: var(--off-white);   /* #EDE4D9 ~16:1 vs page bg */
+  color: var(--bg);               /* dark icon strokes on cream */
 }
 [data-theme="dark"] .ctx-option__btn:hover {
-  background: #2D1500;
+  background: var(--brown);       /* rose-parchment #C4A9A4 ~9:1 */
+  color: var(--bg);
+}
+[data-theme="dark"] .ctx-option__btn.liked {
+  background: #C0273D;            /* bright burgundy ~6:1 vs dark bg */
+  color: var(--white);
 }
 [data-theme="dark"] .ctx-option__btn.copied {
-  background: #3D2000;
+  background: var(--brown);       /* rose-parchment #C4A9A4 ~9:1 */
+  color: var(--bg);
 }
 
 /* Label: positioned absolutely below the circle, not in flex flow.
