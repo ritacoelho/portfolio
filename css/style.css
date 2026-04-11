@@ -891,6 +891,20 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 [data-action="admin-delete"] .ctx-option__btn { background: #8B1A1A; }
 [data-action="admin-delete"] .ctx-option__btn:hover { background: #c0392b; }
 
+/* Dark mode: --text resolves to a light cream in dark theme, making white icons
+   invisible. Override to fixed dark backgrounds so the currentColor white
+   strokes remain legible. --brown and --brown-mid also remap to light values
+   in dark mode, so override hover/copied too. */
+[data-theme="dark"] .ctx-option__btn {
+  background: #1A0E06;
+}
+[data-theme="dark"] .ctx-option__btn:hover {
+  background: #2D1500;
+}
+[data-theme="dark"] .ctx-option__btn.copied {
+  background: #3D2000;
+}
+
 /* Label: positioned absolutely below the circle, not in flex flow.
    Always dark text on white pill — colour: var(--text) fails in dark mode
    where --text resolves to a light colour. */
