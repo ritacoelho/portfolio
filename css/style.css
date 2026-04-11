@@ -661,9 +661,7 @@ button { font-family: inherit; cursor: pointer; }
    Options: Inspect · Copy Link · Show Love · Enquire
    ================== */
 
-/* Diamond trigger — visual in ::before, full 44px hit target on the element.
-   ::before is absolutely positioned so it stays fixed at bottom-right when
-   the trigger expands into a large hit area on active. */
+/* Diamond trigger — visual in ::before, full 44px hit target on the element */
 .ctx-trigger {
   position: absolute;
   bottom: clamp(1.75rem, 3vw, 2.75rem);
@@ -676,11 +674,12 @@ button { font-family: inherit; cursor: pointer; }
   transform: scale(0.7);
   transition: opacity 200ms ease, transform 250ms var(--ease-spring);
   z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .ctx-trigger::before {
   content: '';
-  position: absolute;
-  right: 8px; bottom: 8px;    /* centres 28px diamond in the 44px hit area */
   width: 28px; height: 28px;
   background: var(--brown);
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
@@ -694,10 +693,16 @@ button { font-family: inherit; cursor: pointer; }
 .ctx-trigger:hover::before  { transform: scale(1.18); }
 .ctx-trigger.active,
 .project-card:hover .ctx-trigger.active {
-  /* Expand hit area up and left to cover the arc (options at 9→12 o'clock, R=120px).
-     right/bottom anchors unchanged so the element grows only into the card interior. */
-  width: 290px;
-  height: 290px;
+  /* Expand the invisible hit area so cursor moving to menu options
+     keeps the card in hover state — prevents card flicker.
+     Adjust right/bottom by -68px to keep the visual centre fixed:
+     the element is bottom-right anchored so growing 44→180px shifts
+     the centre 68px up-left; shifting the anchor compensates instantly
+     (right/bottom are not in the transition list, so no bounce). */
+  width: 180px;
+  height: 180px;
+  right: calc(clamp(1.75rem, 3vw, 2.75rem) - 68px);
+  bottom: calc(clamp(1.75rem, 3vw, 2.75rem) - 68px);
   transform: scale(1);
 }
 .ctx-trigger.active::before {
@@ -792,32 +797,25 @@ body:not(.is-admin) .ctx-menu.open .ctx-option.ctx-public-only,
 body.admin-preview  .ctx-menu.open .ctx-option.ctx-public-only {
   opacity: 1; pointer-events: all;
 }
-/* Public option positions — quarter-circle arc from 12→9 o'clock.
-   Trigger sits at bottom-right of card; all buttons open up and left
-   so they stay within the card boundary. Radius = 120px.
-   At 30° spacing, adjacent button centres are ~62px apart (16px clear of 46px diameter). */
+/* Public option positions — 4 cardinal directions, radius 88px */
 body:not(.is-admin) .ctx-menu.open [data-action="inspect"],
 body.admin-preview  .ctx-menu.open [data-action="inspect"] {
-  /* 12 o'clock — straight up */
-  transform: translate(-50%, calc(-50% - 120px)) scale(1);
+  transform: translate(-50%, calc(-50% - 88px)) scale(1);
   transition-delay: 0ms;
 }
 body:not(.is-admin) .ctx-menu.open [data-action="copy-link"],
 body.admin-preview  .ctx-menu.open [data-action="copy-link"] {
-  /* ~10:30 — upper-left (30° from top): sin30=0.5, cos30=0.866 */
-  transform: translate(calc(-50% - 60px), calc(-50% - 104px)) scale(1);
+  transform: translate(calc(-50% + 88px), -50%) scale(1);
   transition-delay: 35ms;
 }
 body:not(.is-admin) .ctx-menu.open [data-action="show-love"],
 body.admin-preview  .ctx-menu.open [data-action="show-love"] {
-  /* ~10 o'clock — left-leaning (60° from top): sin60=0.866, cos60=0.5 */
-  transform: translate(calc(-50% - 104px), calc(-50% - 60px)) scale(1);
+  transform: translate(-50%, calc(-50% + 88px)) scale(1);
   transition-delay: 70ms;
 }
 body:not(.is-admin) .ctx-menu.open [data-action="enquire"],
 body.admin-preview  .ctx-menu.open [data-action="enquire"] {
-  /* 9 o'clock — straight left */
-  transform: translate(calc(-50% - 120px), -50%) scale(1);
+  transform: translate(calc(-50% - 88px), -50%) scale(1);
   transition-delay: 105ms;
 }
 
@@ -834,24 +832,24 @@ body.is-admin:not(.admin-preview) .ctx-menu.open .ctx-option.ctx-public-only {
 body.is-admin:not(.admin-preview) .ctx-menu.open .ctx-option.ctx-admin-only {
   opacity: 1 !important; pointer-events: all !important;
 }
-/* Edit — straight up */
+/* Edit — top */
 body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-edit"] {
-  transform: translate(-50%, calc(-50% - 120px)) scale(1);
+  transform: translate(-50%, calc(-50% - 88px)) scale(1);
   transition-delay: 0ms;
 }
-/* Hide — upper-left diagonal (30°) */
+/* Hide — right */
 body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-hide"] {
-  transform: translate(calc(-50% - 60px), calc(-50% - 104px)) scale(1);
+  transform: translate(calc(-50% + 88px), -50%) scale(1);
   transition-delay: 30ms;
 }
-/* Lock — left-leaning (60°) */
+/* Lock — left */
 body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-lock"] {
-  transform: translate(calc(-50% - 104px), calc(-50% - 60px)) scale(1);
+  transform: translate(calc(-50% - 88px), -50%) scale(1);
   transition-delay: 60ms;
 }
-/* Delete — straight left (least likely to be hit accidentally) */
+/* Delete — bottom (last, hardest to reach) */
 body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
-  transform: translate(calc(-50% - 120px), -50%) scale(1);
+  transform: translate(-50%, calc(-50% + 88px)) scale(1);
   transition-delay: 90ms;
 }
 /* Admin options invisible by default — use same specificity level as the
@@ -893,7 +891,9 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 [data-action="admin-delete"] .ctx-option__btn { background: #8B1A1A; }
 [data-action="admin-delete"] .ctx-option__btn:hover { background: #c0392b; }
 
-/* Label: positioned absolutely below the circle, not in flex flow */
+/* Label: positioned absolutely below the circle, not in flex flow.
+   Always dark text on white pill — colour: var(--text) fails in dark mode
+   where --text resolves to a light colour. */
 .ctx-option__label {
   position: absolute;
   top: calc(100% + 7px);
@@ -904,7 +904,7 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text);
+  color: #1A0E06;
   background: var(--white);
   padding: 0.12rem 0.45rem;
   border-radius: 999px;
