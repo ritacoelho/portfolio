@@ -743,6 +743,19 @@ button { font-family: inherit; cursor: pointer; }
   border-color: rgba(196, 169, 164, 0.25);
 }
 
+/* Dark mode hub tiles — lighten/darken to contrast against dark bg */
+[data-theme="dark"] .hub__tile--journey {
+  background: #1E170E;
+  color: var(--off-white);
+  border-color: rgba(237, 228, 217, 0.08);
+}
+[data-theme="dark"] .hub__tile--journey::before { background: #28200F; }
+[data-theme="dark"] .hub__tile--about {
+  background: #131C25;
+  color: var(--off-white);
+}
+[data-theme="dark"] .hub__tile--about::before { background: #1A2A38; }
+
 /* ── ctx-menu container
    Positioned by JS at trigger centre (left/top = cx, cy).
    Options use absolute + transforms to fan out from that origin.

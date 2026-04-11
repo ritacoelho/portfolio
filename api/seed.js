@@ -45,7 +45,7 @@ const PROJECTS = [
     role: 'UX Designer (Academic)',
     company: 'Atlassian (Academic project)',
     location: 'Sydney, Australia',
-    coverImage: '/images/work/pilot-thumbnail.png',
+    coverImage: '/images/projects/atlassian/cover.png',
     isLocked: false,
     isStatic: true,
     isHidden: false,
