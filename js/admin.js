@@ -129,13 +129,11 @@
         '</svg>',
         'Admin',
       '</span>',
-      isOnPage('admin/access-codes.html') ? '' : [
-        '<label class="rc-admin-bar__toggle" title="Preview as public user">',
-          '<input type="checkbox" id="rc-preview-toggle"' + (isPreviewMode() ? ' checked' : '') + '>',
-          '<span>Preview public</span>',
-        '</label>',
-        '<a class="rc-admin-bar__link" href="/admin/access-codes.html">Access codes</a>'
-      ].join(''),
+      '<label class="rc-admin-bar__toggle" title="Preview as public user">',
+        '<input type="checkbox" id="rc-preview-toggle"' + (isPreviewMode() ? ' checked' : '') + '>',
+        '<span>Preview public</span>',
+      '</label>',
+      '<button class="rc-admin-bar__link" id="rc-ac-btn">Access codes</button>',
       '<button class="rc-admin-bar__logout" id="rc-logout">Log out</button>'
     ].join('');
 
@@ -150,10 +148,9 @@
         document.body.classList.toggle('admin-preview', toggle.checked);
       });
     }
-  }
 
-  function isOnPage(fragment) {
-    return window.location.pathname.includes(fragment);
+    var acBtn = document.getElementById('rc-ac-btn');
+    if (acBtn) { acBtn.addEventListener('click', showAccessCodesModal); }
   }
 
   // ── Login modal ───────────────────────────────────────────────
@@ -471,6 +468,294 @@
 
   function injectCardAdminControls(card) {
     // Card admin actions are now in the context menu — nothing extra needed on the card itself
+  }
+
+  // ── Access Codes Modal ────────────────────────────────────────
+  function showAccessCodesModal() {
+    if (document.getElementById('rc-ac-overlay')) { return; }
+
+    var SVG_CLOSE = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+
+    var overlay = document.createElement('div');
+    overlay.id        = 'rc-ac-overlay';
+    overlay.className = 'rc-modal-overlay';
+    overlay.innerHTML = [
+      '<div class="rc-modal-card rc-ac-card">',
+        '<button class="rc-modal-close" id="rc-ac-close" aria-label="Close">' + SVG_CLOSE + '</button>',
+        '<h2 class="rc-modal-title">Access Codes</h2>',
+        '<p class="ac-page__subtitle">Manage access codes for protected content on the portfolio.</p>',
+        '<div class="ac-create">',
+          '<p class="ac-create__title">Generate new code</p>',
+          '<form class="ac-form" id="rc-ac-form" autocomplete="off">',
+            '<div class="ac-form__field">',
+              '<label class="ac-form__label" for="rc-ac-recipient">Recipient *</label>',
+              '<input class="ac-form__input" type="text" id="rc-ac-recipient" placeholder="e.g. Jane Smith / Google" required>',
+            '</div>',
+            '<div class="ac-form__field">',
+              '<label class="ac-form__label" for="rc-ac-expiry">Expiry date (optional)</label>',
+              '<input class="ac-form__input" type="date" id="rc-ac-expiry">',
+            '</div>',
+            '<div class="ac-form__field ac-form__field--full">',
+              '<label class="ac-form__label" for="rc-ac-desc-input">Description (optional)</label>',
+              '<input class="ac-form__input" type="text" id="rc-ac-desc-input" placeholder="e.g. Recruiter at Google — applied via LinkedIn">',
+            '</div>',
+            '<div class="ac-form__submit">',
+              '<button class="ac-btn ac-btn--primary" type="submit" id="rc-ac-submit">Generate code</button>',
+              '<span class="ac-create__status" id="rc-ac-status"></span>',
+            '</div>',
+          '</form>',
+          '<div id="rc-ac-new-wrap" style="display:none;margin-top:1rem;">',
+            '<p style="font-size:0.78rem;color:var(--muted);margin:0 0 0.5rem;">New code (click to copy):</p>',
+            '<button class="ac-new-code" id="rc-ac-new-btn" type="button">',
+              '<span id="rc-ac-new-val">—</span>',
+              '<span class="ac-new-code__copy" id="rc-ac-copy-hint">Click to copy</span>',
+            '</button>',
+          '</div>',
+        '</div>',
+        '<div class="ac-table-wrap">',
+          '<table class="ac-table">',
+            '<thead><tr>',
+              '<th>Code</th><th>Recipient</th><th>Description</th>',
+              '<th>Status</th><th>Uses</th><th>Last used</th><th>Expires</th><th>Actions</th>',
+            '</tr></thead>',
+            '<tbody id="rc-ac-tbody"><tr><td colspan="8" class="ac-loading">Loading…</td></tr></tbody>',
+          '</table>',
+        '</div>',
+      '</div>'
+    ].join('');
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('rc-ac-close').addEventListener('click', hideAccessCodesModal);
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) { hideAccessCodesModal(); }
+    });
+
+    var escHandler = function (e) {
+      if (e.key === 'Escape') { hideAccessCodesModal(); document.removeEventListener('keydown', escHandler); }
+    };
+    document.addEventListener('keydown', escHandler);
+
+    var newBtn = document.getElementById('rc-ac-new-btn');
+    if (newBtn) {
+      newBtn.addEventListener('click', function () {
+        var val  = document.getElementById('rc-ac-new-val');
+        var hint = document.getElementById('rc-ac-copy-hint');
+        if (val) { acCopyText(val.textContent); }
+        if (hint) {
+          hint.textContent = 'Copied!';
+          setTimeout(function () { hint.textContent = 'Click to copy'; }, 1800);
+        }
+      });
+    }
+
+    var form = document.getElementById('rc-ac-form');
+    if (form) { form.addEventListener('submit', acHandleCreate); }
+
+    acLoadCodes();
+  }
+
+  function hideAccessCodesModal() {
+    var overlay = document.getElementById('rc-ac-overlay');
+    if (overlay) { overlay.remove(); }
+  }
+
+  function acAuthHeaders() {
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (getToken() || '') };
+  }
+
+  function acCopyText(text) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(function () {});
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      ta.remove();
+    }
+  }
+
+  function acFormatDate(iso) {
+    if (!iso) { return '—'; }
+    try {
+      return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) { return iso; }
+  }
+
+  function acStatusBadge(entry) {
+    var now = new Date();
+    if (!entry.isActive) {
+      return '<span class="ac-status-badge ac-status-badge--inactive">Inactive</span>';
+    }
+    if (entry.expiryDate && new Date(entry.expiryDate) < now) {
+      return '<span class="ac-status-badge ac-status-badge--expired">Expired</span>';
+    }
+    return '<span class="ac-status-badge ac-status-badge--active">Active</span>';
+  }
+
+  function acEscHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  async function acLoadCodes() {
+    var tbody = document.getElementById('rc-ac-tbody');
+    if (!tbody) { return; }
+    tbody.innerHTML = '<tr><td colspan="8" class="ac-loading">Loading…</td></tr>';
+    try {
+      var r = await fetch('/api/access-codes', { headers: acAuthHeaders() });
+      if (r.status === 401) { hideAccessCodesModal(); return; }
+      var data = await r.json();
+      acRenderTable(data);
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="8" class="ac-empty">Failed to load codes. Check your connection.</td></tr>';
+    }
+  }
+
+  function acRenderTable(entries) {
+    var tbody = document.getElementById('rc-ac-tbody');
+    if (!tbody) { return; }
+    if (!entries || !entries.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="ac-empty">No codes yet. Generate one above.</td></tr>';
+      return;
+    }
+
+    var SVG_COPY       = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="5" y="5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M9 5V3.5A1.5 1.5 0 0 0 7.5 2h-4A1.5 1.5 0 0 0 2 3.5v4A1.5 1.5 0 0 0 3.5 9H5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+    var SVG_ACTIVATE   = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5L5.5 10.5L11.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var SVG_DEACTIVATE = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    var SVG_DELETE     = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 3.5h11M4.5 3.5V2.5A.5.5 0 0 1 5 2h4a.5.5 0 0 1 .5.5V3.5M5.5 6.5v3M8.5 6.5v3M2.5 3.5l.8 8.1A.5.5 0 0 0 3.8 12h6.4a.5.5 0 0 0 .5-.4l.8-8.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    tbody.innerHTML = '';
+    entries.forEach(function (entry) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = [
+        '<td><button class="ac-code-pill" data-copy="' + acEscHtml(entry.code) + '" title="Click to copy">' + acEscHtml(entry.code) + '</button></td>',
+        '<td>' + acEscHtml(entry.recipient || '—') + '</td>',
+        '<td><span class="ac-desc-editable" contenteditable="true" data-code="' + acEscHtml(entry.code) + '" title="Click to edit">' + acEscHtml(entry.description || '') + '</span></td>',
+        '<td>' + acStatusBadge(entry) + '</td>',
+        '<td>' + (entry.usageCount || 0) + '</td>',
+        '<td>' + acFormatDate(entry.lastUsedAt) + '</td>',
+        '<td>' + acFormatDate(entry.expiryDate) + '</td>',
+        '<td><div class="ac-table__actions">',
+          '<button class="ac-icon-btn" data-action="copy-code" data-code="' + acEscHtml(entry.code) + '" data-tooltip="Copy code" aria-label="Copy code">' + SVG_COPY + '</button>',
+          entry.isActive
+            ? '<button class="ac-icon-btn ac-icon-btn--active" data-action="deactivate" data-code="' + acEscHtml(entry.code) + '" data-tooltip="Deactivate" aria-label="Deactivate">' + SVG_DEACTIVATE + '</button>'
+            : '<button class="ac-icon-btn" data-action="activate" data-code="' + acEscHtml(entry.code) + '" data-tooltip="Activate" aria-label="Activate">' + SVG_ACTIVATE + '</button>',
+          '<button class="ac-icon-btn ac-icon-btn--danger" data-action="delete" data-code="' + acEscHtml(entry.code) + '" data-tooltip="Delete" aria-label="Delete">' + SVG_DELETE + '</button>',
+        '</div></td>'
+      ].join('');
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('[data-copy]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        acCopyText(btn.dataset.copy);
+        showToast('Copied ' + btn.dataset.copy);
+      });
+    });
+
+    tbody.querySelectorAll('.ac-desc-editable').forEach(function (el) {
+      el.addEventListener('blur', async function () {
+        var code = el.dataset.code;
+        var desc = el.textContent.trim();
+        try {
+          await fetch('/api/access-codes', {
+            method: 'PATCH', headers: acAuthHeaders(),
+            body: JSON.stringify({ code: code, description: desc })
+          });
+        } catch (e) { showToast('Could not save description'); }
+      });
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+      });
+    });
+
+    tbody.querySelectorAll('[data-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = btn.dataset.action;
+        var code   = btn.dataset.code;
+        if (action === 'copy-code')  { acCopyText(code); showToast('Copied ' + code); }
+        if (action === 'deactivate') { acToggleActive(code, false); }
+        if (action === 'activate')   { acToggleActive(code, true); }
+        if (action === 'delete')     { acDeleteCode(code); }
+      });
+    });
+  }
+
+  async function acToggleActive(code, isActive) {
+    try {
+      await fetch('/api/access-codes', {
+        method: 'PATCH', headers: acAuthHeaders(),
+        body: JSON.stringify({ code: code, isActive: isActive })
+      });
+      showToast(isActive ? 'Code activated' : 'Code deactivated');
+      acLoadCodes();
+    } catch (e) { showToast('Error updating code'); }
+  }
+
+  function acDeleteCode(code) {
+    showConfirm('Delete access code ' + code + '? This cannot be undone.', async function () {
+      try {
+        await fetch('/api/access-codes', {
+          method: 'DELETE', headers: acAuthHeaders(),
+          body: JSON.stringify({ code: code })
+        });
+        showToast('Code deleted');
+        acLoadCodes();
+      } catch (e) { showToast('Error deleting code'); }
+    });
+  }
+
+  async function acHandleCreate(e) {
+    e.preventDefault();
+    var recipient = document.getElementById('rc-ac-recipient');
+    var expiry    = document.getElementById('rc-ac-expiry');
+    var desc      = document.getElementById('rc-ac-desc-input');
+    var submitBtn = document.getElementById('rc-ac-submit');
+    var statusEl  = document.getElementById('rc-ac-status');
+    var newWrap   = document.getElementById('rc-ac-new-wrap');
+    var newVal    = document.getElementById('rc-ac-new-val');
+    var copyHint  = document.getElementById('rc-ac-copy-hint');
+
+    submitBtn.disabled    = true;
+    submitBtn.textContent = 'Generating…';
+    statusEl.textContent  = '';
+    statusEl.className    = 'ac-create__status';
+    if (newWrap) { newWrap.style.display = 'none'; }
+
+    try {
+      var r = await fetch('/api/access-codes', {
+        method:  'POST',
+        headers: acAuthHeaders(),
+        body:    JSON.stringify({
+          recipient:   recipient ? recipient.value.trim() : '',
+          description: desc      ? desc.value.trim()      : '',
+          expiryDate:  expiry && expiry.value ? expiry.value : null
+        })
+      });
+      var data = await r.json();
+
+      if (r.ok && data.code) {
+        statusEl.textContent = 'Code created successfully';
+        statusEl.className   = 'ac-create__status is-success';
+        if (newVal)   { newVal.textContent    = data.code; }
+        if (newWrap)  { newWrap.style.display = 'block'; }
+        if (copyHint) { copyHint.textContent  = 'Click to copy'; }
+        e.target.reset();
+        acLoadCodes();
+      } else {
+        statusEl.textContent = data.error || 'Failed to create code';
+        statusEl.className   = 'ac-create__status is-error';
+      }
+    } catch (err) {
+      statusEl.textContent = 'Error — check connection';
+      statusEl.className   = 'ac-create__status is-error';
+    }
+
+    submitBtn.disabled    = false;
+    submitBtn.textContent = 'Generate code';
   }
 
   function injectTimelineCtxTrigger(item) {
