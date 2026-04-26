@@ -16,7 +16,7 @@ function isAdmin(req) {
   catch { return false; }
 }
 
-// ── Static project seed data ──────────────────────────────────────
+// ── Static project seed data ────────────────────────────────────────────────
 const PROJECTS = [
   {
     slug: 'hexagon',
@@ -62,7 +62,7 @@ const PROJECTS = [
     role: 'UX / Service Designer',
     company: 'Academic project',
     location: 'Sydney, Australia',
-    coverImage: '/images/work/ipad-screens.png',
+    coverImage: '/images/projects/last-mile/ipad-screens.png',
     isLocked: false,
     isStatic: true,
     isHidden: false,
@@ -79,7 +79,7 @@ const PROJECTS = [
     role: 'Interaction Designer & Developer',
     company: 'University of Sydney',
     location: 'Sydney, Australia',
-    coverImage: '/images/work/sonic-thumbnail.png',
+    coverImage: '/images/projects/sonic-link/site.png',
     isLocked: false,
     isStatic: true,
     isHidden: false,
@@ -88,7 +88,7 @@ const PROJECTS = [
   },
 ];
 
-// ── Static journey seed data ──────────────────────────────────────
+// ── Static journey seed data ────────────────────────────────────────────────
 const JOURNEY = [
   {
     id: 'j-hexagon',
@@ -186,9 +186,7 @@ module.exports = async function handler(req, res) {
 
   const results = { projects: [], journey: [], skipped: [], purged: [] };
 
-  // ── Purge non-static (dynamic/test) project entries ───────────
-  // Projects are now static HTML files. Any KV entry without isStatic:true
-  // is a leftover test/dynamic entry and should be removed.
+  // ── Purge non-static (dynamic/test) project entries ─────────────────
   const staticSlugs = PROJECTS.map(p => p.slug);
   const existingList = (await kv.get('project:list')) || [];
   const slugsToPurge = existingList.filter(s => !staticSlugs.includes(s));
@@ -198,13 +196,11 @@ module.exports = async function handler(req, res) {
     results.purged.push(slug);
   }
 
-  // ── Seed projects ─────────────────────────────────────────────
-  // Start fresh from the canonical static list only
+  // ── Seed projects ─────────────────────────────────────────────────────
   const projectList = existingList.filter(s => staticSlugs.includes(s));
 
   for (const p of PROJECTS) {
     if (projectList.includes(p.slug)) {
-      // Re-apply seed data but preserve isHidden / isLocked if already set
       const existing = await kv.get(`project:${p.slug}`);
       const entry = {
         ...p,
@@ -228,7 +224,7 @@ module.exports = async function handler(req, res) {
   }
   await kv.set('project:list', projectList);
 
-  // ── Seed journey ──────────────────────────────────────────────
+  // ── Seed journey ──────────────────────────────────────────────────────
   const journeyList = (await kv.get('journey:list')) || [];
 
   for (const e of JOURNEY) {
