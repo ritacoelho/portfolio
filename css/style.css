@@ -62,27 +62,6 @@
 }
 
 /* ==================
-   DARK MODE TOKENS
-   ================== */
-[data-theme="dark"] {
-  --bg:           #0F0A06;
-  --bg-alt:       #19110A;
-  --card:         #1D1409;
-  --text:         #EDE4D9;
-  --muted:        #A89286;
-  --light:        #6B5C54;
-  --border:       rgba(237, 228, 217, 0.10);
-  --border-faint: rgba(237, 228, 217, 0.06);
-  --brown:        #C4A9A4;   /* remapped: warm rose-parchment (mauve family), readable on dark bg */
-  --brown-dark:   #D4B9B4;
-  --brown-mid:    #A08880;
-  --brown-faint:  #251608;
-  --mauve-faint:  #1E1311;
-  --burgundy-faint: rgba(92, 10, 19, 0.20);
-  --off-white:    #EDE4D9;
-}
-
-/* ==================
    RESET
    ================== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -145,11 +124,6 @@ button { font-family: inherit; cursor: pointer; }
   background: rgba(19, 23, 23, 0.93);
   box-shadow: 0 1px 0 var(--border-dark);
 }
-[data-theme="dark"] .nav.scrolled {
-  background: rgba(15, 10, 6, 0.92);
-  box-shadow: 0 1px 0 rgba(237, 228, 217, 0.08);
-}
-
 /* Theme toggle button */
 .theme-toggle {
   display: flex;
@@ -730,37 +704,6 @@ button { font-family: inherit; cursor: pointer; }
 .project-card.card--menu-open .project-card__link svg { transform: translateX(3px); }
 .project-card.card--menu-open .ctx-trigger { opacity: 1; transform: scale(1); }
 
-/* Dark mode card hover — warm dark lift instead of light blue */
-[data-theme="dark"] .project-card:hover,
-[data-theme="dark"] .project-card.card--menu-open {
-  background: #261C12;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
-}
-[data-theme="dark"] .project-card:hover .project-card__tag,
-[data-theme="dark"] .project-card.card--menu-open .project-card__tag {
-  background: var(--brown-faint);
-  color: var(--brown);
-  border-color: rgba(196, 169, 164, 0.25);
-}
-
-/* Dark mode hub tiles — lighten/darken to contrast against dark bg */
-[data-theme="dark"] .hub__tile--work {
-  background: var(--brown-faint);
-  color: var(--brown);
-}
-[data-theme="dark"] .hub__tile--work::before { background: #1A0E06; }
-[data-theme="dark"] .hub__tile--journey {
-  background: #1E170E;
-  color: var(--off-white);
-  border-color: rgba(237, 228, 217, 0.08);
-}
-[data-theme="dark"] .hub__tile--journey::before { background: #28200F; }
-[data-theme="dark"] .hub__tile--about {
-  background: #131C25;
-  color: var(--off-white);
-}
-[data-theme="dark"] .hub__tile--about::before { background: #1A2A38; }
-
 /* ── ctx-menu container
    Positioned by JS at trigger centre (left/top = cx, cy).
    Options use absolute + transforms to fan out from that origin.
@@ -891,30 +834,7 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 [data-action="admin-delete"] .ctx-option__btn { background: #8B1A1A; }
 [data-action="admin-delete"] .ctx-option__btn:hover { background: #c0392b; }
 
-/* Dark mode: button circles need a light background to be visible against the
-   dark card surface (#0F0A06). Flip to warm cream + dark icon strokes.
-   --burgundy (liked) and --brown-mid (copied) also disappear in dark mode —
-   override with values that clear WCAG 1.4.11 (3:1 UI component contrast). */
-[data-theme="dark"] .ctx-option__btn {
-  background: var(--off-white);   /* #EDE4D9 ~16:1 vs page bg */
-  color: var(--bg);               /* dark icon strokes on cream */
-}
-[data-theme="dark"] .ctx-option__btn:hover {
-  background: var(--brown);       /* rose-parchment #C4A9A4 ~9:1 */
-  color: var(--bg);
-}
-[data-theme="dark"] .ctx-option__btn.liked {
-  background: #C0273D;            /* bright burgundy ~6:1 vs dark bg */
-  color: var(--white);
-}
-[data-theme="dark"] .ctx-option__btn.copied {
-  background: var(--brown);       /* rose-parchment #C4A9A4 ~9:1 */
-  color: var(--bg);
-}
-
-/* Label: positioned absolutely below the circle, not in flex flow.
-   Always dark text on white pill — colour: var(--text) fails in dark mode
-   where --text resolves to a light colour. */
+/* Label: positioned absolutely below the circle, not in flex flow. */
 .ctx-option__label {
   position: absolute;
   top: calc(100% + 7px);
@@ -1002,12 +922,6 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   background: var(--brown);
   color: var(--white);
   border-color: var(--brown);
-}
-[data-theme="dark"] .journey-filter.active,
-[data-theme="dark"] .journey-filter:hover {
-  background: var(--brown-faint);
-  color: var(--brown);
-  border-color: var(--brown-mid);
 }
 
 .timeline {
@@ -1295,12 +1209,6 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
 .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
 .btn--primary { background: var(--brown); color: var(--white); border-color: var(--brown); }
 .btn--primary:hover { background: var(--brown-dark); border-color: var(--brown-dark); }
-[data-theme="dark"] .btn--primary {
-  background: var(--brown-faint);
-  color: var(--brown);
-  border-color: var(--brown-mid);
-}
-[data-theme="dark"] .btn--primary:hover { background: #1A0E06; border-color: var(--brown-mid); }
 .btn--ghost { background: transparent; color: var(--off-white); border-color: #2E3636; }
 .btn--ghost:hover { border-color: var(--brown-mid); color: var(--brown-mid); }
 .btn--light { background: transparent; color: var(--text); border-color: var(--border); }
@@ -1526,9 +1434,6 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   color: var(--muted);
 }
 
-/* Dark mode: light parchment diamond needs dark text to stay readable */
-[data-theme="dark"] .process-step__num { color: var(--bg); }
-
 /* Mobile: hide the orphaned connector arrow when steps wrap */
 @media (max-width: 480px) {
   .process-step::after { display: none; }
@@ -1704,12 +1609,6 @@ body.is-admin:not(.admin-preview) .ctx-menu.open [data-action="admin-delete"] {
   background: var(--brown);
   color: var(--white);
   border-color: var(--brown);
-}
-[data-theme="dark"] .work-filter-btn:hover,
-[data-theme="dark"] .work-filter-btn.active {
-  background: var(--brown-faint);
-  color: var(--brown);
-  border-color: var(--brown-mid);
 }
 .work-sort {
   display: flex;
