@@ -90,7 +90,7 @@
 
       <h2>The problem</h2>
       <p>
-        Atlassian wanted to expand into a younger demographic — students and early-career employees — at a time when they were launching Atlassian Intelligence, their AI assistant, across the product suite. The challenge: no existing tool served both contexts. Students were stitching together Google Drive, Canvas, Discord, and WhatsApp to manage work, while professionals used entirely different stacks. The transition between the two was a gap nobody had designed for.
+        No project management tool existed for people straddling student and employee contexts at the same time. Atlassian had nothing for new graduates or students in part-time roles — people managing university deadlines, team meetings, and early-career tasks from one place. Students were stitching together Google Drive, Canvas, Discord, and WhatsApp, while professionals used entirely different stacks. The transition between the two was a gap nobody had designed for.
       </p>
 
       <div class="callout">
@@ -123,45 +123,46 @@
       </div>
 
       <p>
-        User research surfaced five clear signals: 95% of participants wanted one tool to handle all task types, 86% named task and time management as their biggest pain point, 80% wanted more engaging project tools, 75% wanted better group communication, and 70% wanted more efficient software overall. Competitor analysis covered direct tools (Asana, Notion, Monday.com), non-direct references (GitHub, Figma, Canva), and the tools students were already using — confirming that none bridged both student and employee contexts.
+        Research pointed to a consistent underlying problem: 95% of participants wanted one tool for all task types and 86% named task and time management as their biggest pain — not just poor tooling, but the cognitive overhead of context-switching between apps. Competitor analysis confirmed no existing tool bridged student and professional contexts. This shaped three "how might we" questions around personalisation, time allocation, and sustained engagement, which fed directly into the design direction.
       </p>
       <p>
-        Three "how might we" questions shaped the direction: adapt the experience to personal needs, help users allocate time more accurately, and keep users engaged. These led to three design opportunities: personalised productivity enhancement, engagement through seamless integration, and contextual collaboration boost. From there, two rounds of Hi-Fi prototyping and three rounds of user testing refined the design before the final presentation to Atlassian.
+        Two rounds of Hi-Fi prototyping followed, each iteration responding to specific user feedback before a final presentation to Atlassian's product and design team.
       </p>
 
       <h2>My role</h2>
       <p>
-        I was one of four UX/UI designers on the project. I owned the research synthesis, ran ideation sessions (Crazy 8s, group brainstorming, decision matrix), and led the design of two core flows: the AI project creation model and the notification system. I contributed to all three design iterations and co-presented the final prototype to Atlassian's product and design team.
+        I was one of four UX/UI designers. I led research synthesis, ran ideation (Crazy 8s, decision matrix), and owned two flows end-to-end: the AI project creation model and the notification system. The AI scaffold went through a significant revision between iterations — the first Hi-Fi surfaced all AI-generated tasks at once, which felt overwhelming in testing. The final version staged the reveal: approve milestones first, then see tasks populate. That single change resolved the trust issue users flagged.
       </p>
 
       <h2>Solution</h2>
       <p>
-        <strong>Pilot</strong> is an intelligent project management tool that organises work across academic, workplace, and personal contexts in one interface. The homepage surfaces AI-recommended priority tasks across all active projects, so users see what matters most regardless of which project it belongs to. A calendar with built-in availability detection suggests meeting times and resolves clashes proactively — presenting alternatives rather than just surfacing conflicts.
+        <strong>Pilot</strong> organises work across academic, workplace, and personal contexts from a single interface. The core insight driving the homepage was that urgency doesn't respect project boundaries — so the app shouldn't either. AI-recommended tasks surface across all active projects in priority order, with a weekly calendar view alongside. A calendar with availability detection suggests meeting times and resolves clashes by offering alternatives rather than just flagging conflicts.
       </p>
 
       <div class="project-img">
-        <img src="../images/projects/atlassian/design-concept.png"
-             alt="Pilot — homepage showing AI-recommended tasks and weekly view on laptop"
+        <img src="../images/projects/atlassian/devices.png"
+             alt="Pilot — homepage with recommended tasks, weekly calendar, and AI project board across devices"
              loading="lazy">
       </div>
 
       <p>
-        The standout feature is the AI project scaffold: users paste in a brief and Pilot generates a full task structure broken down by milestone across weeks. A notification system lets users request help from teammates without leaving the app — replacing the WhatsApp thread. Premium analytics give teams a per-user view of milestones, workload, and effort across all projects.
-      </p>
-      <p>
-        Every design decision was made within Atlassian's existing component language, so Pilot feels like a natural part of the ecosystem rather than a standalone student project.
+        The AI project scaffold lets users paste in an assignment brief and generates a full milestone and task structure. The design challenge was establishing trust in the AI output: users needed to feel in control rather than handed a completed plan. A two-step review — approve milestones first, then tasks populate — gave users the right amount of agency without breaking the flow. A notification system replaces the WhatsApp thread: users can request help from teammates directly in-app, from the project page where the work lives.
       </p>
 
       <div class="project-img">
         <img src="../images/projects/atlassian/new-project-desktop.png"
-             alt="Pilot — AI-generated task structure from an assignment brief"
+             alt="Pilot — AI-generated task structure from an assignment brief, reviewed before committing"
              loading="lazy">
       </div>
+
+      <p>
+        All interactions were built inside Atlassian's existing component language so Pilot integrates naturally rather than feeling like a bolt-on. The analytics dashboard (premium) gives teams a per-user view of milestones, workload, and effort — a direct response to the research finding that group accountability was a persistent, unresolved pain point.
+      </p>
 
       <div class="project-img-grid">
         <div class="project-img">
           <img src="../images/projects/atlassian/analytics-desktop.png"
-               alt="Pilot analytics dashboard — milestones, tasks, workload and effort across projects"
+               alt="Pilot analytics — milestones, tasks, workload and effort across projects"
                loading="lazy">
         </div>
         <div class="project-img">
@@ -189,7 +190,7 @@
       </div>
 
       <p>
-        Both satisfaction metrics improved consistently across all three testing rounds. The prototype was presented to Atlassian's product and design team at the end of the brief. The AI project scaffold was called out as the standout differentiator — addressing a gap none of Atlassian's existing products currently fill.
+        Both metrics improved consistently across all three testing rounds. At the final presentation, Atlassian's team specifically called out the AI scaffold as a gap none of their current products fill.
       </p>
 
     </div>
