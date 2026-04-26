@@ -27,6 +27,7 @@
       <li><a href="../contact.html" class="nav__link">Contact</a></li>
     </ul>
   </nav>
+  <button class="theme-toggle" aria-label="Switch to dark mode"></button>
   <button class="nav__menu-btn" id="menu-btn" aria-label="Open navigation" aria-expanded="false">
     <span></span><span></span><span></span>
   </button>
@@ -62,7 +63,7 @@
     </h1>
 
     <p class="project-hero__summary fade-up fade-up--d3">
-      A live industry brief from Atlassian: design an intelligent, AI-powered project management tool to help students and new employees manage work across university, the workplace, and personal life, all in one place.
+      A live industry brief from Atlassian: design an intelligent, AI-powered project management tool to help students and new employees manage work across university, the workplace, and personal life — all in one place.
     </p>
 
     <div class="project-meta fade-up fade-up--d4">
@@ -78,7 +79,7 @@
   <div class="container">
     <div class="project-cover fade-up">
       <img src="../images/projects/atlassian/cover.png"
-           alt="Pilot app — new project creation and analytics across devices"
+           alt="Pilot — homepage, calendar and new project creation across devices"
            loading="lazy">
     </div>
   </div>
@@ -87,13 +88,24 @@
   <section class="section container" aria-label="Case study">
     <div class="project-body">
 
-      <h2>The problem</h2>
+      <h2>The brief</h2>
       <p>
-        Atlassian wanted to expand into a younger demographic (students and new employees) at a time when it was investing heavily in AI through Atlassian Intelligence. The challenge: existing tools like Asana, Notion, and Monday.com weren't built for people who need to juggle academic deadlines, early-career responsibilities, and personal commitments all at once. Students were duct-taping together Google Drive, Canvas, Discord, and WhatsApp to get through the week.
+        Atlassian wanted to expand into a younger demographic at a time when they were investing heavily in AI through Atlassian Intelligence — their new AI-powered virtual teammate launching across the product suite. The challenge: existing tools like Asana, Notion, and Monday.com weren't built for people who need to juggle academic deadlines, early-career responsibilities, and personal commitments all at once. Students were stitching together Google Drive, Canvas, Discord, and WhatsApp just to get through the week.
       </p>
 
       <div class="callout">
         <p><strong>Brief:</strong> Design an intelligent project management tool for students and new employees that enhances productivity and team collaboration, sitting within the Atlassian ecosystem.</p>
+      </div>
+
+      <h2>Target users</h2>
+      <p>
+        The brief targeted two overlapping groups: <strong>students</strong> managing academic workloads and group assignments, and <strong>employees</strong> in the early stages of their careers navigating new workplace structures. Both share the same core friction — transitioning between contexts and tools — making them a natural fit for a single, intelligent platform.
+      </p>
+
+      <div class="project-img">
+        <img src="../images/projects/atlassian/target-users.png"
+             alt="Target users: Students and Employees transitioning to the workplace"
+             loading="lazy">
       </div>
 
       <h2>Process</h2>
@@ -122,67 +134,179 @@
       </div>
 
       <p>
-        User research surfaced a clear signal: 95% of participants wanted a single tool to handle diverse tasks, and 86% said task and time management was their biggest pain point. Group communication and engagement with project tools were close behind. Three "how might we" questions shaped our direction: how might we adapt the experience to personal needs, help users allocate time more accurately, and keep them coming back?
+        Background research mapped Atlassian's strategic goals — attracting young users, staying ahead of industry, expanding to new organisations — against what students and early-career employees actually need. Competitor analysis covered three categories: direct competitors (Asana, Notion, Monday.com), non-direct competitors with relevant patterns (GitHub, Figma, Canva), and the tools students were already using day-to-day. None of the existing solutions bridged the student-to-employee context; they either served professionals or academics, not both.
       </p>
+
+      <div class="project-img">
+        <img src="../images/projects/atlassian/competitor-analysis.png"
+             alt="Competitor analysis — direct: Asana, Notion, Monday.com; non-direct: GitHub, Figma, Canva; currently used: Google Drive, Canvas, Slack, Discord, WhatsApp"
+             loading="lazy">
+      </div>
+
       <p>
-        Competitive analysis covered direct competitors (Asana, Notion, Monday.com), non-direct competitors with relevant patterns (GitHub, Figma, Canva), and the tools students were already using day-to-day. None of the existing solutions bridged the student-to-employee context: they either served professionals or academics, not both. This gap became the foundation for three design opportunities: personalised productivity enhancement, engagement through seamless integration, and contextual collaboration.
+        User research confirmed the gap. Five findings stood out:
+      </p>
+
+      <div class="stats">
+        <div>
+          <p class="stat__number">95%</p>
+          <p class="stat__label">Want one tool to process diverse tasks</p>
+        </div>
+        <div>
+          <p class="stat__number">86%</p>
+          <p class="stat__label">Want to improve task &amp; time management</p>
+        </div>
+        <div>
+          <p class="stat__number">80%</p>
+          <p class="stat__label">Want more engaging project management tools</p>
+        </div>
+        <div>
+          <p class="stat__number">75%</p>
+          <p class="stat__label">Want to improve group communication</p>
+        </div>
+        <div>
+          <p class="stat__number">70%</p>
+          <p class="stat__label">Want more efficient software</p>
+        </div>
+      </div>
+
+      <div class="project-img">
+        <img src="../images/projects/atlassian/research-findings.png"
+             alt="Summary from user research — bar chart of pain points and How Might We questions"
+             loading="lazy">
+      </div>
+
+      <p>
+        Three "how might we" questions shaped the design direction: how might we <em>adapt the experience to personal needs</em>? How might we <em>help users more accurately allocate time to complete their tasks</em>? How might we <em>keep users engaged and coming back</em>? These mapped to three design opportunities: personalised productivity enhancement, engagement through seamless integration, and contextual collaboration boost.
       </p>
 
       <h2>My role</h2>
       <p>
-        I was a UX/UI designer on the project, working in a team of four. I owned the research synthesis, led the ideation sessions (Crazy 8s, group brainstorming, decision matrix), and designed core interaction flows including the AI project creation model and the notification system. I contributed to all three design iterations and presented the final prototype and rationale to Atlassian's product and design team.
+        I was a UX/UI designer on a team of four. I owned the research synthesis, led ideation sessions (Crazy 8s, group brainstorming, decision matrix), and designed core interaction flows including the AI project creation flow and the notification system. I contributed to all three design iterations and presented the final prototype and rationale to Atlassian's product and design team.
       </p>
+
+      <h2>Design concept</h2>
+      <p>
+        <strong>Pilot</strong> is an intelligent project management tool for students and employees, designed to enhance productivity and team collaboration within the Atlassian ecosystem. The homepage surfaces AI-recommended tasks ordered by priority across all active projects — giving users an immediate view of their most imminent commitments across academic, workplace, and personal contexts.
+      </p>
+
+      <div class="project-img">
+        <img src="../images/projects/atlassian/design-concept.png"
+             alt="Pilot design concept — intelligent project management tool shown on laptop"
+             loading="lazy">
+      </div>
 
       <h2>Solution</h2>
+
+      <h3>Homepage</h3>
       <p>
-        <strong>Pilot</strong> is an intelligent project management tool that lets users manage work across academic, workplace, and personal contexts from a single interface. The homepage surfaces AI-recommended tasks ordered by priority across all active projects. The project page includes an AI assistant that generates a full task structure from an assignment brief; users can review, edit, or accept the suggestions before committing. The calendar uses AI to schedule group meetings around team availability and detects clashes with concrete resolution options.
-      </p>
-      <p>
-        Key design decisions: a task recommendation engine that surfaces what matters now across all projects, not just one; an AI project scaffold that reduces the friction of starting from scratch; agenda clash resolution that gives users real alternatives rather than just flagging a conflict; and a notification system that tracks postponed tasks and lets users request help from teammates directly. Premium features unlock per-user analytics and extended calendar filtering.
-      </p>
-      <p>
-        Throughout, we designed within Atlassian's existing design language — using their component patterns, typography, and brand conventions so Pilot would feel like a natural extension of the ecosystem rather than a separate product.
+        Displays the most imminent tasks and an overview of the week's commitments. The recommendation engine surfaces priority tasks across all active projects so users never lose track of what matters most right now. Filters let users narrow by project, workspace, or task status.
       </p>
 
       <div class="project-img">
-        <img src="../images/projects/atlassian/new-project-desktop.png"
-             alt="Pilot — AI-generated task structure from an assignment brief"
+        <img src="../images/projects/atlassian/feature-homepage.png"
+             alt="Pilot homepage — recommended tasks and weekly calendar, with Hi-Fi iterations and final prototype"
              loading="lazy">
       </div>
 
-      <div class="project-img-grid">
-        <div class="project-img">
-          <img src="../images/projects/atlassian/new-project-mobile.png"
-               alt="Pilot — new project creation with AI task suggestion on mobile"
-               loading="lazy">
-        </div>
-        <div class="project-img">
-          <img src="../images/projects/atlassian/new-project-mobile2.png"
-               alt="Pilot — AI-generated project structure from assignment brief on mobile"
-               loading="lazy">
-        </div>
-      </div>
+      <h3>Project overview</h3>
+      <p>
+        A dedicated space for projects organised by context — Workplace, Individual, and Academic. Each project page shows the team, open tasks, milestones on a timeline, and an upcoming agenda. The design evolved from two Hi-Fi iterations based on user feedback around visibility of interactions and content hierarchy.
+      </p>
 
       <div class="project-img">
-        <img src="../images/projects/atlassian/analytics-desktop.png"
-             alt="Pilot analytics dashboard — milestones, tasks, workload and effort across projects"
+        <img src="../images/projects/atlassian/feature-project-overview.png"
+             alt="Pilot project overview — team, tasks, milestones timeline and agenda"
              loading="lazy">
       </div>
 
+      <h3>New project with AI</h3>
+      <p>
+        Users paste in an assignment brief or project description, and Pilot generates a full task structure — broken down by milestone across weeks — using AI. Users can review, edit, or accept the suggestions before committing. This was identified as the standout differentiator against Atlassian's existing products: a gap none of them currently fill.
+      </p>
+
+      <div class="project-img">
+        <img src="../images/projects/atlassian/feature-new-project.png"
+             alt="Pilot new project — AI generates task structure from an assignment brief"
+             loading="lazy">
+      </div>
+
+      <h3>Calendar</h3>
+      <p>
+        The calendar uses AI to schedule group meetings around team availability. When adding an event, Pilot shows which teammates are free on that date and time. When a new event clashes with an existing commitment, it proactively suggests alternative slots — giving users concrete resolution options rather than just flagging a conflict.
+      </p>
+
       <div class="project-img-grid">
         <div class="project-img">
-          <img src="../images/projects/atlassian/analytics-mobile.png"
-               alt="Pilot analytics — overall project view"
+          <img src="../images/projects/atlassian/feature-calendar.png"
+               alt="Pilot calendar — AI recommendations for group meeting scheduling"
                loading="lazy">
         </div>
         <div class="project-img">
-          <img src="../images/projects/atlassian/analytics-mobile-peruser.png"
-               alt="Pilot analytics — per user breakdown"
+          <img src="../images/projects/atlassian/feature-calendar-clash.png"
+               alt="Pilot calendar — AI recommendations for resolving agenda clashes"
                loading="lazy">
         </div>
       </div>
+
+      <h3>Notifications</h3>
+      <p>
+        A system reminder for task progress — Pilot notifies users when milestones are approaching and tasks have been postponed. Users can also send assistance requests directly to group members from within the project page, removing the need to switch to external messaging apps.
+      </p>
+
+      <div class="project-img-grid">
+        <div class="project-img">
+          <img src="../images/projects/atlassian/feature-notification.png"
+               alt="Pilot notification — system reminder for task progress"
+               loading="lazy">
+        </div>
+        <div class="project-img">
+          <img src="../images/projects/atlassian/feature-notification-assist.png"
+               alt="Pilot notification — send assistance requests to group members"
+               loading="lazy">
+        </div>
+      </div>
+
+      <h3>Analytics</h3>
+      <p>
+        Premium feature: view team and individual progress at a glance. The analytics dashboard tracks milestones, tasks, workload, and effort across all projects. A "Per User" toggle lets users compare their own performance against team averages — directly addressing the research finding that users wanted visibility into group accountability.
+      </p>
+
+      <div class="project-img">
+        <img src="../images/projects/atlassian/feature-analytics.png"
+             alt="Pilot analytics — team and individual progress, milestones, tasks, workload and effort"
+             loading="lazy">
+      </div>
+
+      <h3>Atlassian Intelligence</h3>
+      <p>
+        Two AI features are woven throughout the product: <strong>predictive user mentions</strong> in the calendar (surfacing available teammates when scheduling a meeting) and <strong>AI-generated project plans</strong> (defining tasks and milestones directly from a brief). Both follow Atlassian's existing design patterns so Pilot feels like a natural extension of the ecosystem rather than a separate product.
+      </p>
+
+      <div class="project-img">
+        <img src="../images/projects/atlassian/atlassian-intelligence.png"
+             alt="Atlassian Intelligence: predictive user mentions in calendar and AI project plan generation"
+             loading="lazy">
+      </div>
+
+      <h2>Why Pilot</h2>
+      <p>Pilot addresses three core needs no existing tool covered for this audience:</p>
+      <ol>
+        <li><strong>Manage responsibilities</strong> across available time and team members</li>
+        <li><strong>Break down project requirements</strong> into tangible goals</li>
+        <li><strong>Reduce time spent</strong> figuring out logistics</li>
+      </ol>
+      <p>
+        What makes it stand out: a gentle <strong>learning curve</strong> thanks to Atlassian's familiar design language; <strong>well-integrated</strong> across academic, workplace, and personal contexts in a single tool; <strong>high-impact features</strong> like the AI scaffold and clash detection; and <strong>AI transformative power</strong> that actively improves how users plan and collaborate — not just a passive task list.
+      </p>
 
       <h2>Impact</h2>
+
+      <div class="project-img">
+        <img src="../images/projects/atlassian/design-progress.png"
+             alt="Summary of design progress — 86% and 82% satisfaction improving across 3 rounds of user testing"
+             loading="lazy">
+      </div>
 
       <div class="stats">
         <div>
@@ -191,16 +315,16 @@
         </div>
         <div>
           <p class="stat__number">86%</p>
-          <p class="stat__label">Of testers said the prototype successfully addressed the design concept</p>
+          <p class="stat__label">Said the prototype successfully responded to the design concept</p>
         </div>
         <div>
           <p class="stat__number">82%</p>
-          <p class="stat__label">Rated Pilot adaptable across uni, workplace, and personal life</p>
+          <p class="stat__label">Rated Pilot adaptable across uni studies, workplace tasks, and personal life</p>
         </div>
       </div>
 
       <p>
-        Both satisfaction metrics improved consistently across all three testing rounds. The prototype was presented to Atlassian's product and design team at the end of the brief. The AI project scaffold (which generates a task structure directly from a brief) was identified as the standout differentiator, addressing a gap none of Atlassian's existing products currently fill.
+        Both satisfaction metrics improved consistently across all three testing rounds. The prototype was presented to Atlassian's product and design team at the end of the brief. The AI project scaffold — which generates a full task structure directly from a brief — was identified as the standout differentiator, addressing a gap none of Atlassian's existing products currently fill.
       </p>
 
     </div>
