@@ -129,14 +129,14 @@
   var activeFilter = 'all';
   var activeSort   = 'newest';
 
-  // ── Project URL ────────────────────────────────────────────────
+  // ── Project URL ────────────────────────────────────────────────────────────
   function projectUrl(p) {
     if (p.externalUrl)  { return p.externalUrl; }
     if (p.isStatic)     { return 'projects/' + p.slug + '.html'; }
     return 'projects/view.html?slug=' + encodeURIComponent(p.slug);
   }
 
-  // ── Build card HTML ────────────────────────────────────────────
+  // ── Build card HTML ─────────────────────────────────────────────────────
   function buildCard(p) {
     var url     = projectUrl(p);
     var tags    = Array.isArray(p.tags) ? p.tags : [];
@@ -200,7 +200,7 @@
       .replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // ── Render grid ────────────────────────────────────────────────
+  // ── Render grid ──────────────────────────────────────────────────────
   function renderGrid(projects) {
     grid.innerHTML = '';
     if (!projects.length) {
@@ -220,7 +220,7 @@
     }
   }
 
-  // ── Filter + sort ──────────────────────────────────────────────
+  // ── Filter + sort ──────────────────────────────────────────────────────
   function getCards() {
     return Array.from(grid.querySelectorAll('.project-card'));
   }
@@ -243,7 +243,7 @@
     visible.forEach(function (card) { grid.appendChild(card); });
   }
 
-  // ── Dynamic filter chips from tags ─────────────────────────────
+  // ── Dynamic filter chips from tags ────────────────────────────────────
   function buildFilterChips(projects) {
     var allTags = [];
     projects.forEach(function (p) {
@@ -273,7 +273,7 @@
     });
   }
 
-  // ── Sort dropdown ──────────────────────────────────────────────
+  // ── Sort dropdown ──────────────────────────────────────────────────────
   if (sortEl) {
     sortEl.addEventListener('sort-change', function (e) {
       activeSort = e.detail.value;
@@ -281,15 +281,17 @@
     });
   }
 
-  // ── Admin: show manage button ──────────────────────────────────
+  // ── Admin: show manage button ──────────────────────────────────────────
   window.addEventListener('rc-admin-enabled', function () {
     var adminBtns = document.querySelectorAll('.is-admin-only');
     adminBtns.forEach(function (el) { el.style.display = ''; });
   });
 
-  // ── Load from API ──────────────────────────────────────────────
+  // ── Load projects ──────────────────────────────────────────────────────────
+  // Public users load directly from the static file — no database hit.
+  // Admins load from the API so hide/lock changes made via admin mode
+  // are reflected without needing a code deploy.
   var token = sessionStorage.getItem('rc_admin_token');
-  var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
 
   function loadProjects(projects) {
     allProjects = projects || [];
@@ -300,23 +302,29 @@
     grid.querySelectorAll('.project-card').forEach(function (c) { c.classList.add('visible'); });
   }
 
-  fetch('/api/projects', { headers: headers })
-    .then(function (r) {
-      if (!r.ok) { throw new Error('api-unavailable'); }
-      return r.json();
-    })
-    .then(loadProjects)
-    .catch(function () {
-      // Fall back to static projects.json for local development
-      fetch('/projects.json')
-        .then(function (r) { return r.json(); })
-        .then(loadProjects)
-        .catch(function () {
-          if (loadingEl) {
-            loadingEl.textContent = 'Could not load projects. Please refresh.';
-          }
-        });
-    });
+  function loadFromStatic() {
+    fetch('/projects.json')
+      .then(function (r) {
+        if (!r.ok) { throw new Error('static-unavailable'); }
+        return r.json();
+      })
+      .then(loadProjects)
+      .catch(function () {
+        if (loadingEl) { loadingEl.textContent = 'Could not load projects. Please refresh.'; }
+      });
+  }
+
+  if (token) {
+    fetch('/api/projects', { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function (r) {
+        if (!r.ok) { throw new Error('api-unavailable'); }
+        return r.json();
+      })
+      .then(loadProjects)
+      .catch(loadFromStatic);
+  } else {
+    loadFromStatic();
+  }
 
 })();
 </script>
